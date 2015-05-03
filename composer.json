@@ -25,5 +25,19 @@
 		"sebastian/phpcpd" : "2.0.2@dev",
 		"theseer/phpdox" : "0.7.0@dev",
 		"psr/log" : "1.0.0"
-	}
+	},
+	"support" : {
+		"email" : "greubel@nkey.de",
+		"issues" : "https://github.com/maikgreubel/caribu-orm/issues",
+		"wiki" : "https://github.com/maikgreubel/caribu-orm/wiki",
+		"source" : "https://github.com/maikgreubel/caribu-orm"
+	},
+	"authors" : [{
+			"name" : "Maik Greubel",
+			"email" : "greubel@nkey.de",
+			"homepage" : "https://nkey.de",
+			"role" : "Maintainer"
+		}
+	],
+	"homepage" : "https://github.com/maikgreubel/caribu-orm"
 }
