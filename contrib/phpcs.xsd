@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	attributeFormDefault="unqualified" elementFormDefault="qualified">
+
+	<xsd:element name="ruleset">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="description" type="xsd:string"
+					minOccurs="1" maxOccurs="1" />
+				<xsd:element name="exclude-pattern" type="ExcludePattern"
+					minOccurs="0" maxOccurs="unbounded" />
+				<xsd:element name="rule" type="Rule" minOccurs="0"
+					maxOccurs="unbounded" />
+			</xsd:sequence>
+			<xsd:attribute name="name" type="xsd:string" use="required"/>
+		</xsd:complexType>
+	</xsd:element>
+
+	<xsd:complexType name="Rule">
+		<xsd:sequence>
+			<xsd:element name="exclude-pattern" type="ExcludePattern"
+				minOccurs="0" maxOccurs="unbounded" />
+			<xsd:element name="severity" type="Severity" minOccurs="0"
+				maxOccurs="unbounded" />
+			<xsd:element name="properties" type="PropertyContainer"
+				minOccurs="0" maxOccurs="1" />
+			<xsd:element name="message" type="Message" minOccurs="0"
+				maxOccurs="1" />
+		</xsd:sequence>
+		<xsd:attribute name="ref" type="xsd:string" />
+	</xsd:complexType>
+
+	<xsd:complexType name="ExcludePattern">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:string" />
+		</xsd:simpleContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="Severity">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:int" />
+		</xsd:simpleContent>
+	</xsd:complexType>
+
+	<xsd:complexType name="PropertyContainer">
+		<xsd:sequence>
+			<xsd:element name="property" type="Property" minOccurs="1"
+				maxOccurs="unbounded" />
+		</xsd:sequence>
+	</xsd:complexType>
+
+	<xsd:complexType name="Property">
+		<xsd:attribute name="name" type="xsd:string" use="required" />
+		<xsd:attribute name="value" type="xsd:string" use="required" />
+	</xsd:complexType>
+
+	<xsd:complexType name="Message">
+		<xsd:simpleContent>
+			<xsd:extension base="xsd:string" />
+		</xsd:simpleContent>
+	</xsd:complexType>
+</xsd:schema>

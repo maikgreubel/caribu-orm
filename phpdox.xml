@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!DOCTYPE phpdox>
+<phpdox xmlns="http://xml.phpdox.net/config">
+	<bootstrap>
+		<require file="./vendor/autoload.php" />
+	</bootstrap>
+
+	<project name="PHP Generics API Documentation" source="${basedir}/src"
+		workdir="${basedir}/build/api/xml">
+		<collector backend="parser" />
+
+		<generator output="${basedir}/build/api">
+			<enrich base="${basedir}/build">
+				<source type="build"/>
+				<source type="checkstyle">
+					<file name="logs/checkstyle.xml" /> 
+				</source>
+				<source type="pmd">
+					<file name="logs/pmd.xml" />
+				</source>
+				<source type="phploc">
+					<file name="logs/phploc.xml" />
+				</source>
+				<source type="phpunit">
+					<coverage path="coverage/xml" />
+				</source>
+			</enrich>
+
+			<build engine="html" output="html" />
+		</generator>
+	</project>
+</phpdox>

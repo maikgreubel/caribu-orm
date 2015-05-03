@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dataset>
+<dataset>
+    <guestbook id="1" content="Hello buddy!" user="joe" created="2010-04-24 17:15:23" />
+    <guestbook id="2" content="I like it!" user="nancy" created="2010-04-26 12:14:20" />
+    <guestbook id="3" content="Me too!" user="joe" created="2010-04-27 18:26:45" />
+    <guestbook id="5" content="Well done" user="bob" created="2011-05-13 02:34:23" />
+</dataset>

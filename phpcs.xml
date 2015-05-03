@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:noNamespaceSchemaLocation="contrib/phpcs.xsd" name="Custom Standard">
+
+	<description>A custom coding standard</description>
+
+	<rule ref="Generic.Files.LineLength.MaxExceeded">
+		<message>Line contains %s chars, which is longer than the max limit of %s</message>
+	</rule>
+
+	<rule ref="Generic.Files.LineLength.TooLong">
+		<message>Line longer than %s characters; contains %s characters</message>
+	</rule>
+
+</ruleset>
