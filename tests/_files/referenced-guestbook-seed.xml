@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dataset>
+<dataset>
+    <table name="user">
+        <column>uid</column>
+        <column>name</column>
+        <column>email</column>
+        <row>
+            <value>1</value>
+            <value>joe</value>
+            <value>joe@test.tld</value>
+        </row>
+        <row>
+            <value>2</value>
+            <value>nancy</value>
+            <value>nancy@test.tld</value>
+        </row>
+        <row>
+            <value>3</value>
+            <value>bob</value>
+            <value>bob@test.tld</value>
+        </row>
+    </table>
+    <table name="guestbook">
+        <column>id</column>
+        <column>content</column>
+        <column>user</column>
+        <column>created</column>
+        <row>
+            <value>1</value>
+            <value>Hello buddy!</value>
+            <value>1</value>
+            <value>2010-04-24 17:15:23</value>
+        </row>
+        <row>
+            <value>2</value>
+            <value>I like it!</value>
+            <value>2</value>
+            <value>2010-04-26 12:14:20</value>
+        </row>
+        <row>
+            <value>3</value>
+            <value>Me too!</value>
+            <value>1</value>
+            <value>2010-04-27 18:26:45</value>
+        </row>
+        <row>
+            <value>5</value>
+            <value>Well done</value>
+            <value>3</value>
+            <value>2011-05-13 02:34:23</value>
+        </row>
+    </table>
+</dataset>

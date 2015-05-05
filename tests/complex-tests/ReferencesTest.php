@@ -2,23 +2,23 @@
 namespace Nkey\Caribu\Tests;
 
 require_once dirname(__FILE__).'/../AbstractDatabaseTestCase.php';
-require_once dirname(__FILE__).'/../Model/NoteModel.php';
-
-use Nkey\Caribu\Tests\Model\NoteModel;
+require_once dirname(__FILE__).'/../Model/ReferencedGuestBook.php';
+require_once dirname(__FILE__).'/../Model/User.php';
 
 use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Orm\OrmException;
-use Nkey\Caribu\Tests\Model\Nkey\Caribu\Tests\Model;
+
+use Nkey\Caribu\Tests\Model\ReferencedGuestBook;
+use Nkey\Caribu\Tests\Model\User;
 
 /**
- * Failure test cases
+ * Complex test cases
  *
  * This class is part of Caribu package
  *
  * @author Maik Greubel <greubel@nkey.de>
  */
-class FailureTest extends AbstractDatabaseTestCase
+class ReferencesTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
@@ -27,7 +27,7 @@ class FailureTest extends AbstractDatabaseTestCase
             'file' => ':memory:'
         );
 
-        $this->flatDataSetFile = dirname(__FILE__).'/../_files/notes-seed.xml';
+        $this->dataSetFile = dirname(__FILE__).'/../_files/referenced-guestbook-seed.xml';
     }
 
     /**
@@ -38,7 +38,8 @@ class FailureTest extends AbstractDatabaseTestCase
     {
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
-        $connection->exec("CREATE TABLE notes (id INTEGER, content TEXT, created TEXT)");
+        $connection->exec("CREATE TABLE guestbook (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, user INTEGER, created TEXT)");
+        $connection->exec("CREATE TABLE user (uid INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT)");
         $connection->commit();
 
         parent::setUp();
@@ -52,23 +53,19 @@ class FailureTest extends AbstractDatabaseTestCase
     {
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
-        $connection->exec("DROP TABLE notes");
+        $connection->exec("DROP TABLE user");
+        $connection->exec("DROP TABLE guestbook");
         $connection->commit();
 
         parent::tearDown();
     }
 
-    /**
-     * Test missing primary key
-     *
-     * @expectedException Nkey\Caribu\Orm\OrmException
-     * @expectedExceptionMessage Exception ReflectionException occured:
-     */
-    public function testMissingPrimaryKey()
+    public function testReferencedGet()
     {
-        $entity = new NoteModel();
-        $entity->setContent("Will fail");
-        $entity->setCreated(time());
-        $entity->persist();
+        $entity = ReferencedGuestBook::get(1);
+        $this->assertFalse(is_null($entity));
+        $this->assertFalse(is_null($entity->getUser()));
+        $this->assertTrue($entity->getUser() instanceof User);
+        $this->assertEquals(1, $entity->getUser()->getId());
     }
 }

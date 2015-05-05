@@ -479,12 +479,17 @@ class Orm
                 ));
             }
 
+            $unmapped = array();
             while ($result = $statement->fetch(PDO::FETCH_OBJ)) {
-                $results[] = self::map($result, $class);
+                $unmapped[] = $result;
             }
 
             $statement->closeCursor();
             $instance->connection->commit();
+
+            foreach($unmapped as $result) {
+                $results[] = self::map($result, $class);
+            }
 
             if (count($results) == 1) {
                 $results = $results[0];

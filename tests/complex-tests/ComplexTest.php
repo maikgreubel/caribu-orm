@@ -29,7 +29,7 @@ class ComplexTest extends AbstractDatabaseTestCase
             'file' => ':memory:'
         );
 
-        $this->dataSetFile = dirname(__FILE__).'/../_files/guestbook-seed.xml';
+        $this->flatDataSetFile = dirname(__FILE__).'/../_files/guestbook-seed.xml';
     }
 
     /**

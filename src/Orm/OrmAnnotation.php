@@ -2,7 +2,6 @@
 namespace Nkey\Caribu\Orm;
 
 use Nkey\Caribu\Orm\OrmException;
-
 use \ReflectionClass;
 use \ReflectionProperty;
 use \ReflectionObject;
@@ -126,6 +125,43 @@ trait OrmAnnotation
     }
 
     /**
+     * Get the property type via annotation
+     * @param string $class
+     * @param string $propertyName
+     * @return string|null
+     */
+    private function getAnnotatedPropertyType($class, $propertyName)
+    {
+        $type = null;
+        $rf = new ReflectionClass($class);
+
+        foreach($rf->getProperties() as $property) {
+            assert($property instanceof ReflectionProperty);
+
+            $docComments = $property->getDocComment();
+
+            $isDestinationProperty = false;
+            $matches = array();
+            if($property->getName() == $propertyName) {
+                $isDestinationProperty = true;
+            }
+
+            if(!$isDestinationProperty) {
+                continue;
+            }
+
+            if ($docComments) {
+                if(preg_match('/@var ([\w\\\\]+)/', $docComments, $matches) && count($matches) > 1) {
+                    $type = $matches[1];
+                    break;
+                }
+            }
+        }
+
+        return $type;
+    }
+
+    /**
      * Map default class object into specific by annotation
      *
      * @param \stdClass $from
@@ -147,11 +183,26 @@ trait OrmAnnotation
             $properties = $rf->getProperties();
             foreach ($properties as $property) {
                 assert($property instanceof ReflectionProperty);
+
+                $value = $property->getValue($from);
+
+                $type = $this->getAnnotatedPropertyType($toClass, $property->getName());
+
+                if (class_exists($type)) {
+                    $rfPropertyType = new ReflectionClass($type);
+                    if (strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0) {
+                        $getById = new ReflectionMethod($type, "get");
+                        $value = $getById->invoke(null, $value);
+                    } else {
+                        $value = $rfPropertyType->newInstance($value);
+                    }
+                }
+
                 $method = sprintf("set%s", ucfirst($property->getName()));
 
                 if ($resultClass->hasMethod($method)) {
                     $rfMethod = new ReflectionMethod($toClass, $method);
-                    $rfMethod->invoke($result, $property->getValue($from));
+                    $rfMethod->invoke($result, $value);
                 } else {
                     $resultClassProperties = $resultClass->getProperties();
                     foreach ($resultClassProperties as $resultClassProperty) {
@@ -165,7 +216,7 @@ trait OrmAnnotation
                                 $method = sprintf("set%s", ucfirst($resultClassProperty->getName()));
                                 if ($resultClass->hasMethod($method)) {
                                     $rfMethod = new ReflectionMethod($toClass, $method);
-                                    $rfMethod->invoke($result, $property->getValue($from));
+                                    $rfMethod->invoke($result, $value);
                                     continue 2;
                                 }
                             }

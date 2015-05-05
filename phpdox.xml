@@ -5,7 +5,7 @@
 		<require file="./vendor/autoload.php" />
 	</bootstrap>
 
-	<project name="PHP Generics API Documentation" source="${basedir}/src"
+	<project name="Caribu API Documentation" source="${basedir}/src"
 		workdir="${basedir}/build/api/xml">
 		<collector backend="parser" />
 

@@ -23,7 +23,14 @@ abstract class AbstractDatabaseTestCase extends PHPUnit_Extensions_Database_Test
     protected $options;
 
     /**
-     * File for loading the test data sets
+     * File for loading the test flat data sets
+     *
+     * @var string
+     */
+    protected $flatDataSetFile;
+
+    /**
+     * File for loading the test non-flat data sets
      *
      * @var string
      */
@@ -64,7 +71,12 @@ abstract class AbstractDatabaseTestCase extends PHPUnit_Extensions_Database_Test
     public function getDataSet()
     {
         if(null == $this->dataset) {
-            $this->dataset = $this->createFlatXMLDataSet($this->dataSetFile);
+            if($this->flatDataSetFile) {
+                $this->dataset = $this->createFlatXMLDataSet($this->flatDataSetFile);
+            }
+            else if($this->dataSetFile) {
+                $this->dataset = $this->createXmlDataSet($this->dataSetFile);
+            }
         }
         return $this->dataset;
     }
