@@ -142,7 +142,9 @@ class Orm
      * Disable cloning
      */
     private function __clone()
-    {}
+    {
+        //
+    }
 
     /**
      * Configure the Orm
@@ -451,7 +453,14 @@ class Orm
         $instance = self::getInstance();
         $class = get_called_class();
 
-        $query = $instance->createQuery($instance->getTableName($class), $criteria, '*', $orderBy, $limit, $startOffset);
+        $query = $instance->createQuery(
+            $instance->getTableName($class),
+            $criteria,
+            '*',
+            $orderBy,
+            $limit,
+            $startOffset
+        );
         $statement = null;
 
         try {
@@ -518,7 +527,7 @@ class Orm
             try {
                 $rfMethod = new ReflectionMethod($class, $method);
                 $pk = $rfMethod->invoke($object);
-                if(!$onlyValue) {
+                if (!$onlyValue) {
                     $pk = array(
                         $pkCol => $pk
                     );
@@ -543,7 +552,7 @@ class Orm
     private function setPrimaryKey($class, $object, $primaryKey)
     {
         $pkCol = $this->getAnnotatedPrimaryKeyProperty($class);
-        if(null == $pkCol) {
+        if (null == $pkCol) {
             $pkCol = $this->getPrimaryKeyCol($class);
         }
         $method = sprintf("set%s", ucfirst($pkCol));
@@ -614,7 +623,9 @@ class Orm
         if (is_null($pk)) {
             throw new OrmException("No primary key column found!");
         }
-        foreach ($pk as $primaryKeyCol => $primaryKeyValue) {}
+        foreach ($pk as $primaryKeyCol => $primaryKeyValue) {
+            //
+        }
 
         $pairs = $this->getAnnotatedColumnValuePairs($class, $this);
 
@@ -652,7 +663,7 @@ class Orm
             unset($statement);
             $connection->commit();
 
-            if(!$primaryKeyValue) {
+            if (!$primaryKeyValue) {
                 $this->setPrimaryKey($class, $this, $pk);
             }
         } catch (PDOException $ex) {
@@ -675,7 +686,9 @@ class Orm
         $tableName = $this->getTableName($class);
 
         $pk = $this->getPrimaryKey($class, $this);
-        foreach ($pk as $primaryKeyCol => $primaryKeyValue) {}
+        foreach ($pk as $primaryKeyCol => $primaryKeyValue) {
+            //
+        }
 
         if (is_null($primaryKeyValue)) {
             throw new OrmException("Entity is not persisted or detached. Can not delete.");

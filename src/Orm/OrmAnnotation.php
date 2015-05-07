@@ -123,44 +123,6 @@ trait OrmAnnotation
     }
 
     /**
-     * Get the property of class based on annotation or as fallback
-     *
-     * @param string $class
-     * @param string $propertyName
-     * @return string
-     *
-     * @throws OrmException
-     */
-    private function getAnnotatedProperty($class, $propertyName)
-    {
-        $rf = new ReflectionClass($class);
-
-        $properties = $rf->getProperties();
-
-        foreach ($properties as $property) {
-            assert($property instanceof ReflectionProperty);
-
-            if ($property->getName() == $propertyName) {
-                return $propertyName;
-            }
-
-            $docComment = $property->getDocComment();
-            $matches = array();
-            if ($docComment && preg_match('/@column (\w+)/', $docComment, $matches) && count($matches) > 1) {
-                array_shift($matches);
-                if ($matches[0] == $propertyName) {
-                    return $property->getName();
-                }
-            }
-        }
-
-        throw new OrmException("No such property {property} in class {class}", array(
-            'property' => $propertyName,
-            'class' => $class
-        ));
-    }
-
-    /**
      * Get the property type via annotation
      *
      * @param string $class
@@ -299,7 +261,6 @@ trait OrmAnnotation
                 if ($docComments && preg_match('/@var ([\w\\\\]+)/', $docComments, $matches)) {
                     $type = $matches[1];
                     if (class_exists($type)) {
-
                         if (! $persist) {
                             $entityDocComments = $property->getDocComment();
                             if ($entityDocComments && preg_match('/@cascade/', $entityDocComments)) {
@@ -315,13 +276,12 @@ trait OrmAnnotation
                                 $pk = $this->getAnnotatedPrimaryKey($type);
                                 if (null == $pk) {
                                     // TODO Retrieve using fallback
-                                } else
-                                    if (is_array($pk)) {
-                                        list ($pkCol) = $pk;
-                                        if (is_empty($pk[$pkCol])) {
-                                            $persist = true;
-                                        }
+                                } elseif (is_array($pk)) {
+                                    list ($pkCol) = $pk;
+                                    if (is_empty($pk[$pkCol])) {
+                                        $persist = true;
                                     }
+                                }
                             }
                             if ($persist) {
                                 $entity->persist();
@@ -405,7 +365,7 @@ trait OrmAnnotation
 
                     $pk = $rfMethod->invoke($object);
 
-                    if(!$onlyValue) {
+                    if (!$onlyValue) {
                         $pk = array(
                             $columnName => $pk
                         );
