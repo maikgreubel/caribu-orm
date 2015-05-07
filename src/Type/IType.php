@@ -19,7 +19,7 @@ interface IType
      *
      * @return string
      */
-    function getDsn();
+    public function getDsn();
 
     /**
      * Retrieve the table column which presents the primary key
@@ -31,5 +31,5 @@ interface IType
      *
      * @throws OrmException
      */
-    function getPrimaryKeyColumn($table, Orm $orm);
+    public function getPrimaryKeyColumn($table, Orm $orm);
 }

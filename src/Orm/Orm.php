@@ -301,7 +301,7 @@ class Orm
      *
      * @return string
      */
-    public static function getType()
+    public function getType()
     {
         return self::getInstance()->type;
     }

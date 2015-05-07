@@ -25,7 +25,7 @@ abstract class TypeFactory
      */
     public static function create(Orm $orm)
     {
-        $type = Orm::getType();
+        $type = $orm->getType();
         switch ($type) {
             case 'sqlite':
                 return new Sqlite();

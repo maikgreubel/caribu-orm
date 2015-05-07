@@ -14,5 +14,7 @@ abstract class AbstractModel extends Orm
 {
 
     public function __construct()
-    {}
+    {
+        // Needed
+    }
 }
