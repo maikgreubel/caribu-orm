@@ -11,6 +11,7 @@ use Nkey\Caribu\Model\AbstractModel;
  * @author Maik Greubel <greubel@nkey.de>
  * @entity
  * @table guestbook
+ * @cascade
  */
 class ReferencedGuestBook extends AbstractModel
 {

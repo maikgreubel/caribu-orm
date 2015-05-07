@@ -1,7 +1,9 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
+use Nkey\Caribu\Model\AbstractModel;
 use Nkey\Caribu\Orm\OrmException;
+
 use \ReflectionClass;
 use \ReflectionProperty;
 use \ReflectionObject;
@@ -41,6 +43,40 @@ trait OrmAnnotation
             }
 
             return $fallback;
+        } catch (ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
+    }
+
+    /**
+     * Get the annotated primary key property name
+     *
+     * The property is annotated with the @id annotation
+     *
+     * @param string $class
+     * @return string
+     *
+     * @throws OrmException
+     */
+    private function getAnnotatedPrimaryKeyProperty($class)
+    {
+        try {
+            $rf = new ReflectionClass($class);
+
+            $properties = $rf->getProperties();
+
+            $properyName = null;
+
+            foreach ($properties as $property) {
+                assert($property instanceof ReflectionProperty);
+                $docComment = $property->getDocComment();
+                if ($docComment && preg_match('/@id/', $docComment)) {
+                    $properyName = $property->getName();
+                    break;
+                }
+            }
+
+            return $properyName;
         } catch (ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
         }
@@ -126,6 +162,7 @@ trait OrmAnnotation
 
     /**
      * Get the property type via annotation
+     *
      * @param string $class
      * @param string $propertyName
      * @return string|null
@@ -135,23 +172,23 @@ trait OrmAnnotation
         $type = null;
         $rf = new ReflectionClass($class);
 
-        foreach($rf->getProperties() as $property) {
+        foreach ($rf->getProperties() as $property) {
             assert($property instanceof ReflectionProperty);
 
             $docComments = $property->getDocComment();
 
             $isDestinationProperty = false;
             $matches = array();
-            if($property->getName() == $propertyName) {
+            if ($property->getName() == $propertyName) {
                 $isDestinationProperty = true;
             }
 
-            if(!$isDestinationProperty) {
+            if (! $isDestinationProperty) {
                 continue;
             }
 
             if ($docComments) {
-                if(preg_match('/@var ([\w\\\\]+)/', $docComments, $matches) && count($matches) > 1) {
+                if (preg_match('/@var ([\w\\\\]+)/', $docComments, $matches) && count($matches) > 1) {
                     $type = $matches[1];
                     break;
                 }
@@ -237,6 +274,68 @@ trait OrmAnnotation
     }
 
     /**
+     * Persist the entity and all sub entities if necessary
+     *
+     * @param string $class
+     * @param AbstractModel $object
+     * @throws OrmException
+     */
+    private function persistAnnotated($class, $object)
+    {
+        try {
+            $rf = new ReflectionClass($class);
+
+            $persist = false;
+
+            $docComments = $rf->getDocComment();
+            if ($docComments && preg_match('/@cascade/', $docComments)) {
+                $persist = true;
+            }
+
+            foreach ($rf->getProperties() as $property) {
+                assert($property instanceof ReflectionProperty);
+                $docComments = $property->getDocComment();
+                $matches = array();
+                if ($docComments && preg_match('/@var ([\w\\\\]+)/', $docComments, $matches)) {
+                    $type = $matches[1];
+                    if (class_exists($type)) {
+
+                        if (! $persist) {
+                            $entityDocComments = $property->getDocComment();
+                            if ($entityDocComments && preg_match('/@cascade/', $entityDocComments)) {
+                                $persist = true;
+                            }
+                        }
+
+                        $method = sprintf("get%s", ucfirst($property->getName()));
+                        $rfMethod = new ReflectionMethod($this, $method);
+                        $entity = $rfMethod->invoke($object);
+                        if ($entity instanceof AbstractModel) {
+                            if (! $persist) {
+                                $pk = $this->getAnnotatedPrimaryKey($type);
+                                if (null == $pk) {
+                                    // TODO Retrieve using fallback
+                                } else
+                                    if (is_array($pk)) {
+                                        list ($pkCol) = $pk;
+                                        if (is_empty($pk[$pkCol])) {
+                                            $persist = true;
+                                        }
+                                    }
+                            }
+                            if ($persist) {
+                                $entity->persist();
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
+    }
+
+    /**
      * Retrieve list of columns and its corresponding pairs
      *
      * @param string $class
@@ -262,7 +361,7 @@ trait OrmAnnotation
                     $column = $matches[1];
                 }
 
-                $method = sprintf("get%s", ucfirst($column));
+                $method = sprintf("get%s", ucfirst($property->getName()));
                 $rfMethod = new ReflectionMethod($class, $method);
 
                 $pairs[$column] = $rfMethod->invoke($object);
@@ -282,8 +381,9 @@ trait OrmAnnotation
      *
      * @throws OrmException
      */
-    private function getAnnotatedPrimaryKey($class)
+    private function getAnnotatedPrimaryKey($class, $object, $onlyValue = false)
     {
+        $pk = null;
         try {
             $rf = new ReflectionClass($class);
 
@@ -303,15 +403,20 @@ trait OrmAnnotation
                         $columnName = $matches[1];
                     }
 
-                    return array(
-                        $columnName => $rfMethod->invoke($this)
-                    );
+                    $pk = $rfMethod->invoke($object);
+
+                    if(!$onlyValue) {
+                        $pk = array(
+                            $columnName => $pk
+                        );
+                    }
+                    break;
                 }
             }
         } catch (ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
         }
 
-        return null;
+        return $pk;
     }
 }

@@ -3,22 +3,17 @@ namespace Nkey\Caribu\Orm;
 
 use Generics\Logger\LoggerTrait;
 use Generics\Util\Interpolator;
-
 use Nkey\Caribu\Model\AbstractModel;
-
 use Nkey\Caribu\Type\AbstractType;
 use Nkey\Caribu\Type\TypeFactory;
-
 use Symfony\Component\Console\Logger\ConsoleLogger;
 use Symfony\Component\Console\Output\ConsoleOutput;
-
 use \Exception;
 use \PDO;
 use \PDOException;
 use \PDOStatement;
 use \ReflectionMethod;
 use \ReflectionException;
-
 
 /**
  * The main object relational mapper class
@@ -487,7 +482,7 @@ class Orm
             $statement->closeCursor();
             $instance->connection->commit();
 
-            foreach($unmapped as $result) {
+            foreach ($unmapped as $result) {
                 $results[] = self::map($result, $class);
             }
 
@@ -512,28 +507,53 @@ class Orm
      *
      * @throws OrmException
      */
-    private function getPrimaryKey($class, $object)
+    private function getPrimaryKey($class, $object, $onlyValue = false)
     {
-        $pk = $this->getAnnotatedPrimaryKey($class);
+        $pk = $this->getAnnotatedPrimaryKey($class, $object, $onlyValue);
 
         if (null == $pk) {
             $pkCol = $this->getPrimaryKeyCol($class);
             $method = sprintf("get%s", ucfirst($pkCol));
 
-            try
-            {
+            try {
                 $rfMethod = new ReflectionMethod($class, $method);
-                $pk = array(
-                    $pkCol => $rfMethod->invoke($object)
-                );
-            }
-            catch(ReflectionException $ex)
-            {
+                $pk = $rfMethod->invoke($object);
+                if(!$onlyValue) {
+                    $pk = array(
+                        $pkCol => $pk
+                    );
+                }
+
+            } catch (ReflectionException $ex) {
                 throw OrmException::fromPrevious($ex);
             }
         }
 
         return $pk;
+    }
+
+    /**
+     * Set the primary key value after persist
+     *
+     * @param string $class
+     * @param AbstractModel $object
+     * @param mixed $primaryKey
+     * @throws OrmException
+     */
+    private function setPrimaryKey($class, $object, $primaryKey)
+    {
+        $pkCol = $this->getAnnotatedPrimaryKeyProperty($class);
+        if(null == $pkCol) {
+            $pkCol = $this->getPrimaryKeyCol($class);
+        }
+        $method = sprintf("set%s", ucfirst($pkCol));
+
+        try {
+            $rfMethod = new ReflectionMethod($class, $method);
+            $rfMethod->invoke($object, $primaryKey);
+        } catch (ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
     }
 
     /**
@@ -551,11 +571,15 @@ class Orm
         $columns = array_keys($pairs);
 
         if ($insert) {
-            $cols = implode(',', $columns);
+            $cols = "";
             $vals = "";
             foreach ($columns as $column) {
-                $vals .= ($vals ? ',' : '');
-                $vals .= sprintf(':%s', $column);
+                //if(!is_null($pairs[$column])) {
+                    $cols .= ($cols ? ',' : '');
+                    $cols .= $column;
+                    $vals .= ($vals ? ',' : '');
+                    $vals .= sprintf(':%s', $column);
+                //}
             }
             $query = sprintf("(%s) VALUES (%s)", $cols, $vals);
         } else {
@@ -582,10 +606,12 @@ class Orm
 
         $class = get_class($this);
 
+        $this->persistAnnotated($class, $this);
+
         $tableName = $this->getTableName($class);
 
         $pk = $this->getPrimaryKey($class, $this);
-        if(is_null($pk)) {
+        if (is_null($pk)) {
             throw new OrmException("No primary key column found!");
         }
         foreach ($pk as $primaryKeyCol => $primaryKeyValue) {}
@@ -612,6 +638,9 @@ class Orm
             $statement = $connection->prepare($query);
 
             foreach ($pairs as $column => $value) {
+                if ($value instanceof AbstractModel) {
+                    $value = $this->getPrimaryKey(get_class($value), $value, true);
+                }
                 $statement->bindValue(":{$column}", $value);
             }
             if ($primaryKeyValue) {
@@ -619,9 +648,15 @@ class Orm
             }
 
             $statement->execute();
+            $pk = $connection->lastInsertId();
             unset($statement);
             $connection->commit();
+
+            if(!$primaryKeyValue) {
+                $this->setPrimaryKey($class, $this, $pk);
+            }
         } catch (PDOException $ex) {
+            $connection->rollBack();
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
@@ -668,12 +703,11 @@ class Orm
      */
     public static function passivate()
     {
-        if(self::$instance && self::$instance->connection)
-        {
+        if (self::$instance && self::$instance->connection) {
             unset(self::$instance->connection);
         }
 
-        if(self::$instance) {
+        if (self::$instance) {
             self::$instance = null;
         }
     }
