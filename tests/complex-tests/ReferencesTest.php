@@ -36,6 +36,8 @@ class ReferencesTest extends AbstractDatabaseTestCase
      */
     protected function setUp()
     {
+        Orm::passivate();
+
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
         $connection->exec("CREATE TABLE guestbook (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, user INTEGER, created TEXT)");
@@ -90,5 +92,19 @@ class ReferencesTest extends AbstractDatabaseTestCase
 
         $this->assertFalse(is_null($entity->getGid()));
         $this->assertFalse(is_null($entity->getUser()->getId()));
+
+        $id = $entity->getGid();
+        $uid = $entity->getUser()->getId();
+
+        unset($user);
+        unset($entity);
+
+        $entity = ReferencedGuestBook::get($id);
+        $this->assertFalse(is_null($entity));
+        $this->assertFalse(is_null($entity->getUser()));
+        $this->assertEquals($id, $entity->getGid());
+        $this->assertEquals($uid, $entity->getUser()->getId());
+        $this->assertEquals("Hey! Cool!", $entity->getContent());
+        $this->assertEquals("theodore", $entity->getUser()->getName());
     }
 }

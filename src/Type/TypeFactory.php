@@ -31,6 +31,10 @@ abstract class TypeFactory
                 return new Sqlite();
                 break;
 
+            case 'mysql':
+                return new MySQL();
+                break;
+
             default:
                 throw new OrmException("No such type {type}", array(
                     'type' => $type

@@ -2,9 +2,6 @@
 namespace Nkey\Caribu\Type;
 
 use Nkey\Caribu\Orm\OrmException;
-
-use \PDO;
-use \PDOException;
 use Nkey\Caribu\Orm\Orm;
 
 /**
@@ -17,7 +14,7 @@ use Nkey\Caribu\Orm\Orm;
 class Sqlite extends AbstractType
 {
 
-    /*
+    /**
      * (non-PHPdoc)
      * @see \Nkey\Caribu\Type\IType::getDsn()
      */
@@ -26,7 +23,7 @@ class Sqlite extends AbstractType
         return "sqlite:{file}";
     }
 
-    /*
+    /**
      * (non-PHPdoc)
      * @see \Nkey\Caribu\Type\IType::getPrimaryKeyColumn()
      */
@@ -40,7 +37,7 @@ class Sqlite extends AbstractType
 
         try {
             $stmt = $orm->getConnection()->query($sql);
-            $stmt->setFetchMode(PDO::FETCH_ASSOC);
+            $stmt->setFetchMode(\PDO::FETCH_ASSOC);
             while ($result = $stmt->fetch()) {
                 $name = '';
                 foreach ($result as $identifier => $value) {
@@ -53,10 +50,19 @@ class Sqlite extends AbstractType
                 }
             }
             $stmt->closeCursor();
-        } catch (PDOException $ex) {
+        } catch (\PDOException $ex) {
             throw OrmException::fromPrevious($ex);
         }
 
+        return null;
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getDefaultPort()
+     */
+    public function getDefaultPort()
+    {
         return null;
     }
 }

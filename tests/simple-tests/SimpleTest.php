@@ -38,6 +38,8 @@ class SimpleTest extends AbstractDatabaseTestCase
      */
     protected function setUp()
     {
+        Orm::passivate();
+
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
         $connection->query("CREATE TABLE guestbook (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, user TEXT, created TEXT)");

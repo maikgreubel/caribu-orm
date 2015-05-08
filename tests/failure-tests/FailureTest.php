@@ -36,6 +36,8 @@ class FailureTest extends AbstractDatabaseTestCase
      */
     protected function setUp()
     {
+        Orm::passivate();
+
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
         $connection->exec("CREATE TABLE notes (id INTEGER, content TEXT, created TEXT)");

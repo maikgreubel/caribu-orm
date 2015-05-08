@@ -3,7 +3,6 @@ namespace Nkey\Caribu\Orm;
 
 use Generics\Logger\LoggerTrait;
 use Generics\Util\Interpolator;
-use Nkey\Caribu\Model\AbstractModel;
 use Nkey\Caribu\Type\AbstractType;
 use Nkey\Caribu\Type\TypeFactory;
 use Symfony\Component\Console\Logger\ConsoleLogger;
@@ -44,77 +43,77 @@ class Orm
      *
      * @var Orm
      */
-    private static $instance;
+    private static $instance = null;
 
     /**
      * The concrete database type
      *
      * @var string
      */
-    private $type;
+    private $type = null;
 
     /**
      * The database schema
      *
      * @var string
      */
-    private $schema;
+    private $schema = null;
 
     /**
      * Database connection user
      *
      * @var string
      */
-    private $user;
+    private $user = null;
 
     /**
      * Database connection password
      *
      * @var string
      */
-    private $password;
+    private $password = null;
 
     /**
      * Database connection host
      *
      * @var string
      */
-    private $host;
+    private $host = null;
 
     /**
      * Database connection port
      *
      * @var int
      */
-    private $port;
+    private $port = null;
 
     /**
      * Embedded database file
      *
      * @var string
      */
-    private $file;
+    private $file = null;
 
     /**
      * Settings to use for connection
      *
      * @var array
      */
-    private $settings;
+    private $settings = null;
 
     /**
      * The database connection
      *
      * @var PDO
      */
-    private $connection;
+    private $connection = null;
 
     /**
      * Database type
      *
      * @var AbstractType
      */
-    private $dbType;
+    private $dbType = null;
 
     /**
      * Singleton pattern
@@ -256,6 +255,16 @@ class Orm
     }
 
     /**
+     * Retrieve the selected schema of the connection
+     *
+     * @return string
+     */
+    public function getSchema()
+    {
+        return $this->schema;
+    }
+
+    /**
      * Get the name of table
      *
      * @param string $class
@@ -311,7 +320,7 @@ class Orm
      *
      * @param mixed $id
      *
-     * @return AbstractModel
+     * @return \Nkey\Caribu\Model\AbstractModel
      *
      * @throws OrmException
      */
@@ -545,7 +554,7 @@ class Orm
      * Set the primary key value after persist
      *
      * @param string $class
-     * @param AbstractModel $object
+     * @param \Nkey\Caribu\Model\AbstractModel $object
      * @param mixed $primaryKey
      * @throws OrmException
      */
@@ -649,7 +658,7 @@ class Orm
             $statement = $connection->prepare($query);
 
             foreach ($pairs as $column => $value) {
-                if ($value instanceof AbstractModel) {
+                if ($value instanceof \Nkey\Caribu\Model\AbstractModel) {
                     $value = $this->getPrimaryKey(get_class($value), $value, true);
                 }
                 $statement->bindValue(":{$column}", $value);

@@ -22,6 +22,13 @@ interface IType
     public function getDsn();
 
     /**
+     * Retrieve the default port of this type
+     *
+     * @return int
+     */
+    public function getDefaultPort();
+
+    /**
      * Retrieve the table column which presents the primary key
      *
      * @param string $table

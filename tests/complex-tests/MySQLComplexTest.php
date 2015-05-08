@@ -14,19 +14,22 @@ use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
 
 /**
- * Complex test cases (sqlite is used)
+ * Complex test cases (mysql is used)
  *
  * This class is part of Caribu package
  *
  * @author Maik Greubel <greubel@nkey.de>
  */
-class ComplexTest extends AbstractDatabaseTestCase
+class MySQLComplexTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
         $this->options = array(
-            'type' => 'sqlite',
-            'file' => ':memory:'
+            'type' => 'mysql',
+            'host' => 'localhost',
+            'schema' => 'test',
+            'user' => 'test',
+            'pass' => 'test1234'
         );
 
         $this->flatDataSetFile = dirname(__FILE__).'/../_files/guestbook-seed.xml';
@@ -42,7 +45,7 @@ class ComplexTest extends AbstractDatabaseTestCase
 
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
-        $connection->exec("CREATE TABLE guestbook (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, user TEXT, created TEXT)");
+        $connection->exec("CREATE TABLE `guestbook` (`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `content` TEXT, `user` TEXT, `created` TEXT)");
         $connection->commit();
 
         parent::setUp();
@@ -56,7 +59,7 @@ class ComplexTest extends AbstractDatabaseTestCase
     {
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
-        $connection->exec("DROP TABLE guestbook");
+        $connection->exec("DROP TABLE `guestbook`");
         $connection->commit();
 
         parent::tearDown();

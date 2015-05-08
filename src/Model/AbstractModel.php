@@ -1,8 +1,6 @@
 <?php
 namespace Nkey\Caribu\Model;
 
-use Nkey\Caribu\Orm\Orm;
-
 /**
  * Abstract entity model
  *
@@ -10,7 +8,7 @@ use Nkey\Caribu\Orm\Orm;
  *
  * @author Maik Greubel <greubel@nkey.de>
  */
-abstract class AbstractModel extends Orm
+abstract class AbstractModel extends \Nkey\Caribu\Orm\Orm
 {
 
     public function __construct()
