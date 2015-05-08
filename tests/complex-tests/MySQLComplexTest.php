@@ -29,7 +29,7 @@ class MySQLComplexTest extends AbstractDatabaseTestCase
             'host' => 'localhost',
             'schema' => 'test',
             'user' => 'test',
-            'pass' => 'test1234'
+            'password' => 'test1234'
         );
 
         $this->flatDataSetFile = dirname(__FILE__).'/../_files/guestbook-seed.xml';
