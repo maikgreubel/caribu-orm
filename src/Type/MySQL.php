@@ -56,7 +56,7 @@ class MySQL extends AbstractType
             }
             $stmt->closeCursor();
 
-            if($count > 1) {
+            if ($count > 1) {
                 throw new OrmException("Table {table} contains more than one primary key! Please annotate!", array(
                     'table' => $table
                 ));
