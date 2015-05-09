@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE dataset>
+<dataset>
+    <table name="user">
+        <column>id</column>
+        <column>name</column>
+        <column>email</column>
+        <row>
+            <value>1</value>
+            <value>joe</value>
+            <value>joe@test.tld</value>
+        </row>
+        <row>
+            <value>2</value>
+            <value>nancy</value>
+            <value>nancy@test.tld</value>
+        </row>
+        <row>
+            <value>3</value>
+            <value>bob</value>
+            <value>bob@test.tld</value>
+        </row>
+    </table>
+    <table name="blog">
+        <column>id</column>
+        <column>content</column>
+        <column>created</column>
+        <row>
+            <value>1</value>
+            <value>My first blog post. Welcome to my blog.</value>
+            <value>2010-04-24 17:15:23</value>
+        </row>
+        <row>
+            <value>2</value>
+            <value>That works! I'm excited to demonstrate the functionality of my blog!</value>
+            <value>2010-04-26 12:14:20</value>
+        </row>
+        <row>
+            <value>3</value>
+            <value>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et!</value>
+            <value>2010-04-27 18:26:45</value>
+        </row>
+        <row>
+            <value>5</value>
+            <value>Quisque vel odio ut elit porttitor fermentum. Sed nisi eros, laoreet ac neque non, malesuada vulputate est. Donec imperdiet erat tellus, vitae eleifend libero finibus sed. Sed quis ornare mi. </value>
+            <value>2011-05-13 02:34:23</value>
+        </row>
+    </table>
+    
+    <table name="blog_user_to_posts">
+        <column>id</column>
+        <column>userid</column>
+        <column>postid</column>
+        <row>
+            <value>1</value>
+            <value>1</value>
+            <value>1</value>
+        </row>
+        <row>
+            <value>2</value>
+            <value>1</value>
+            <value>2</value>
+        </row>
+        <row>
+            <value>3</value>
+            <value>2</value>
+            <value>3</value>
+        </row>
+        <row>
+            <value>4</value>
+            <value>2</value>
+            <value>5</value>
+        </row>
+        
+    </table>
+</dataset>

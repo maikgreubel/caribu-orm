@@ -1,13 +1,12 @@
 <?php
 namespace Nkey\Caribu\Tests;
 
-require_once dirname(__FILE__).'/../AbstractDatabaseTestCase.php';
-require_once dirname(__FILE__).'/../Model/ReferencedGuestBook.php';
-require_once dirname(__FILE__).'/../Model/User.php';
+require_once dirname(__FILE__) . '/../AbstractDatabaseTestCase.php';
+require_once dirname(__FILE__) . '/../Model/ReferencedGuestBook.php';
+require_once dirname(__FILE__) . '/../Model/User.php';
 
 use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
-
 use Nkey\Caribu\Tests\Model\ReferencedGuestBook;
 use Nkey\Caribu\Tests\Model\User;
 
@@ -20,6 +19,7 @@ use Nkey\Caribu\Tests\Model\User;
  */
 class ReferencesTest extends AbstractDatabaseTestCase
 {
+
     public function __construct()
     {
         $this->options = array(
@@ -27,11 +27,12 @@ class ReferencesTest extends AbstractDatabaseTestCase
             'file' => ':memory:'
         );
 
-        $this->dataSetFile = dirname(__FILE__).'/../_files/referenced-guestbook-seed.xml';
+        $this->dataSetFile = dirname(__FILE__) . '/../_files/referenced-guestbook-seed.xml';
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see PHPUnit_Extensions_Database_TestCase::setUp()
      */
     protected function setUp()
@@ -49,6 +50,7 @@ class ReferencesTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
+     *
      * @see PHPUnit_Extensions_Database_TestCase::tearDown()
      */
     protected function tearDown()
@@ -71,7 +73,8 @@ class ReferencesTest extends AbstractDatabaseTestCase
         $this->assertFalse(is_null($entity));
         $this->assertFalse(is_null($entity->getUser()));
         $this->assertTrue($entity->getUser() instanceof User);
-        $this->assertEquals(1, $entity->getUser()->getId());
+        $this->assertEquals(1, $entity->getUser()
+            ->getId());
     }
 
     /**
@@ -91,7 +94,8 @@ class ReferencesTest extends AbstractDatabaseTestCase
         $entity->persist();
 
         $this->assertFalse(is_null($entity->getGid()));
-        $this->assertFalse(is_null($entity->getUser()->getId()));
+        $this->assertFalse(is_null($entity->getUser()
+            ->getId()));
 
         $id = $entity->getGid();
         $uid = $entity->getUser()->getId();
@@ -103,8 +107,10 @@ class ReferencesTest extends AbstractDatabaseTestCase
         $this->assertFalse(is_null($entity));
         $this->assertFalse(is_null($entity->getUser()));
         $this->assertEquals($id, $entity->getGid());
-        $this->assertEquals($uid, $entity->getUser()->getId());
+        $this->assertEquals($uid, $entity->getUser()
+            ->getId());
         $this->assertEquals("Hey! Cool!", $entity->getContent());
-        $this->assertEquals("theodore", $entity->getUser()->getName());
+        $this->assertEquals("theodore", $entity->getUser()
+            ->getName());
     }
 }

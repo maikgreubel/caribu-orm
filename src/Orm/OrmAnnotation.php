@@ -3,7 +3,6 @@ namespace Nkey\Caribu\Orm;
 
 use Nkey\Caribu\Model\AbstractModel;
 use Nkey\Caribu\Orm\OrmException;
-
 use \ReflectionClass;
 use \ReflectionProperty;
 use \ReflectionObject;
@@ -183,6 +182,11 @@ trait OrmAnnotation
             foreach ($properties as $property) {
                 assert($property instanceof ReflectionProperty);
 
+                // attached property by annotation mapping => map later
+                if (strpos($property->getName(), '.')) {
+                    continue;
+                }
+
                 $value = $property->getValue($from);
 
                 $type = $this->getAnnotatedPropertyType($toClass, $property->getName());
@@ -221,11 +225,12 @@ trait OrmAnnotation
                             }
                         }
                     }
-
-                    throw new OrmException("No method {method} provided by {class}", array(
-                        'method' => $method,
-                        'class' => $toClass
-                    ));
+                    /*
+                     * throw new OrmException("No method {method} provided by {class}", array(
+                     * 'method' => $method,
+                     * 'class' => $toClass
+                     * ));
+                     */
                 }
             }
 
@@ -365,7 +370,7 @@ trait OrmAnnotation
 
                     $pk = $rfMethod->invoke($object);
 
-                    if (!$onlyValue) {
+                    if (! $onlyValue) {
                         $pk = array(
                             $columnName => $pk
                         );
@@ -378,5 +383,86 @@ trait OrmAnnotation
         }
 
         return $pk;
+    }
+
+    /**
+     * Parse the @mappedBy annotation
+     *
+     * @param string $mappedBy
+     * @return array
+     */
+    private function parseMappedBy($mappedBy)
+    {
+        $mappingOptions = array();
+        foreach (explode(',', $mappedBy) as $mappingOption) {
+            list ($option, $value) = preg_split('/=/', $mappingOption);
+            $mappingOptions[$option] = $value;
+        }
+
+        return $mappingOptions;
+    }
+
+    /**
+     * Get the annotated join query
+     *
+     * @param string $class
+     * @param object $object
+     * @param array $criteria
+     *            (by reference)
+     * @param array $columns
+     *            (by reference)
+     * @param array $wheres
+     *            (by reference)
+     *
+     * @return string
+     *
+     * @throws OrmException
+     */
+    private function getAnnotatedQuery($class, $table, $object, &$criteria, &$columns, &$wheres)
+    {
+        $joinQuery = "";
+
+        $rf = new ReflectionClass($class);
+
+        // Example criterion: user.name => 'john'
+        foreach (array_keys($criteria) as $criterion) {
+
+            // from example criterionProperty will be 'name', criterion will now be 'user'
+            if (strpos($criterion, '.') !== false) {
+                list ($criterion) = explode('.', $criterion);
+            }
+
+            // class must have a property named by criterion
+            $rfProperty = $rf->hasProperty($criterion) ? $rf->getProperty($criterion) : null;
+            if ($rfProperty == null) {
+                continue;
+            }
+
+            // check annotations
+            $matches = array();
+            $propertyClass = "";
+            // search the type of property value
+            if (preg_match("/@var ([\w\\\\]+)/", $rfProperty->getDocComment(), $matches)) {
+                if (class_exists($matches[1])) {
+                    $propertyClass = $matches[1];
+                }
+            }
+            $inverseTable = $propertyClass ? $this->getAnnotatedTableName($propertyClass, $criterion) : $criterion;
+
+            // search the table mapping conditions
+            if (preg_match("/@mappedBy\(([^\)].+)\)/", $rfProperty->getDocComment(), $matches)) {
+                $mappedBy = $this->parseMappedBy($matches[1]);
+
+                $pkCol = $this->getAnnotatedPrimaryKeyColumn($class);
+                $inversePkCol = $this->getAnnotatedPrimaryKeyColumn($propertyClass);
+
+                $joinQuery = sprintf("JOIN %s ON %s.%s = %s.%s ", $mappedBy['table'], $mappedBy['table'], $mappedBy['inverseColumn'], $table, $pkCol);
+                $joinQuery .= sprintf("JOIN %s ON %s.%s = %s.%s", $inverseTable, $inverseTable, $inversePkCol, $mappedBy['table'], $mappedBy['column']);
+
+                $columns[] = sprintf("%s.%s AS '%s.%s'", $inverseTable, $inversePkCol, $inverseTable, $inversePkCol);
+            }
+        }
+
+        return $joinQuery;
     }
 }

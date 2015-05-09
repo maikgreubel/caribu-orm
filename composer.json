@@ -10,6 +10,17 @@
 			"Nkey\\Caribu\\Model\\" : "src/Model"
 		}
 	},
+	"autoload-dev" : {
+		"psr-4" : {
+			"Nkey\\Caribu\\Tests\\Model\\" : "tests/Model",
+			"Nkey\\Caribu\\Tests\\" : [
+				"tests/complex-tests",
+				"tests/failure-tests",
+				"tests/simple-tests",
+				"tests"
+			]
+		}
+	},
 	"name" : "nkey/caribu",
 	"type" : "library",
 	"description" : "OR Mapping framework for PHP",
@@ -26,7 +37,7 @@
 		"pdepend/pdepend" : "2.0.6",
 		"phpmd/phpmd" : "2.2.2",
 		"sebastian/phpcpd" : "2.0.2",
-		"theseer/phpdox": "0.8.0",
+		"theseer/phpdox" : "0.8.0",
 		"psr/log" : "1.0.0"
 	},
 	"support" : {

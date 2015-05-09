@@ -45,6 +45,7 @@ class MySQLComplexTest extends AbstractDatabaseTestCase
 
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
+        $connection->exec("DROP TABLE IF EXISTS `guestbook`");
         $connection->exec("CREATE TABLE `guestbook` (`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `content` TEXT, `user` TEXT, `created` TEXT)");
         $connection->commit();
 

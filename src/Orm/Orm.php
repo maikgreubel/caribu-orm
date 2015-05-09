@@ -13,6 +13,7 @@ use \PDOException;
 use \PDOStatement;
 use \ReflectionMethod;
 use \ReflectionException;
+use Nkey\Caribu\Model\AbstractModel;
 
 /**
  * The main object relational mapper class
@@ -347,20 +348,22 @@ class Orm
      * Create a query for selection
      *
      * @param array $criteria
-     * @param string $columns
+     * @param array $columns
      * @param string $orderBy
      * @param number $limit
      * @param number $startFrom
      * @return string
      */
-    private function createQuery($tableName, $criteria, $columns = '*', $orderBy = '', $limit = 0, $startFrom = 0)
+    private function createQuery($class, $tableName, array $criteria, array $columns, $orderBy = '', $limit = 0, $startFrom = 0)
     {
         $wheres = array();
+
+        $joins = $this->getAnnotatedQuery($class, $tableName, $this, $criteria, $columns, $wheres);
 
         $criterias = array_keys($criteria);
 
         foreach ($criterias as $criterion) {
-            $wheres[] = sprintf("%s = :%s", $criterion, $criterion);
+            $wheres[] = sprintf("%s = :%s", $criterion, str_replace('.', '_', $criterion));
         }
 
         if (count($wheres)) {
@@ -383,7 +386,7 @@ class Orm
             $orderBy = sprintf("ORDER BY %s", $orderBy);
         }
 
-        $query = sprintf("SELECT %s FROM %s %s %s %s", $columns, $tableName, $wheres, $orderBy, $limits);
+        $query = sprintf("SELECT %s FROM %s %s %s %s %s", implode(',', $columns), $tableName, $joins, $wheres, $orderBy, $limits);
 
         return $query;
     }
@@ -404,12 +407,43 @@ class Orm
         try {
             $instance = self::getInstance();
             $result = $instance->mapAnnotated($from, $toClass);
+            $instance->mapReferenced($from, $toClass, $result);
         } catch (OrmException $ex) {
             // TODO: implement simple handling without annotation
             throw $ex;
         }
 
         return $result;
+    }
+
+    /**
+     * Map a referenced object into current mapped object
+     *
+     * @param object $from
+     * @param string $toClass
+     * @param AbstractModel $result
+     */
+    private function mapReferenced($from, $toClass, $result)
+    {
+        $rfToClass = new \ReflectionClass($toClass);
+
+        foreach (get_object_vars($from) as $property => $value) {
+            if (strpos($property, '.')) {
+                list($toProperty, $column) = explode('.', $property);
+
+                if($rfToClass->hasProperty($toProperty)) {
+                    $referencedClass = $this->getAnnotatedPropertyType($toClass, $toProperty);
+                    $rfReferenced = new \ReflectionClass($referencedClass);
+
+                    $findMethod = $rfReferenced->getMethod("find");
+                    $referencedObject = $findMethod->invoke(null, array($column => $value));
+
+                    $propertySetter = $rfToClass->getMethod(sprintf("set%s", ucfirst($toProperty)));
+
+                    $propertySetter->invoke($result, $referencedObject);
+                }
+            }
+        }
     }
 
     /**
@@ -462,10 +496,13 @@ class Orm
         $instance = self::getInstance();
         $class = get_called_class();
 
+        $table = $instance->getTableName($class);
+
         $query = $instance->createQuery(
-            $instance->getTableName($class),
+            $class,
+            $table,
             $criteria,
-            '*',
+            array(sprintf("%s.*", $table)),
             $orderBy,
             $limit,
             $startOffset
@@ -473,7 +510,7 @@ class Orm
         $statement = null;
 
         try {
-            $instance->connection->beginTransaction();
+            $instance->connection->beginTransaction(); // TODO: Tx-scope
             $statement = $instance->connection->prepare($query);
 
             if (! $statement) {
@@ -483,7 +520,7 @@ class Orm
             }
 
             foreach ($criteria as $criterion => $value) {
-                $statement->bindValue(":" . $criterion, $value);
+                $statement->bindValue(":" . str_replace('.', '_', $criterion), $value);
             }
 
             if (! $statement->execute()) {
@@ -653,7 +690,7 @@ class Orm
         $statement = null;
 
         try {
-            $connection->beginTransaction();
+            $connection->beginTransaction();  // TODO: Tx-scope
 
             $statement = $connection->prepare($query);
 
@@ -708,7 +745,7 @@ class Orm
         $query = sprintf("DELETE FROM %s WHERE %s = :%s", $tableName, $primaryKeyCol, $primaryKeyCol);
 
         try {
-            $connection->beginTransaction();
+            $connection->beginTransaction();  // TODO: Tx-scope
 
             $statement = $connection->prepare($query);
             $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
