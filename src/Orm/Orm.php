@@ -398,13 +398,15 @@ class Orm
             $orderBy = sprintf("ORDER BY %s", $orderBy);
         }
 
-        $query = sprintf("SELECT %s FROM %s %s %s %s %s",
+        $query = sprintf(
+            "SELECT %s FROM %s %s %s %s %s",
             implode(',', $columns),
             $tableName,
             $joins,
             $wheres,
             $orderBy,
-            $limits);
+            $limits
+        );
 
         return $query;
     }

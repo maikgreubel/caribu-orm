@@ -426,7 +426,6 @@ trait OrmAnnotation
 
         // Example criterion: user.name => 'john'
         foreach (array_keys($criteria) as $criterion) {
-
             // from example criterionProperty will be 'name', criterion will now be 'user'
             if (strpos($criterion, '.') !== false) {
                 list ($criterion) = explode('.', $criterion);
@@ -456,8 +455,22 @@ trait OrmAnnotation
                 $pkCol = $this->getAnnotatedPrimaryKeyColumn($class);
                 $inversePkCol = $this->getAnnotatedPrimaryKeyColumn($propertyClass);
 
-                $joinQuery = sprintf("JOIN %s ON %s.%s = %s.%s ", $mappedBy['table'], $mappedBy['table'], $mappedBy['inverseColumn'], $table, $pkCol);
-                $joinQuery .= sprintf("JOIN %s ON %s.%s = %s.%s", $inverseTable, $inverseTable, $inversePkCol, $mappedBy['table'], $mappedBy['column']);
+                $joinQuery = sprintf(
+                    "JOIN %s ON %s.%s = %s.%s ",
+                    $mappedBy['table'],
+                    $mappedBy['table'],
+                    $mappedBy['inverseColumn'],
+                    $table,
+                    $pkCol
+                );
+                $joinQuery .= sprintf(
+                    "JOIN %s ON %s.%s = %s.%s",
+                    $inverseTable,
+                    $inverseTable,
+                    $inversePkCol,
+                    $mappedBy['table'],
+                    $mappedBy['column']
+                );
 
                 $columns[] = sprintf("%s.%s AS '%s.%s'", $inverseTable, $inversePkCol, $inverseTable, $inversePkCol);
             }
