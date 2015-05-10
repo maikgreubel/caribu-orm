@@ -347,14 +347,26 @@ class Orm
     /**
      * Create a query for selection
      *
-     * @param array $criteria
-     * @param array $columns
+     * @param string $class
+     * @param array  $criteria
+     * @param array  $columns
      * @param string $orderBy
      * @param number $limit
      * @param number $startFrom
+     *
      * @return string
+     *
+     * @throws OrmException
      */
-    private function createQuery($class, $tableName, array $criteria, array $columns, $orderBy = '', $limit = 0, $startFrom = 0)
+    private function createQuery(
+        $class,
+        $tableName,
+        array $criteria,
+        array $columns,
+        $orderBy = '',
+        $limit = 0,
+        $startFrom = 0
+    )
     {
         $wheres = array();
 
@@ -386,7 +398,13 @@ class Orm
             $orderBy = sprintf("ORDER BY %s", $orderBy);
         }
 
-        $query = sprintf("SELECT %s FROM %s %s %s %s %s", implode(',', $columns), $tableName, $joins, $wheres, $orderBy, $limits);
+        $query = sprintf("SELECT %s FROM %s %s %s %s %s",
+            implode(',', $columns),
+            $tableName,
+            $joins,
+            $wheres,
+            $orderBy,
+            $limits);
 
         return $query;
     }
@@ -431,7 +449,7 @@ class Orm
             if (strpos($property, '.')) {
                 list($toProperty, $column) = explode('.', $property);
 
-                if($rfToClass->hasProperty($toProperty)) {
+                if ($rfToClass->hasProperty($toProperty)) {
                     $referencedClass = $this->getAnnotatedPropertyType($toClass, $toProperty);
                     $rfReferenced = new \ReflectionClass($referencedClass);
 
