@@ -75,3 +75,7 @@ Here is a very basic example about the usage (for sqlite):
   ```
   
 No need to write infrastructure and boilerblate code by yourself. Let the Orm do the hard work for you.
+
+Caribu provides a convention-over-configuration behaviour by supporting annotations.
+
+See the [[Wiki|https://github.com/maikgreubel/caribu-orm/wiki]] for more information about the capabilities and usage.
