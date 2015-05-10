@@ -366,8 +366,7 @@ class Orm
         $orderBy = '',
         $limit = 0,
         $startFrom = 0
-    )
-    {
+    ) {
         $wheres = array();
 
         $joins = $this->getAnnotatedQuery($class, $tableName, $this, $criteria, $columns, $wheres);
