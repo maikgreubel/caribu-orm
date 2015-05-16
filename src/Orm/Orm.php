@@ -150,7 +150,7 @@ class Orm
     /**
      * Configure the Orm
      *
-     * @param array $options
+     * @param array $options Various options to use for configuration. See documentation for details.
      */
     public static function configure($options = array())
     {
@@ -160,7 +160,7 @@ class Orm
     /**
      * Parse the options
      *
-     * @param array $options
+     * @param array $options The options to parse
      */
     private static function parseOptions($options)
     {
@@ -203,10 +203,10 @@ class Orm
     /**
      * Interpolate a given string
      *
-     * @param string $string
-     * @param array $context
+     * @param string $string The string to interpolate
+     * @param array $context The interpolation context key-value pairs
      *
-     * @return string
+     * @return string The interpolated string
      */
     protected function interp($string, array $context = array())
     {
@@ -243,7 +243,7 @@ class Orm
     /**
      * Retrieve the database connection
      *
-     * @return PDO
+     * @return PDO The database connection
      *
      * @throws OrmException
      */
@@ -259,7 +259,7 @@ class Orm
     /**
      * Retrieve the selected schema of the connection
      *
-     * @return string
+     * @return string The name of schema
      */
     public function getSchema()
     {
@@ -269,8 +269,9 @@ class Orm
     /**
      * Get the name of table
      *
-     * @param string $class
-     * @return string
+     * @param string $class The name of class
+     *
+     * @return string The name of table
      *
      * @throws OrmException
      */
@@ -287,8 +288,9 @@ class Orm
     /**
      * Retrieve the name of column which represents the primary key
      *
-     * @param string $class
-     * @return string
+     * @param string $class The name of class
+     *
+     * @return string The name of primary key column
      *
      * @throws OrmException
      */
@@ -310,7 +312,7 @@ class Orm
     /**
      * Retrieve the type of database
      *
-     * @return string
+     * @return string The type of database
      */
     public function getType()
     {
@@ -320,7 +322,7 @@ class Orm
     /**
      * Retrieve particular dataset by given id
      *
-     * @param mixed $id
+     * @param mixed $id The primary key value of dataset row to retrieve
      *
      * @return \Nkey\Caribu\Model\AbstractModel
      *
@@ -348,14 +350,14 @@ class Orm
     /**
      * Create a query for selection
      *
-     * @param string $class
-     * @param array  $criteria
-     * @param array  $columns
-     * @param string $orderBy
-     * @param number $limit
-     * @param number $startFrom
+     * @param string $class The class for which the query will be created
+     * @param array  $criteria Array of criterias in form of "property" => "value"
+     * @param array  $columns The columns to retrieve
+     * @param string $orderBy An order-by statement in form of "property ASC|DESC"
+     * @param number $limit The maximum amount of results
+     * @param number $startFrom The offset where to get results of
      *
-     * @return string
+     * @return string The query as sql statement
      *
      * @throws OrmException
      */
@@ -370,7 +372,7 @@ class Orm
     ) {
         $wheres = array();
 
-        $joins = $this->getAnnotatedQuery($class, $tableName, $this, $criteria, $columns, $wheres);
+        $joins = $this->getAnnotatedQuery($class, $tableName, $this, $criteria, $columns);
 
         $criterias = array_keys($criteria);
 
@@ -420,10 +422,10 @@ class Orm
     /**
      * Map a object from default class into specific
      *
-     * @param stdClass $from
-     * @param string $toClass
+     * @param stdClass $from The unmapped data as stdClass object
+     * @param string $toClass The name of class to map data into
      *
-     * @return object
+     * @return object The new created object of $toClass containing the mapped data
      *
      * @throws OrmException
      */
@@ -445,9 +447,9 @@ class Orm
     /**
      * Map a referenced object into current mapped object
      *
-     * @param object $from
-     * @param string $toClass
-     * @param AbstractModel $result
+     * @param object $from The unmapped object as stdClass
+     * @param string $toClass The name of class where the mapped data will be stored into
+     * @param AbstractModel $result The mapped entity
      */
     private function mapReferenced($from, $toClass, $result)
     {
@@ -480,9 +482,9 @@ class Orm
     /**
      * Handle a previous occured pdo exception
      *
-     * @param PDO $connection
-     * @param PDOStatement $statement
-     * @param Exception $ex
+     * @param PDO $connection The underlying database connection
+     * @param PDOStatement $statement The statement which caused the exception to rollback
+     * @param Exception $ex The exception cause
      *
      * @return OrmException
      */
@@ -511,13 +513,13 @@ class Orm
     /**
      * Find data sets by given criteria
      *
-     * @param array $criteria
-     * @param string $orderBy
-     * @param int $limit
-     * @param int $startOffset
+     * @param array $criteria Array of criterias in form of "property" => "value"
+     * @param string $orderBy An order-by statement in form of "property ASC|DESC"
+     * @param int $limit The maximum amount of results
+     * @param int $startOffset The offset where to get results of
      * @param boolean $asList Fetch results as list, also if number of results is one
      *
-     * @return mixed
+     * @return mixed Either an array of object, a single object (if only one was found) or null
      *
      * @throws OrmException
      */
@@ -589,11 +591,11 @@ class Orm
      * Find data sets by given criteria
      *
      * @param array $criteria Array of criterias in form of "property" => "value"
-     * @param string $orderBy
-     * @param int $limit
-     * @param int $startOffset
+     * @param string $orderBy  An order-by statement in form of "property ASC|DESC"
+     * @param int $limit The maximum amount of results
+     * @param int $startOffset The offset where to get results of
      *
-     * @return mixed
+     * @return mixed  Either an array of object, a single object (if only one was found) or null
      *
      * @throws OrmException
      */
@@ -605,9 +607,9 @@ class Orm
     /**
      * Retrieve the primary key value
      *
-     * @param string $class
+     * @param string $class The name of class where to retrieve the primary key value
      *
-     * @return array
+     * @return array Pair of column name and value of primary key
      *
      * @throws OrmException
      */
@@ -639,9 +641,9 @@ class Orm
     /**
      * Set the primary key value after persist
      *
-     * @param string $class
-     * @param \Nkey\Caribu\Model\AbstractModel $object
-     * @param mixed $primaryKey
+     * @param string $class The name of class of entity
+     * @param \Nkey\Caribu\Model\AbstractModel $object The object where the primary key should be set
+     * @param mixed $primaryKey The primary key value
      * @throws OrmException
      */
     private function setPrimaryKey($class, $object, $primaryKey)
@@ -663,8 +665,9 @@ class Orm
     /**
      * Retrieve the persistence parameters via reflection
      *
-     * @param array $pairs
-     * @return string
+     * @param array $pairs The pairs of column names => values
+     *
+     * @return string The prepared statement parameters for persistence
      *
      * @throws OrmException
      */
@@ -768,7 +771,7 @@ class Orm
     }
 
     /**
-     * Removes a persisted entity
+     * Removes the current persisted entity
      *
      * @throws OrmException
      */

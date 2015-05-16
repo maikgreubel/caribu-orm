@@ -22,9 +22,10 @@ trait OrmAnnotation
     /**
      * Retrieve the annotated table name
      *
-     * @param string $class
-     * @param string $fallback
-     * @return string
+     * @param string $class The name of class
+     * @param string $fallback As fallback if nothing was found
+     *
+     * @return string The name of table
      *
      * @throws OrmException
      */
@@ -52,8 +53,9 @@ trait OrmAnnotation
      *
      * The property is annotated with the @id annotation
      *
-     * @param string $class
-     * @return string
+     * @param string $class The name of class to retrieve the primary key property
+     *
+     * @return string The name of property which represents the primary key
      *
      * @throws OrmException
      */
@@ -87,8 +89,9 @@ trait OrmAnnotation
      * The property is annotated with the @id annotation
      * The propery may have a @column annotation to modify the database column name
      *
-     * @param string $class
-     * @return string
+     * @param string $class The name of class to retrieve the primary key column of
+     *
+     * @return string The name of primary key column
      *
      * @throws OrmException
      */
@@ -124,9 +127,10 @@ trait OrmAnnotation
     /**
      * Get the property type via annotation
      *
-     * @param string $class
-     * @param string $propertyName
-     * @return string|null
+     * @param string $class The name of class to retrieve a particular property type
+     * @param string $propertyName The name of property to retrieve the type of
+     *
+     * @return string|null The property type
      */
     private function getAnnotatedPropertyType($class, $propertyName)
     {
@@ -162,10 +166,10 @@ trait OrmAnnotation
     /**
      * Map default class object into specific by annotation
      *
-     * @param \stdClass $from
-     * @param string $toClass
+     * @param object $from The unmapped dataset
+     * @param string $toClass The name of class where to map data in
      *
-     * @return object
+     * @return AbstractModel The mapped data as entity
      *
      * @throws OrmException
      */
@@ -260,8 +264,9 @@ trait OrmAnnotation
     /**
      * Persist the entity and all sub entities if necessary
      *
-     * @param string $class
-     * @param AbstractModel $object
+     * @param string $class The name of class of which the data has to be persisted
+     * @param AbstractModel $object The entity to persist
+     *
      * @throws OrmException
      */
     private function persistAnnotated($class, $object)
@@ -325,9 +330,10 @@ trait OrmAnnotation
     /**
      * Retrieve list of columns and its corresponding pairs
      *
-     * @param string $class
-     * @param object $object
-     * @return array
+     * @param string $class The name of class to retrieve all column-value pairs of
+     * @param AbstractModel $object The entity to get the column-value pairs of
+     *
+     * @return array List of column => value pairs
      *
      * @throws OrmException
      */
@@ -361,10 +367,13 @@ trait OrmAnnotation
     }
 
     /**
-     * Retrieve the primary key value using annotation
+     * Retrieve the primary key name and value using annotation
      *
-     * @param string $class
-     * @return array
+     * @param string $class The name of class to retrieve the primary key name and value
+     * @param AbstractModel The entity to retrieve the pimary key value
+     * @param boolean $onlyValue Whether to retrieve only the value instead of name and value
+     *
+     * @return array The "name" => "value" of primary key or only the value (depending on $onlyValue)
      *
      * @throws OrmException
      */
@@ -410,8 +419,9 @@ trait OrmAnnotation
     /**
      * Parse the @mappedBy annotation
      *
-     * @param string $mappedBy
-     * @return array
+     * @param string $mappedBy The mappedBy annotation string
+     *
+     * @return array All parsed property attributes of the mappedBy string
      */
     private function parseMappedBy($mappedBy)
     {
@@ -427,9 +437,10 @@ trait OrmAnnotation
     /**
      * Get the annotated column name
      *
-     * @param string $class
-     * @param string $property
-     * @return string
+     * @param string $class The name of class to retrieve te annotated column name
+     * @param string $property The property which is annotated by column name
+     *
+     * @return string The column name
      */
     private function getAnnotatedColumnName($class, $property)
     {
@@ -447,20 +458,18 @@ trait OrmAnnotation
     /**
      * Get the annotated join query
      *
-     * @param string $class
-     * @param object $object
+     * @param string $class The name of class to use as left class
+     * @param AbstractModel $object The entity to use for join
      * @param array $criteria
-     *            (by reference)
+     *            (by reference) List of criterias
      * @param array $columns
-     *            (by reference)
-     * @param array $wheres
-     *            (by reference)
+     *            (by reference) List of columns
      *
-     * @return string
+     * @return string The join query sql statment
      *
      * @throws OrmException
      */
-    private function getAnnotatedQuery($class, $table, $object, &$criteria, &$columns, &$wheres)
+    private function getAnnotatedQuery($class, $table, $object, &$criteria, &$columns)
     {
         $joinQuery = "";
 
@@ -545,7 +554,7 @@ trait OrmAnnotation
     /**
      * Checks whether a given string equals identifier of a primitive type
      *
-     * @param string $type
+     * @param string $type The type identifier
      *
      * @return boolean true in case of string is identifier of primitive type, false otherwise
      */
