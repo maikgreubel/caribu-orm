@@ -437,7 +437,7 @@ trait OrmAnnotation
 
         $rfProperty = new ReflectionProperty($class, $property);
         $matches = array();
-        if(preg_match("/@column (\w+)/", $rfProperty->getDocComment(), $matches)) {
+        if (preg_match("/@column (\w+)/", $rfProperty->getDocComment(), $matches)) {
             $columnName = $matches[1];
         }
 
@@ -487,10 +487,9 @@ trait OrmAnnotation
                 if (!$this->isPrimitive($matches[1])) {
                     if (class_exists($matches[1])) {
                         $propertyClass = $matches[1];
-                    }
-                    else {
+                    } else {
                         $classToFind = sprintf("\\%s\\%s", $rf->getNamespaceName(), $matches[1]);
-                        if(class_exists($classToFind)) {
+                        if (class_exists($classToFind)) {
                             $propertyClass = $classToFind;
                             $matches[1] = $classToFind;
                         }
@@ -524,8 +523,7 @@ trait OrmAnnotation
                 );
 
                 $columns[] = sprintf("%s.%s AS '%s.%s'", $inverseTable, $inversePkCol, $inverseTable, $inversePkCol);
-            }
-            elseif ($propertyClass != "") {
+            } elseif ($propertyClass != "") {
                 $inversePkCol = $this->getAnnotatedPrimaryKeyColumn($propertyClass);
                 $column = $this->getAnnotatedColumnName($class, $rfProperty->getName());
                 $joinQuery = sprintf(
@@ -562,7 +560,7 @@ trait OrmAnnotation
             case 'boolean':
             case 'bool':
                 $isPrimitive = true;
-            break;
+                break;
         }
 
         return $isPrimitive;

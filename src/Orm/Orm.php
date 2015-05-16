@@ -453,7 +453,7 @@ class Orm
                 if ($rfToClass->hasProperty($toProperty)) {
                     $referencedClass = $this->getAnnotatedPropertyType($toClass, $toProperty);
 
-                    if(!class_exists($referencedClass)) {
+                    if (!class_exists($referencedClass)) {
                         $referencedClass = sprintf("\\%s\\%s", $rfToClass->getNamespaceName(), $referencedClass);
                     }
 
