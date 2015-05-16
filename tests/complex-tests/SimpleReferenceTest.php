@@ -78,7 +78,23 @@ class SimpleReferenceTest extends AbstractDatabaseTestCase
 
         $book->persist();
 
+        // And we add another book but take the already persisted author
+
+        $stevenHawking = Author::find(array("name" => "Steven Hawking"));
+
+        $anotherBook = new Book();
+        $anotherBook->setName("The Universe in a Nutshell")
+            ->setSummary("From wikipedia: Is one of Stephen Hawking's books on theoretical physics.")
+            ->setAuthor($stevenHawking);
+
+        $anotherBook->persist();
+
+        // Now check if everything is fine...
+
         $allHawkingBooks = Book::findAll(array("author.name" => "Steven Hawking"));
+
+        $this->assertEquals(2, count($allHawkingBooks));
+
         foreach($allHawkingBooks as $hawkingBook) {
             $this->assertNotNull($hawkingBook);
             $this->assertNotNull($hawkingBook->getAuthor());
