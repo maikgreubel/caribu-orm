@@ -1,19 +1,17 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use Generics\Logger\LoggerTrait;
-use Generics\Util\Interpolator;
-use Nkey\Caribu\Type\AbstractType;
-use Nkey\Caribu\Type\TypeFactory;
-use Symfony\Component\Console\Logger\ConsoleLogger;
-use Symfony\Component\Console\Output\ConsoleOutput;
 use \Exception;
+use \Generics\Logger\LoggerTrait;
+use \Generics\Util\Interpolator;
+use \Nkey\Caribu\Model\AbstractModel;
+use \Nkey\Caribu\Type\AbstractType;
+use \Nkey\Caribu\Type\TypeFactory;
 use \PDO;
 use \PDOException;
 use \PDOStatement;
 use \ReflectionMethod;
 use \ReflectionException;
-use Nkey\Caribu\Model\AbstractModel;
 
 /**
  * The main object relational mapper class
@@ -377,7 +375,7 @@ class Orm
         $criterias = array_keys($criteria);
 
         foreach ($criterias as $criterion) {
-            if (stristr( $criteria[$criterion], 'LIKE')) {
+            if (stristr($criteria[$criterion], 'LIKE')) {
                 $wheres[] = sprintf("%s LIKE :%s", $criterion, str_replace('.', '_', $criterion));
             } else {
                 $wheres[] = sprintf("%s = :%s", $criterion, str_replace('.', '_', $criterion));
@@ -579,9 +577,21 @@ class Orm
                 $results = $results[0];
             }
         } catch (OrmException $ex) {
-            throw $instance->handleException($instance->getConnection(), $statement, $ex, "Finding data set failed", - 100);
+            throw $instance->handleException(
+                $instance->getConnection(),
+                $statement,
+                $ex,
+                "Finding data set failed",
+                -100
+            );
         } catch (PDOException $ex) {
-            throw $instance->handleException($instance->getConnection(), $statement, $ex, "Finding data set failed", - 100);
+            throw $instance->handleException(
+                $instance->getConnection(),
+                $statement,
+                $ex,
+                "Finding data set failed",
+                -100
+            );
         }
 
         return $results;

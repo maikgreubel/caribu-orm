@@ -1,8 +1,7 @@
 <?php
 namespace Nkey\Caribu\Type;
 
-use Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Orm\OrmException;
+use \Nkey\Caribu\Orm\Orm;
 
 /**
  * Interface description of database type
@@ -36,7 +35,7 @@ interface IType
      *
      * @return string
      *
-     * @throws OrmException
+     * @throws \Nkey\Caribu\Orm\OrmException
      */
     public function getPrimaryKeyColumn($table, Orm $orm);
 }

@@ -1,8 +1,8 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use Nkey\Caribu\Model\AbstractModel;
-use Nkey\Caribu\Orm\OrmException;
+use \Nkey\Caribu\Model\AbstractModel;
+use \Nkey\Caribu\Orm\OrmException;
 use \ReflectionClass;
 use \ReflectionProperty;
 use \ReflectionObject;

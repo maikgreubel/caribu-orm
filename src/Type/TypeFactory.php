@@ -1,10 +1,8 @@
 <?php
 namespace Nkey\Caribu\Type;
 
-use Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Orm\OrmException;
-
-use Nkey\Caribu\Type\IType;
+use \Nkey\Caribu\Orm\Orm;
+use \Nkey\Caribu\Orm\OrmException;
 
 /**
  * Database type factory
@@ -19,9 +17,11 @@ abstract class TypeFactory
     /**
      * Creata a database type
      *
-     * @param Orm $orm
+     * @param Orm $orm Orm instance
+     *
+     * @return \Nkey\Caribu\Type\IType
+     *
      * @throws OrmException
-     * @return IType
      */
     public static function create(Orm $orm)
     {

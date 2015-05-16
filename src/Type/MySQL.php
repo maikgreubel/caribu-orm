@@ -1,8 +1,8 @@
 <?php
 namespace Nkey\Caribu\Type;
 
-use Nkey\Caribu\Orm\OrmException;
-use Nkey\Caribu\Orm\Orm;
+use \Nkey\Caribu\Orm\OrmException;
+use \Nkey\Caribu\Orm\Orm;
 
 /**
  * Concrete mysql implementation of database type

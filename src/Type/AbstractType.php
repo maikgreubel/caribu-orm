@@ -1,10 +1,9 @@
 <?php
 namespace Nkey\Caribu\Type;
 
-use Generics\Util\Interpolator;
+use \Generics\Util\Interpolator;
 
-use Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Model\AbstractModel;
+use \Nkey\Caribu\Orm\Orm;
 
 /**
  * Abstract database type
