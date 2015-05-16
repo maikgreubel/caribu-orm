@@ -544,8 +544,8 @@ class Orm
         $statement = null;
 
         try {
-            $instance->connection->beginTransaction(); // TODO: Tx-scope
-            $statement = $instance->connection->prepare($query);
+            $instance->getConnection()->beginTransaction(); // TODO: Tx-scope
+            $statement = $instance->getConnection()->prepare($query);
 
             if (! $statement) {
                 throw new OrmException("Could not prepare statement for query {query}", array(
@@ -569,7 +569,7 @@ class Orm
             }
 
             $statement->closeCursor();
-            $instance->connection->commit();
+            $instance->getConnection()->commit();
 
             foreach ($unmapped as $result) {
                 $results[] = self::map($result, $class);
@@ -579,9 +579,9 @@ class Orm
                 $results = $results[0];
             }
         } catch (OrmException $ex) {
-            throw $instance->handleException($instance->connection, $statement, $ex, "Finding data set failed", - 100);
+            throw $instance->handleException($instance->getConnection(), $statement, $ex, "Finding data set failed", - 100);
         } catch (PDOException $ex) {
-            throw $instance->handleException($instance->connection, $statement, $ex, "Finding data set failed", - 100);
+            throw $instance->handleException($instance->getConnection(), $statement, $ex, "Finding data set failed", - 100);
         }
 
         return $results;
