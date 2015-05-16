@@ -9,7 +9,6 @@ use Nkey\Caribu\Tests\Model\NoteModel;
 use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
 use Nkey\Caribu\Orm\OrmException;
-use Nkey\Caribu\Tests\Model\Nkey\Caribu\Tests\Model;
 
 /**
  * Failure test cases

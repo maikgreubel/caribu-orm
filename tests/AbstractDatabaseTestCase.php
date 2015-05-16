@@ -77,6 +77,9 @@ abstract class AbstractDatabaseTestCase extends PHPUnit_Extensions_Database_Test
             else if($this->dataSetFile) {
                 $this->dataset = $this->createXmlDataSet($this->dataSetFile);
             }
+            else {
+                $this->dataset = new \PHPUnit_Extensions_Database_DataSet_DefaultDataSet();
+            }
         }
         return $this->dataset;
     }

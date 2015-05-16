@@ -452,6 +452,11 @@ class Orm
 
                 if ($rfToClass->hasProperty($toProperty)) {
                     $referencedClass = $this->getAnnotatedPropertyType($toClass, $toProperty);
+
+                    if(!class_exists($referencedClass)) {
+                        $referencedClass = sprintf("\\%s\\%s", $rfToClass->getNamespaceName(), $referencedClass);
+                    }
+
                     $rfReferenced = new \ReflectionClass($referencedClass);
 
                     $findMethod = $rfReferenced->getMethod("find");
@@ -503,12 +508,13 @@ class Orm
      * @param string $orderBy
      * @param int $limit
      * @param int $startOffset
+     * @param boolean $asList Fetch results as list, also if number of results is one
      *
      * @return mixed
      *
      * @throws OrmException
      */
-    public static function find(array $criteria, $orderBy = "", $limit = 0, $startOffset = 0)
+    public static function find(array $criteria, $orderBy = "", $limit = 0, $startOffset = 0, $asList = false)
     {
         $results = null;
 
@@ -560,7 +566,7 @@ class Orm
                 $results[] = self::map($result, $class);
             }
 
-            if (count($results) == 1) {
+            if (!$asList && count($results) == 1) {
                 $results = $results[0];
             }
         } catch (OrmException $ex) {
@@ -570,6 +576,23 @@ class Orm
         }
 
         return $results;
+    }
+
+    /**
+     * Find data sets by given criteria
+     *
+     * @param array $criteria
+     * @param string $orderBy
+     * @param int $limit
+     * @param int $startOffset
+     *
+     * @return mixed
+     *
+     * @throws OrmException
+     */
+    public static function findAll(array $criteria, $orderBy = "", $limit = 0, $startOffset = 0)
+    {
+        return self::find($criteria, $orderBy, $limit, $startOffset, true);
     }
 
     /**

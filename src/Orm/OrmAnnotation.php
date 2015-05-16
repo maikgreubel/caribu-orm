@@ -191,7 +191,11 @@ trait OrmAnnotation
 
                 $type = $this->getAnnotatedPropertyType($toClass, $property->getName());
 
-                if (class_exists($type)) {
+                if ($type && !$this->isPrimitive($type) && !class_exists($type)) {
+                    $type = sprintf("\\%s\\%s", $rf->getNamespaceName(), $type);
+                }
+
+                if ($type && !$this->isPrimitive($type) && class_exists($type)) {
                     $rfPropertyType = new ReflectionClass($type);
                     if (strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0) {
                         $getById = new ReflectionMethod($type, "get");
@@ -212,10 +216,23 @@ trait OrmAnnotation
                         assert($resultClassProperty instanceof ReflectionProperty);
                         $docComments = $resultClassProperty->getDocComment();
                         $matches = array();
-                        if ($docComments && preg_match('/@column (\w+)/', $docComments, $matches)) {
-                            array_shift($matches);
-                            $destinationProperty = $matches[0];
+                        if (preg_match('/@column (\w+)/', $docComments, $matches)) {
+                            $destinationProperty = $matches[1];
                             if ($destinationProperty == $property->getName()) {
+                                if (preg_match('/@var ([\w\\\\]+)/', $docComments, $matches)) {
+                                    $type = $matches[1];
+                                    if (!$this->isPrimitive($type)) {
+                                        if (!class_exists($type)) {
+                                            $type = sprintf("\\%s\\%s", $resultClass->getNamespaceName(), $type);
+                                        }
+                                        if (class_exists($type)) {
+                                            if (!$value instanceof $type) {
+                                                continue 2;
+                                            }
+                                        }
+                                    }
+                                }
+
                                 $method = sprintf("set%s", ucfirst($resultClassProperty->getName()));
                                 if ($resultClass->hasMethod($method)) {
                                     $rfMethod = new ReflectionMethod($toClass, $method);
@@ -265,7 +282,12 @@ trait OrmAnnotation
                 $matches = array();
                 if ($docComments && preg_match('/@var ([\w\\\\]+)/', $docComments, $matches)) {
                     $type = $matches[1];
-                    if (class_exists($type)) {
+
+                    if ($type && !$this->isPrimitive($type) && !class_exists($type)) {
+                        $type = sprintf("\\%s\\%s", $rf->getNamespaceName(), $type);
+                    }
+
+                    if ($type && !$this->isPrimitive($type) && class_exists($type)) {
                         if (! $persist) {
                             $entityDocComments = $property->getDocComment();
                             if ($entityDocComments && preg_match('/@cascade/', $entityDocComments)) {
@@ -403,6 +425,26 @@ trait OrmAnnotation
     }
 
     /**
+     * Get the annotated column name
+     *
+     * @param string $class
+     * @param string $property
+     * @return string
+     */
+    private function getAnnotatedColumnName($class, $property)
+    {
+        $columnName = "";
+
+        $rfProperty = new ReflectionProperty($class, $property);
+        $matches = array();
+        if(preg_match("/@column (\w+)/", $rfProperty->getDocComment(), $matches)) {
+            $columnName = $matches[1];
+        }
+
+        return $columnName;
+    }
+
+    /**
      * Get the annotated join query
      *
      * @param string $class
@@ -442,8 +484,17 @@ trait OrmAnnotation
             $propertyClass = "";
             // search the type of property value
             if (preg_match("/@var ([\w\\\\]+)/", $rfProperty->getDocComment(), $matches)) {
-                if (class_exists($matches[1])) {
-                    $propertyClass = $matches[1];
+                if (!$this->isPrimitive($matches[1])) {
+                    if (class_exists($matches[1])) {
+                        $propertyClass = $matches[1];
+                    }
+                    else {
+                        $classToFind = sprintf("\\%s\\%s", $rf->getNamespaceName(), $matches[1]);
+                        if(class_exists($classToFind)) {
+                            $propertyClass = $classToFind;
+                            $matches[1] = $classToFind;
+                        }
+                    }
                 }
             }
             $inverseTable = $propertyClass ? $this->getAnnotatedTableName($propertyClass, $criterion) : $criterion;
@@ -474,8 +525,46 @@ trait OrmAnnotation
 
                 $columns[] = sprintf("%s.%s AS '%s.%s'", $inverseTable, $inversePkCol, $inverseTable, $inversePkCol);
             }
+            elseif ($propertyClass != "") {
+                $inversePkCol = $this->getAnnotatedPrimaryKeyColumn($propertyClass);
+                $column = $this->getAnnotatedColumnName($class, $rfProperty->getName());
+                $joinQuery = sprintf(
+                    "JOIN %s AS %s ON %s.%s = %s.%s",
+                    $inverseTable,
+                    $criterion,
+                    $criterion,
+                    $inversePkCol,
+                    $table,
+                    $column
+                );
+                $columns[] = sprintf("%s.%s AS '%s.%s'", $criterion, $inversePkCol, $criterion, $inversePkCol);
+            }
         }
 
         return $joinQuery;
+    }
+
+    /**
+     * Checks whether a given string equals identifier of a primitive type
+     *
+     * @param string $type
+     *
+     * @return boolean true in case of string is identifier of primitive type, false otherwise
+     */
+    private function isPrimitive($type)
+    {
+        $isPrimitive = false;
+
+        switch($type) {
+            case 'int':
+            case 'integer':
+            case 'string':
+            case 'boolean':
+            case 'bool':
+                $isPrimitive = true;
+            break;
+        }
+
+        return $isPrimitive;
     }
 }
