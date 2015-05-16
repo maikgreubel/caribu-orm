@@ -102,4 +102,15 @@ class SimpleTest extends AbstractDatabaseTestCase
         $this->assertEquals(1, $entity->getGid());
         $this->assertEquals("joe", $entity->getUser());
     }
+
+    /**
+     * Test finding via like keyword
+     */
+    public function testLikeFind()
+    {
+        $entity = AnnotatedGuestBookModel::find(array('user' => 'LIKE jo%'), 'id ASC', 1);
+        $this->assertFalse(is_null($entity));
+        $this->assertEquals(1, $entity->getGid());
+        $this->assertEquals("joe", $entity->getUser());
+    }
 }

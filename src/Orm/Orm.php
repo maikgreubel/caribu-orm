@@ -375,11 +375,17 @@ class Orm
         $criterias = array_keys($criteria);
 
         foreach ($criterias as $criterion) {
-            $wheres[] = sprintf("%s = :%s", $criterion, str_replace('.', '_', $criterion));
+            if (stristr( $criteria[$criterion], 'LIKE')) {
+                $wheres[] = sprintf("%s LIKE :%s", $criterion, str_replace('.', '_', $criterion));
+            } else {
+                $wheres[] = sprintf("%s = :%s", $criterion, str_replace('.', '_', $criterion));
+            }
         }
 
         if (count($wheres)) {
             $wheres = sprintf("WHERE %s", implode(' AND ', $wheres));
+        } else {
+            $wheres = '';
         }
 
         $limits = "";
@@ -546,7 +552,7 @@ class Orm
             }
 
             foreach ($criteria as $criterion => $value) {
-                $statement->bindValue(":" . str_replace('.', '_', $criterion), $value);
+                $statement->bindValue(":" . str_replace('.', '_', $criterion), str_ireplace('LIKE ', '', $value));
             }
 
             if (! $statement->execute()) {
@@ -582,7 +588,7 @@ class Orm
     /**
      * Find data sets by given criteria
      *
-     * @param array $criteria
+     * @param array $criteria Array of criterias in form of "property" => "value"
      * @param string $orderBy
      * @param int $limit
      * @param int $startOffset
@@ -591,7 +597,7 @@ class Orm
      *
      * @throws OrmException
      */
-    public static function findAll(array $criteria, $orderBy = "", $limit = 0, $startOffset = 0)
+    public static function findAll(array $criteria = array(), $orderBy = "", $limit = 0, $startOffset = 0)
     {
         return self::find($criteria, $orderBy, $limit, $startOffset, true);
     }
