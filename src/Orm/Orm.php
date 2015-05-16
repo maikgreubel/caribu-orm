@@ -135,7 +135,8 @@ class Orm
      */
     private function __construct()
     {
-        $this->setLogger(new ConsoleLogger(new ConsoleOutput()));
+        //TODO:Implement console logging of sql for debugging purposes
+        //$this->setLogger(new ConsoleLogger(new ConsoleOutput()));
     }
 
     /**
