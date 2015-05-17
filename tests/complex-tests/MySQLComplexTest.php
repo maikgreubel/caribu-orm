@@ -27,9 +27,9 @@ class MySQLComplexTest extends AbstractDatabaseTestCase
         $this->options = array(
             'type' => 'mysql',
             'host' => 'localhost',
-            'schema' => 'test',
-            'user' => 'test',
-            'password' => 'test1234'
+            'schema' => isset($_ENV['TEST_DATABASE']) ? $_ENV['TEST_DATABASE'] : 'test',
+            'user' => isset($_ENV['TEST_USER']) ? $_ENV['TEST_USER'] : 'test',
+            'password' => isset($_ENV['TEST_PASSWORD']) ? $_ENV['TEST_PASSWORD'] : ''
         );
 
         $this->flatDataSetFile = dirname(__FILE__).'/../_files/guestbook-seed.xml';
