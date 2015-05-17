@@ -1,6 +1,7 @@
-# caribu
-
 [![Build Status](https://travis-ci.org/maikgreubel/caribu-orm.png)](https://travis-ci.org/maikgreubel/caribu-orm)
+[![Coverage Status](https://coveralls.io/repos/maikgreubel/caribu-orm/badge.svg?branch=master)](https://coveralls.io/r/maikgreubel/caribu-orm?branch=master)
+
+# caribu
 
 An annotation-based PHP Object Relational Mapper
 
