@@ -13,4 +13,8 @@ install:
 before_script:
   - mysql -e 'create database caribu_test'
 
-script: phpunit
+script:
+  - phpcs
+  - pdepend
+  - phpmd
+  - phpunit
