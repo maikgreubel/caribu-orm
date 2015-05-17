@@ -24,9 +24,9 @@ class SimpleReferenceTest extends AbstractDatabaseTestCase
         $this->options = array(
             'type' => 'mysql',
             'host' => 'localhost',
-            'schema' => isset($_ENV['TEST_DATABASE']) ? $_ENV['TEST_DATABASE'] : 'test',
-            'user' => isset($_ENV['TEST_USER']) ? $_ENV['TEST_USER'] : 'test',
-            'password' => isset($_ENV['TEST_PASSWORD']) ? $_ENV['TEST_PASSWORD'] : ''
+            'schema' => getenv('TEST_DATABASE') === false ? 'test' : getenv('TEST_DATABASE'),
+            'user' => getenv('TEST_USER') === false ? 'test' : getenv('TEST_USER'),
+            'password' => getenv('TEST_PASSWORD') === false ? '' : getenv('TEST_PASSWORD')
         );
     }
 
