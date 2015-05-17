@@ -1,6 +1,8 @@
 # caribu
 
-An PHP Object Relational Mapper
+[![Build Status](https://travis-ci.org/maikgreubel/caribu-orm.png)](https://travis-ci.org/maikgreubel/caribu-orm)
+
+An annotation-based PHP Object Relational Mapper
 
 This project aims to be an object relational mapper easy to use. The main target is to support developers writing only simple attribute containing classes and store it as entities into a database.
 
