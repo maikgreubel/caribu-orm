@@ -23,10 +23,11 @@
 	},
 	"name" : "nkey/caribu",
 	"type" : "library",
-	"description" : "OR Mapping framework for PHP",
+	"description" : "Annotation based OR Mapping framework for PHP",
 	"license" : "BSD-2-Clause",
 	"require" : {
 		"php" : ">=5.4",
+        "psr/log" : "1.0.0",
 		"nkey/phpgenerics" : "dev-master"
 	},
 	"require-dev" : {
@@ -38,7 +39,7 @@
 		"phpmd/phpmd" : "2.2.2",
 		"sebastian/phpcpd" : "2.0.2",
 		"theseer/phpdox" : "0.8.0",
-		"psr/log" : "1.0.0"
+		"satooshi/php-coveralls": "dev-master"
 	},
 	"support" : {
 		"email" : "greubel@nkey.de",

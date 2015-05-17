@@ -6,15 +6,14 @@ php:
 
 env: TEST_USER=root TEST_PASSWORD= TEST_DATABASE=caribu_test
 
-install:
-    composer install
-
-
 before_script:
+  - wget http://getcomposer.org/composer.phar
+  - php composer.phar install --dev --no-interaction
   - mysql -e 'create database caribu_test'
 
-script: phpunit --coverage-clover=coverage.clover
+script:
+  - mkdir -p build/logs
+  - phpunit --coverage-clover build/logs/clover.xml
 
 after_script:
-  - wget https://scrutinizer-ci.com/ocular.phar
-  - php ocular.phar code-coverage:upload --format=php-clover coverage.clover
+   - php vendor/bin/coveralls -v
