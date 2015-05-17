@@ -27,7 +27,6 @@
 		</exec>
 	</target>
 
-
 	<target name="update-deps" depends="update-deps-unix,update-deps-windows" />
 
 	<target name="build"
@@ -36,6 +35,9 @@
 
 	<target name="build-parallel" depends="prepare,lint,tools-parallel,phpunit,phpdox"
 		description="" />
+
+    <target name="no-update" depends="prepare,lint,tools-parallel,phpunit,phpdox"
+        description="Runs build without updating dependencies" />
 
 	<target name="tools-parallel" description="Run tools in parallel">
 		<parallel threadCount="2">
