@@ -16,21 +16,14 @@ use Nkey\Caribu\Orm\Orm;
 /**
  * Complex test cases (mysql is used)
  *
- * This class is part of Caribu package
- *
  * @author Maik Greubel <greubel@nkey.de>
+ *         This class is part of Caribu package
  */
-class MySQLComplexTest extends AbstractDatabaseTestCase
+class MySQLComplexTest extends MySqlAbstractDatabaseTestCase
 {
     public function __construct()
     {
-        $this->options = array(
-            'type' => 'mysql',
-            'host' => 'localhost',
-            'schema' => getenv('TEST_DATABASE') === false ? 'test' : getenv('TEST_DATABASE'),
-            'user' => getenv('TEST_USER') === false ? 'test' : getenv('TEST_USER'),
-            'password' => getenv('TEST_PASSWORD') === false ? '' : getenv('TEST_PASSWORD')
-        );
+        parent::__construct();
 
         $this->flatDataSetFile = dirname(__FILE__).'/../_files/guestbook-seed.xml';
     }
