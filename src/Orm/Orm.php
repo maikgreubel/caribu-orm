@@ -375,15 +375,29 @@ class Orm
         $criterias = array_keys($criteria);
 
         foreach ($criterias as $criterion) {
+            $placeHolder = str_replace('.', '_', $criterion);
+            $placeHolder = str_replace('OR ', 'OR_', $placeHolder);
             if (stristr($criteria[$criterion], 'LIKE')) {
-                $wheres[] = sprintf("%s LIKE :%s", $criterion, str_replace('.', '_', $criterion));
+                $wheres[] = sprintf("%s LIKE :%s", $criterion, $placeHolder);
             } else {
-                $wheres[] = sprintf("%s = :%s", $criterion, str_replace('.', '_', $criterion));
+                $wheres[] = sprintf("%s = :%s", $criterion, $placeHolder);
             }
         }
 
         if (count($wheres)) {
-            $wheres = sprintf("WHERE %s", implode(' AND ', $wheres));
+            $t = "";
+            foreach ($wheres as $where) {
+                $and = "";
+                if ($t) {
+                    if (substr($where, 0, 3) == 'OR ') {
+                        $and = " ";
+                    } else {
+                        $and = " AND ";
+                    }
+                }
+                $t .= $and . $where;
+            }
+            $wheres = sprintf("WHERE %s", $t);
         } else {
             $wheres = '';
         }
@@ -552,7 +566,10 @@ class Orm
             }
 
             foreach ($criteria as $criterion => $value) {
-                $statement->bindValue(":" . str_replace('.', '_', $criterion), str_ireplace('LIKE ', '', $value));
+                $placeHolder = str_replace('.', '_', $criterion);
+                $placeHolder = str_replace('OR ', 'OR_', $placeHolder);
+                $value = str_ireplace('LIKE ', '', $value);
+                $statement->bindValue(":" . $placeHolder, $value);
             }
 
             if (! $statement->execute()) {

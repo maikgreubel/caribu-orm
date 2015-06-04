@@ -39,7 +39,8 @@
 		"phpmd/phpmd" : "2.2.2",
 		"sebastian/phpcpd" : "2.0.2",
 		"theseer/phpdox" : "0.8.0",
-		"satooshi/php-coveralls" : "dev-master"
+		"satooshi/php-coveralls" : "dev-master",
+		"piece/stagehand-testrunner": "~4.0"
 	},
 	"support" : {
 		"email" : "greubel@nkey.de",
@@ -56,8 +57,8 @@
 	],
 	"homepage" : "https://github.com/maikgreubel/caribu-orm",
 	"extra" : {
-        "branch-alias" : {
-            "dev-master" : "1.0-dev"
-        }
-    }
+		"branch-alias" : {
+			"dev-master" : "1.0-dev"
+		}
+	}
 }

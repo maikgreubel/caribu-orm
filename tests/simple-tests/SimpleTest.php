@@ -113,4 +113,22 @@ class SimpleTest extends AbstractDatabaseTestCase
         $this->assertEquals(1, $entity->getGid());
         $this->assertEquals("joe", $entity->getUser());
     }
+
+    /**
+     * Test the finding via OR condition instead of default AND
+     */
+    public function testOrFind()
+    {
+        $entities = AnnotatedGuestBookModel::find(array('user' => 'joe', 'OR user' => 'bob'));
+        $this->assertEquals(3, count($entities));
+    }
+
+    /**
+     * Test the finding via OR condition instead of default AND using LIKE modifier
+     */
+    public function testOrLikeFind()
+    {
+        $entities = AnnotatedGuestBookModel::find(array('user' => 'LIKE jo%', 'OR user' => 'LIKE bo%'));
+        $this->assertEquals(3, count($entities));
+    }
 }
