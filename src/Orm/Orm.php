@@ -10,8 +10,10 @@ use \Nkey\Caribu\Type\TypeFactory;
 use \PDO;
 use \PDOException;
 use \PDOStatement;
+use \ReflectionClass;
 use \ReflectionMethod;
 use \ReflectionException;
+use \ReflectionProperty;
 
 /**
  * The main object relational mapper class
@@ -115,13 +117,20 @@ class Orm
     private $dbType = null;
 
     /**
+     * The stack of open transactions
+     *
+     * @var int
+     */
+    private $transactionStack = 0;
+
+    /**
      * Singleton pattern
      *
      * @return \Nkey\Caribu\Orm\Orm
      */
     public static function getInstance()
     {
-        if (null == self::$instance) {
+        if (null === self::$instance) {
             self::$instance = new self();
         }
 
@@ -389,11 +398,7 @@ class Orm
             foreach ($wheres as $where) {
                 $and = "";
                 if ($t) {
-                    if (substr($where, 0, 3) == 'OR ') {
-                        $and = " ";
-                    } else {
-                        $and = " AND ";
-                    }
+                    $and = substr($where, 0, 3) == 'OR ' ? " " : " AND ";
                 }
                 $t .= $and . $where;
             }
@@ -440,6 +445,7 @@ class Orm
      * @return object The new created object of $toClass containing the mapped data
      *
      * @throws OrmException
+     * @throws PDOException
      */
     private static function map($from, $toClass)
     {
@@ -448,6 +454,9 @@ class Orm
             $instance = self::getInstance();
             $result = $instance->mapAnnotated($from, $toClass);
             $instance->mapReferenced($from, $toClass, $result);
+            if ($instance->isEager($toClass)) {
+                $instance->injectMappedBy($toClass, $result);
+            }
         } catch (OrmException $ex) {
             // TODO: implement simple handling without annotation
             throw $ex;
@@ -465,29 +474,114 @@ class Orm
      */
     private function mapReferenced($from, $toClass, $result)
     {
-        $rfToClass = new \ReflectionClass($toClass);
+        try {
+            $rfToClass = new ReflectionClass($toClass);
 
-        foreach (get_object_vars($from) as $property => $value) {
-            if (strpos($property, '.')) {
-                list($toProperty, $column) = explode('.', $property);
+            foreach (get_object_vars($from) as $property => $value) {
+                if (strpos($property, '.')) {
+                    list($toProperty, $column) = explode('.', $property);
 
-                if ($rfToClass->hasProperty($toProperty)) {
-                    $referencedClass = $this->getAnnotatedPropertyType($toClass, $toProperty);
+                    if ($rfToClass->hasProperty($toProperty)) {
+                        $referencedClass = $this->getAnnotatedPropertyType($toClass, $toProperty);
 
-                    if (!class_exists($referencedClass)) {
-                        $referencedClass = sprintf("\\%s\\%s", $rfToClass->getNamespaceName(), $referencedClass);
+                        if (!class_exists($referencedClass)) {
+                            $referencedClass = sprintf("\\%s\\%s", $rfToClass->getNamespaceName(), $referencedClass);
+                        }
+
+                        $rfReferenced = new ReflectionClass($referencedClass);
+
+                        $findMethod = $rfReferenced->getMethod("find");
+                        $referencedObject = $findMethod->invoke(null, array($column => $value));
+
+                        $propertySetter = $rfToClass->getMethod(sprintf("set%s", ucfirst($toProperty)));
+
+                        $propertySetter->invoke($result, $referencedObject);
                     }
-
-                    $rfReferenced = new \ReflectionClass($referencedClass);
-
-                    $findMethod = $rfReferenced->getMethod("find");
-                    $referencedObject = $findMethod->invoke(null, array($column => $value));
-
-                    $propertySetter = $rfToClass->getMethod(sprintf("set%s", ucfirst($toProperty)));
-
-                    $propertySetter->invoke($result, $referencedObject);
                 }
             }
+        } catch (ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
+    }
+
+    /**
+     * Inject the mappedBy annotated properties
+     *
+     * @param string $toClass The class of entity
+     * @param AbstractModel $object Prefilled entity
+     *
+     * @throws OrmException
+     * @throws PDOException
+     */
+    private function injectMappedBy($toClass, &$object)
+    {
+        try {
+            $rfToClass = new ReflectionClass($toClass);
+
+            foreach ($rfToClass->getProperties() as $property)
+            {
+                assert($property instanceof ReflectionProperty);
+
+                if (null != ($parameters = $this->getAnnotatedMappedByParameters($property->getDocComment()))) {
+                    $mappedBy = $this->parseMappedBy($parameters);
+
+                    if (null == ($type = $this->getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName()))) {
+                        throw new OrmException("Can't use mappedBy without specific type for property {property}",
+                            array('property' => $property->getName())
+                        );
+                    }
+
+                    if ($this->isPrimitive($type)) {
+                        throw new OrmException("Primitive type can not be used in mappedBy for property {property}",
+                            array('property' => $property->getName())
+                        );
+                    }
+
+                    $getMethod = new ReflectionMethod($toClass, sprintf("get%s", ucfirst($property->getName())));
+                    if ($getMethod->invoke($object)) {
+                        continue;
+                    }
+
+                    $ownPrimaryKey = $this->getPrimaryKey($toClass, $object, true);
+
+                    $otherTable = $this->getTableName($type);
+                    $otherPrimaryKeyName = $this->getPrimaryKeyCol($type);
+                    $ownPrimaryKeyName =  $this->getPrimaryKeyCol($toClass);
+
+                    $query = sprintf(
+                        "SELECT %s.* FROM %s
+                        JOIN %s ON %s.%s = %s.%s
+                        WHERE %s.%s = :%s",
+                        $otherTable, $otherTable,
+                        $mappedBy['table'], $mappedBy['table'], $mappedBy['column'], $otherTable, $otherPrimaryKeyName,
+                        $mappedBy['table'], $mappedBy['inverseColumn'], $ownPrimaryKeyName
+                    );
+
+                    $instance = self::getInstance();
+
+                    try {
+                        $connection = $instance->startTX();
+
+                        $statement = $connection->prepare($query);
+                        $statement->bindValue(sprintf(":%s", $ownPrimaryKeyName), $ownPrimaryKey);
+
+                        $statement->execute();
+
+                        $result = $statement->fetch(PDO::FETCH_OBJ);
+
+                        $instance->commitTX();
+
+                        $setMethod = new ReflectionMethod($toClass, sprintf("set%s", ucfirst($property->getName())));
+
+                        $setMethod->invoke($object, self::map($result, $type));
+                    } catch (PDOException $ex) {
+                        $instance->rollBackTX();
+                        throw OrmException::fromPrevious($ex);
+                    }
+                }
+            }
+        } catch (ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
         }
     }
 
@@ -514,7 +608,7 @@ class Orm
         }
 
         try {
-            $connection->rollBack();
+            $this->rollBackTX();
         } catch (PDOException $rbex) {
             $toThrow = new OrmException($rbex->getMessage(), array(), $rbex->getCode(), $toThrow);
         }
@@ -556,14 +650,8 @@ class Orm
         $statement = null;
 
         try {
-            $instance->getConnection()->beginTransaction(); // TODO: Tx-scope
-            $statement = $instance->getConnection()->prepare($query);
-
-            if (! $statement) {
-                throw new OrmException("Could not prepare statement for query {query}", array(
-                    'query' => $query
-                ));
-            }
+            $connection = $instance->startTX();
+            $statement = $connection->prepare($query);
 
             foreach ($criteria as $criterion => $value) {
                 $placeHolder = str_replace('.', '_', $criterion);
@@ -572,11 +660,7 @@ class Orm
                 $statement->bindValue(":" . $placeHolder, $value);
             }
 
-            if (! $statement->execute()) {
-                throw new OrmException("Could not execute query {query}", array(
-                    'query' => $query
-                ));
-            }
+            $statement->execute(); // Not good documented, but it seems, that execute() will throw an exception
 
             $unmapped = array();
             while ($result = $statement->fetch(PDO::FETCH_OBJ)) {
@@ -584,7 +668,6 @@ class Orm
             }
 
             $statement->closeCursor();
-            $instance->getConnection()->commit();
 
             foreach ($unmapped as $result) {
                 $results[] = self::map($result, $class);
@@ -593,15 +676,9 @@ class Orm
             if (!$asList && count($results) == 1) {
                 $results = $results[0];
             }
-        } catch (OrmException $ex) {
-            throw $instance->handleException(
-                $instance->getConnection(),
-                $statement,
-                $ex,
-                "Finding data set failed",
-                -100
-            );
-        } catch (PDOException $ex) {
+
+            $instance->commitTX();
+        } catch (Exception $ex) {
             throw $instance->handleException(
                 $instance->getConnection(),
                 $statement,
@@ -730,6 +807,74 @@ class Orm
     }
 
     /**
+     * Persist the mapped-by entities
+     *
+     * @param string $class The name of class of which the data has to be persisted
+     * @param AbstractModel $object The entity which contain mapped-by entries to persist
+     *
+     * @throws OrmException
+     * @throws PDOException
+     */
+    private function persistMappedBy($class, $object)
+    {
+        $instance = self::getInstance();
+
+        try {
+            $rf = new ReflectionClass($class);
+
+            foreach ($rf->getProperties() as $property) {
+                assert($property instanceof ReflectionProperty);
+
+                if (null != ($parameters = $this->getAnnotatedMappedByParameters($property->getDocComment()))) {
+                    $mappedBy = $this->parseMappedBy($parameters);
+
+                    $method = sprintf("get%s", ucfirst($property->getName()));
+                    $rfMethod = new ReflectionMethod($class, $method);
+                    assert($rfMethod instanceof ReflectionMethod);
+                    $foreignEntity = $rfMethod->invoke($object);
+
+                    if (null !== $foreignEntity) {
+                        $foreignPrimaryKey = $this->getPrimaryKey(get_class($foreignEntity), $foreignEntity, true);
+                        $ownPrimaryKey = $this->getPrimaryKey($class, $this, true);
+
+                        if (is_null($foreignPrimaryKey)) {
+                            throw new OrmException("No primary key column for foreign key found!");
+                        }
+                        if (is_null($ownPrimaryKey)) {
+                            throw new OrmException("No primary key column found!");
+                        }
+
+                        $query = sprintf("INSERT INTO %s (%s, %s) VALUES (:%s, :%s)",
+                            $mappedBy['table'],
+                            $mappedBy['inverseColumn'],
+                            $mappedBy['column'],
+                            $mappedBy['inverseColumn'],
+                            $mappedBy['column']);
+
+                        $connection = $instance->startTX();
+                        $statement = null;
+                        try
+                        {
+                            $statement = $connection->prepare($query);
+                            $statement->bindValue(sprintf(':%s', $mappedBy['inverseColumn']), $ownPrimaryKey);
+                            $statement->bindValue(sprintf(':%s', $mappedBy['column']), $foreignPrimaryKey);
+
+                            $statement->execute();
+
+                            $instance->commitTX();
+                        } catch (PDOException $ex) {
+                            $instance->rollBackTX();
+                            throw $ex;
+                        }
+                    }
+                }
+            }
+        } catch (ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
+    }
+
+    /**
      * Persist the object into database
      *
      * @throws OrmException
@@ -765,12 +910,10 @@ class Orm
             $query .= sprintf(" WHERE %s = :%s", $primaryKeyCol, $primaryKeyCol);
         }
 
-        $connection = $instance->getConnection();
+        $connection = $instance->startTX();
         $statement = null;
 
         try {
-            $connection->beginTransaction();  // TODO: Tx-scope
-
             $statement = $connection->prepare($query);
 
             foreach ($pairs as $column => $value) {
@@ -786,13 +929,17 @@ class Orm
             $statement->execute();
             $pk = $connection->lastInsertId();
             unset($statement);
-            $connection->commit();
 
             if (!$primaryKeyValue) {
                 $this->setPrimaryKey($class, $this, $pk);
             }
+
+            $this->persistMappedBy($class, $this);
+
+            $instance->commitTX();
+
         } catch (PDOException $ex) {
-            $connection->rollBack();
+            $instance->rollBackTX();
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
@@ -819,19 +966,19 @@ class Orm
             throw new OrmException("Entity is not persisted or detached. Can not delete.");
         }
 
-        $connection = $instance->getConnection();
+        $connection = $instance->startTX();
         $statement = null;
         $query = sprintf("DELETE FROM %s WHERE %s = :%s", $tableName, $primaryKeyCol, $primaryKeyCol);
 
         try {
-            $connection->beginTransaction();  // TODO: Tx-scope
 
             $statement = $connection->prepare($query);
             $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
             $statement->execute();
             unset($statement);
-            $connection->commit();
+            $instance->commitTX();
         } catch (PDOException $ex) {
+            $instance->rollBackTX();
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
@@ -847,6 +994,68 @@ class Orm
 
         if (self::$instance) {
             self::$instance = null;
+        }
+    }
+
+    /**
+     * Begin a new transaction
+     *
+     * @return PDO
+     */
+    private function startTX()
+    {
+        if (null == $this->connection) {
+            $this->connection = $this->getConnection();
+        }
+
+        if (!$this->connection->inTransaction()) {
+            $this->connection->beginTransaction();
+        }
+
+        $this->transactionStack++;
+
+        return $this->connection;
+    }
+
+    /**
+     * Try to commit the complete transaction stack
+     *
+     * @throws OrmException
+     * @throws PDOException
+     */
+    private function commitTX()
+    {
+        if (!$this->connection->inTransaction()) {
+            throw new OrmException("Transaction is not open");
+        }
+
+        $this->transactionStack--;
+
+        if ($this->transactionStack === 0) {
+            $this->connection->commit();
+        }
+    }
+
+    /**
+     * Rollback the complete stack
+     *
+     * @throws OrmException
+     */
+    private function rollBackTX()
+    {
+        $this->transactionStack = 0; // Yes, we just ignore any error and reset the transaction stack here
+
+        if (!$this->connection->inTransaction()) {
+            throw new OrmException("Transaction not open");
+        }
+
+        try {
+            if (!$this->connection->rollBack()) {
+                throw new OrmException("Could not rollback!");
+            }
+        }
+        catch (PDOException $ex) {
+            throw OrmException::fromPrevious($ex);
         }
     }
 }

@@ -1,30 +1,27 @@
 <?php
 namespace Nkey\Caribu\Tests;
 
-require_once dirname(__FILE__).'/../AbstractDatabaseTestCase.php';
+require_once dirname(__FILE__).'/../MySqlAbstractDatabaseTestCase.php';
 
 use Nkey\Caribu\Orm\Orm;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
+use Nkey\Caribu\Tests\MySqlAbstractDatabaseTestCase;
 use Nkey\Caribu\Tests\Model\BlogPost;
 use Nkey\Caribu\Tests\Model\BlogUser;
 
 /**
  * Entity with list of referenced entities
- * test cases (sqlite is used)
+ * test cases (mysql is used)
  *
  * This class is part of Caribu package
  *
  * @author Maik Greubel <greubel@nkey.de>
  */
-class EnityListTest extends AbstractDatabaseTestCase
+class MySQLEntityListTest extends MySqlAbstractDatabaseTestCase
 {
     public function __construct()
     {
-        $this->options = array(
-            'type' => 'sqlite',
-            'file' => ':memory:'
-        );
+        parent::__construct();
 
         $this->dataSetFile = dirname(__FILE__).'/../_files/blog-seed.xml';
     }
@@ -39,9 +36,12 @@ class EnityListTest extends AbstractDatabaseTestCase
 
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
-        $connection->exec("CREATE TABLE blog (id INTEGER PRIMARY KEY AUTOINCREMENT, content TEXT, created TEXT)");
-        $connection->exec("CREATE TABLE user (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, email TEXT)");
-        $connection->exec("CREATE TABLE blog_user_to_posts (id INTEGER PRIMARY KEY AUTOINCREMENT, userid INTEGER, postid INTEGER)");
+        $connection->exec("DROP TABLE IF EXISTS `blog`");
+        $connection->exec("DROP TABLE IF EXISTS `user`");
+        $connection->exec("DROP TABLE IF EXISTS `blog_user_to_posts`");
+        $connection->exec("CREATE TABLE `blog` (`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `content` TEXT, `created` TEXT)");
+        $connection->exec("CREATE TABLE `user` (`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `name` TEXT, `email` TEXT)");
+        $connection->exec("CREATE TABLE `blog_user_to_posts` (`id` INTEGER PRIMARY KEY AUTO_INCREMENT, `userid` INTEGER, `postid` INTEGER)");
         $connection->commit();
 
         parent::setUp();
@@ -55,9 +55,9 @@ class EnityListTest extends AbstractDatabaseTestCase
     {
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
-        $connection->exec("DROP TABLE blog_user_to_posts");
-        $connection->exec("DROP TABLE user");
-        $connection->exec("DROP TABLE blog");
+        $connection->exec("DROP TABLE `blog_user_to_posts`");
+        $connection->exec("DROP TABLE `user`");
+        $connection->exec("DROP TABLE `blog`");
         $connection->commit();
 
         parent::tearDown();
@@ -93,5 +93,4 @@ class EnityListTest extends AbstractDatabaseTestCase
         $this->assertFalse(is_null($post->getUser()));
         $this->assertEquals('joe', $post->getUser()->getName());
     }
-
 }

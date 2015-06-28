@@ -37,9 +37,8 @@ trait OrmAnnotation
             $docComments = $rf->getDocComment();
 
             $matches = array();
-            if ($docComments && preg_match('/@table (\w+)/', $docComments, $matches) && count($matches) > 1) {
-                array_shift($matches);
-                $fallback = $matches[0];
+            if (preg_match('/@table (\w+)/', $docComments, $matches)) {
+                $fallback = $matches[1];
             }
 
             return $fallback;
@@ -70,8 +69,7 @@ trait OrmAnnotation
 
             foreach ($properties as $property) {
                 assert($property instanceof ReflectionProperty);
-                $docComment = $property->getDocComment();
-                if ($docComment && preg_match('/@id/', $docComment)) {
+                if (preg_match('/@id/', $property->getDocComment())) {
                     $properyName = $property->getName();
                     break;
                 }
@@ -107,7 +105,7 @@ trait OrmAnnotation
             foreach ($properties as $property) {
                 assert($property instanceof ReflectionProperty);
                 $docComment = $property->getDocComment();
-                if ($docComment && preg_match('/@id/', $docComment)) {
+                if (preg_match('/@id/', $docComment)) {
                     $columnName = $property->getName();
 
                     $matches = array();
@@ -143,7 +141,7 @@ trait OrmAnnotation
             $docComments = $property->getDocComment();
 
             $isDestinationProperty = false;
-            $matches = array();
+
             if ($property->getName() == $propertyName) {
                 $isDestinationProperty = true;
             }
@@ -152,11 +150,8 @@ trait OrmAnnotation
                 continue;
             }
 
-            if ($docComments) {
-                if (preg_match('/@var ([\w\\\\]+)/', $docComments, $matches) && count($matches) > 1) {
-                    $type = $matches[1];
-                    break;
-                }
+            if (null != ($type = $this->getAnnotatedType($docComments, $rf->getNamespaceName()))) {
+                break;
             }
         }
 
@@ -219,21 +214,12 @@ trait OrmAnnotation
                     foreach ($resultClassProperties as $resultClassProperty) {
                         assert($resultClassProperty instanceof ReflectionProperty);
                         $docComments = $resultClassProperty->getDocComment();
-                        $matches = array();
-                        if (preg_match('/@column (\w+)/', $docComments, $matches)) {
-                            $destinationProperty = $matches[1];
+
+                        if (null != ($destinationProperty = $this->getAnnotatedColumn($docComments))) {
                             if ($destinationProperty == $property->getName()) {
-                                if (preg_match('/@var ([\w\\\\]+)/', $docComments, $matches)) {
-                                    $type = $matches[1];
-                                    if (!$this->isPrimitive($type)) {
-                                        if (!class_exists($type)) {
-                                            $type = sprintf("\\%s\\%s", $resultClass->getNamespaceName(), $type);
-                                        }
-                                        if (class_exists($type)) {
-                                            if (!$value instanceof $type) {
-                                                continue 2;
-                                            }
-                                        }
+                                if (null != ($type = $this->getAnnotatedType($docComments, $resultClass->getNamespaceName()))) {
+                                    if (!$this->isPrimitive($type) && class_exists($type) && !$value instanceof $type) {
+                                        continue 2;
                                     }
                                 }
 
@@ -285,7 +271,8 @@ trait OrmAnnotation
                 assert($property instanceof ReflectionProperty);
                 $docComments = $property->getDocComment();
                 $matches = array();
-                if ($docComments && preg_match('/@var ([\w\\\\]+)/', $docComments, $matches)) {
+
+                if (preg_match('/@var ([\w\\\\]+)/', $docComments, $matches)) {
                     $type = $matches[1];
 
                     if ($type && !$this->isPrimitive($type) && !class_exists($type)) {
@@ -349,15 +336,24 @@ trait OrmAnnotation
                 $column = $property->getName();
 
                 $docComments = $property->getDocComment();
+
+                // mapped by entries have no corresponding table column, so we skip it here
+                if (preg_match('/@mappedBy/i', $docComments)) {
+                    continue;
+                }
+
                 $matches = array();
-                if ($docComments && preg_match("/@column (\w+)/", $docComments, $matches) && count($matches) > 1) {
+                if (preg_match('/@column (\w+)/', $docComments, $matches)) {
                     $column = $matches[1];
                 }
 
                 $method = sprintf("get%s", ucfirst($property->getName()));
                 $rfMethod = new ReflectionMethod($class, $method);
 
-                $pairs[$column] = $rfMethod->invoke($object);
+                $value = $rfMethod->invoke($object);
+                if (null != $value) {
+                    $pairs[$column] = $value;
+                }
             }
         } catch (ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
@@ -395,7 +391,7 @@ trait OrmAnnotation
                     $columnName = $property->getName();
 
                     $matches = array();
-                    if (preg_match("/@column (\w+)/", $docComment, $matches) && count($matches) > 1) {
+                    if (preg_match('/@column (\w+)/', $docComment, $matches)) {
                         $columnName = $matches[1];
                     }
 
@@ -435,6 +431,27 @@ trait OrmAnnotation
     }
 
     /**
+     * Get the annotated type
+     *
+     * @param string $comment The document comment string which may contain the @var annotation
+     *
+     * @return string The parsed type
+     */
+    private function getAnnotatedType($comment, $namespace = null)
+    {
+        $type = null;
+        $matches = array();
+        if (preg_match('/@var ([\w\\\\]+)/', $comment, $matches)) {
+            $type = $matches[1];
+
+            if (!class_exists($type) && !strchr($type, "\\")) {
+                $type = sprintf("\\%s\\%s", $namespace, $type);
+            }
+        }
+        return $type;
+    }
+
+    /**
      * Get the annotated column name
      *
      * @param string $class The name of class to retrieve te annotated column name
@@ -442,16 +459,27 @@ trait OrmAnnotation
      *
      * @return string The column name
      */
-    private function getAnnotatedColumnName($class, $property)
+    private function getAnnotatedColumnFromProperty($class, $property)
     {
-        $columnName = "";
-
         $rfProperty = new ReflectionProperty($class, $property);
+        return $this->getAnnotatedColumn($rfProperty->getDocComment());
+    }
+
+    /**
+     * Get the annotated column name from document comment string
+     *
+     * @param string $comment The document comment which may contain the @column annotation
+     *
+     * @return The parsed column name
+     */
+    private function getAnnotatedColumn($comment)
+    {
+        $columnName = null;
+
         $matches = array();
-        if (preg_match("/@column (\w+)/", $rfProperty->getDocComment(), $matches)) {
+        if (preg_match("/@column (\w+)/", $comment, $matches)) {
             $columnName = $matches[1];
         }
-
         return $columnName;
     }
 
@@ -489,27 +517,18 @@ trait OrmAnnotation
             }
 
             // check annotations
-            $matches = array();
             $propertyClass = "";
             // search the type of property value
-            if (preg_match("/@var ([\w\\\\]+)/", $rfProperty->getDocComment(), $matches)) {
-                if (!$this->isPrimitive($matches[1])) {
-                    if (class_exists($matches[1])) {
-                        $propertyClass = $matches[1];
-                    } else {
-                        $classToFind = sprintf("\\%s\\%s", $rf->getNamespaceName(), $matches[1]);
-                        if (class_exists($classToFind)) {
-                            $propertyClass = $classToFind;
-                            $matches[1] = $classToFind;
-                        }
-                    }
+            if (null != ($type = $this->getAnnotatedType($rfProperty->getDocComment(), $rf->getNamespaceName()))) {
+                if (!$this->isPrimitive($type) && class_exists($type)) {
+                    $propertyClass = $type;
                 }
             }
             $inverseTable = $propertyClass ? $this->getAnnotatedTableName($propertyClass, $criterion) : $criterion;
 
             // search the table mapping conditions
-            if (preg_match("/@mappedBy\(([^\)].+)\)/", $rfProperty->getDocComment(), $matches)) {
-                $mappedBy = $this->parseMappedBy($matches[1]);
+            if (null != ($parameters = $this->getAnnotatedMappedByParameters($rfProperty->getDocComment()))) {
+                $mappedBy = $this->parseMappedBy($parameters);
 
                 $pkCol = $this->getAnnotatedPrimaryKeyColumn($class);
                 $inversePkCol = $this->getAnnotatedPrimaryKeyColumn($propertyClass);
@@ -534,7 +553,7 @@ trait OrmAnnotation
                 $columns[] = sprintf("%s.%s AS '%s.%s'", $inverseTable, $inversePkCol, $inverseTable, $inversePkCol);
             } elseif ($propertyClass != "") {
                 $inversePkCol = $this->getAnnotatedPrimaryKeyColumn($propertyClass);
-                $column = $this->getAnnotatedColumnName($class, $rfProperty->getName());
+                $column = $this->getAnnotatedColumnFromProperty($class, $rfProperty->getName());
                 $joinQuery = sprintf(
                     "JOIN %s AS %s ON %s.%s = %s.%s",
                     $inverseTable,
@@ -549,6 +568,48 @@ trait OrmAnnotation
         }
 
         return $joinQuery;
+    }
+
+    /**
+     * Get the mappedBy parameters from documentation comment
+     *
+     * @param string  $comment The documentation comment to parse
+     *
+     * @return string The parsed parameters or null
+     */
+    private function getAnnotatedMappedByParameters($comment)
+    {
+        $parameters = null;
+
+        $matches = array();
+        if (preg_match('/@mappedBy\(([^\)].+)\)/', $comment, $matches)) {
+            $parameters = $matches[1];
+        }
+        return $parameters;
+    }
+
+    /**
+     * Checks whether an entity has eager fetch type
+     *
+     * @param string $class Name of class of entity
+     *
+     * @return boolean true if fetch type is eager, false otherwise
+     *
+     * @throws OrmException
+     */
+    private function isEager($class)
+    {
+        $eager = false;
+        try
+        {
+            $rf = new ReflectionClass($class);
+            if (preg_match('/@eager/', $rf->getDocComment())) {
+                $eager = true;
+            }
+        } catch(ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
+        return $eager;
     }
 
     /**

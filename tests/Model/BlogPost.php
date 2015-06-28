@@ -12,6 +12,8 @@ use Nkey\Caribu\Model\AbstractModel;
  *
  * @table blog
  * @entity
+ * @cascade
+ * @eager
  */
 class BlogPost extends AbstractModel
 {
@@ -54,8 +56,7 @@ class BlogPost extends AbstractModel
 
     /**
      *
-     * @param
-     *            $postId
+     * @param int $postId
      */
     public function setPostId($postId)
     {
@@ -65,7 +66,7 @@ class BlogPost extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getContent()
     {
@@ -73,9 +74,7 @@ class BlogPost extends AbstractModel
     }
 
     /**
-     *
-     * @param
-     *            $content
+     * @param string $content
      */
     public function setContent($content)
     {
@@ -84,8 +83,7 @@ class BlogPost extends AbstractModel
     }
 
     /**
-     *
-     * @return the string
+     * @return string
      */
     public function getCreated()
     {
@@ -94,8 +92,7 @@ class BlogPost extends AbstractModel
 
     /**
      *
-     * @param
-     *            $created
+     * @param string $created
      */
     public function setCreated($created)
     {
@@ -105,7 +102,7 @@ class BlogPost extends AbstractModel
 
     /**
      *
-     * @return the BlogUser
+     * @return BlogUser
      */
     public function getUser()
     {
@@ -114,8 +111,7 @@ class BlogPost extends AbstractModel
 
     /**
      *
-     * @param
-     *            $user
+     * @param BlogUser $user
      */
     public function setUser($user)
     {
