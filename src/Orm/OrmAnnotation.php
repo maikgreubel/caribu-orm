@@ -8,6 +8,7 @@ use \ReflectionProperty;
 use \ReflectionObject;
 use \ReflectionException;
 use \ReflectionMethod;
+use Generics\GenericsException;
 
 /**
  * Annotation provider for Caribu Orm
@@ -69,7 +70,7 @@ trait OrmAnnotation
 
             foreach ($properties as $property) {
                 assert($property instanceof ReflectionProperty);
-                if (preg_match('/@id/', $property->getDocComment())) {
+                if ($this->isIdAnnotated($property->getDocComment())) {
                     $properyName = $property->getName();
                     break;
                 }
@@ -105,13 +106,9 @@ trait OrmAnnotation
             foreach ($properties as $property) {
                 assert($property instanceof ReflectionProperty);
                 $docComment = $property->getDocComment();
-                if (preg_match('/@id/', $docComment)) {
-                    $columnName = $property->getName();
-
-                    $matches = array();
-                    if (preg_match('/@column (\w+)/', $docComment, $matches) && count($matches) > 1) {
-                        array_shift($matches);
-                        $columnName = $matches[0];
+                if ($this->isIdAnnotated($docComment)) {
+                    if (null == ($columnName = $this->getAnnotatedColumn($docComment))) {
+                        $columnName = $property->getName();
                     }
                 }
             }
@@ -262,27 +259,17 @@ trait OrmAnnotation
 
             $persist = false;
 
-            $docComments = $rf->getDocComment();
-            if ($docComments && preg_match('/@cascade/', $docComments)) {
+            if ($this->isCascadeAnnotated($rf->getDocComment())) {
                 $persist = true;
             }
 
             foreach ($rf->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
-                $docComments = $property->getDocComment();
-                $matches = array();
 
-                if (preg_match('/@var ([\w\\\\]+)/', $docComments, $matches)) {
-                    $type = $matches[1];
-
-                    if ($type && !$this->isPrimitive($type) && !class_exists($type)) {
-                        $type = sprintf("\\%s\\%s", $rf->getNamespaceName(), $type);
-                    }
-
-                    if ($type && !$this->isPrimitive($type) && class_exists($type)) {
+                if (null != ($type = $this->getAnnotatedType($property->getDocComment(), $rf->getNamespaceName()))) {
+                    if (!$this->isPrimitive($type)) {
                         if (! $persist) {
-                            $entityDocComments = $property->getDocComment();
-                            if ($entityDocComments && preg_match('/@cascade/', $entityDocComments)) {
+                            if ($this->isCascadeAnnotated($property->getDocComment())) {
                                 $persist = true;
                             }
                         }
@@ -333,7 +320,7 @@ trait OrmAnnotation
 
             foreach ($properties as $property) {
                 assert($property instanceof ReflectionProperty);
-                $column = $property->getName();
+
 
                 $docComments = $property->getDocComment();
 
@@ -341,10 +328,8 @@ trait OrmAnnotation
                 if (preg_match('/@mappedBy/i', $docComments)) {
                     continue;
                 }
-
-                $matches = array();
-                if (preg_match('/@column (\w+)/', $docComments, $matches)) {
-                    $column = $matches[1];
+                if (null == ($column = $this->getAnnotatedColumn($docComments))) {
+                    $column = $property->getName();
                 }
 
                 $method = sprintf("get%s", ucfirst($property->getName()));
@@ -384,15 +369,12 @@ trait OrmAnnotation
             foreach ($properties as $property) {
                 assert($property instanceof ReflectionProperty);
                 $docComment = $property->getDocComment();
-                if ($docComment && preg_match('/@id/', $docComment)) {
+                if ($this->isIdAnnotated($docComment)) {
                     $method = sprintf("get%s", ucfirst($property->getName()));
                     $rfMethod = new ReflectionMethod($class, $method);
 
-                    $columnName = $property->getName();
-
-                    $matches = array();
-                    if (preg_match('/@column (\w+)/', $docComment, $matches)) {
-                        $columnName = $matches[1];
+                    if (null == ($columnName = $this->getAnnotatedColumn($docComment))) {
+                        $columnName = $property->getName();
                     }
 
                     $pk = $rfMethod->invoke($object);
@@ -436,16 +418,28 @@ trait OrmAnnotation
      * @param string $comment The document comment string which may contain the @var annotation
      *
      * @return string The parsed type
+     * 
+     * @throws OrmException
      */
     private function getAnnotatedType($comment, $namespace = null)
     {
         $type = null;
         $matches = array();
         if (preg_match('/@var ([\w\\\\]+)/', $comment, $matches)) {
-            $type = $matches[1];
+            $originType = $type = $matches[1];
+            
+            if ($this->isPrimitive($type)) {
+            	return $type;
+            }
 
-            if (!class_exists($type) && !strchr($type, "\\")) {
+            if (!class_exists($type) && !strchr($type, "\\") && $namespace !== null) {
                 $type = sprintf("\\%s\\%s", $namespace, $type);
+            }
+            
+            if (!class_exists($type)) {
+            	throw new OrmException("Annotated type {type} could not be found nor loaded", array(
+            		'type' => $originType
+            	));
             }
         }
         return $type;
@@ -481,6 +475,42 @@ trait OrmAnnotation
             $columnName = $matches[1];
         }
         return $columnName;
+    }
+
+    /**
+     * Check whether property is annotated using @id
+     *
+     * @param string $comment The document comment which may contain the @id annotation
+     *
+     * @return boolean true in case of it is annotated, false otherwise
+     */
+    private function isIdAnnotated($comment)
+    {
+        $isId = false;
+
+        if (preg_match('/@id/', $comment)) {
+            $isId = true;
+        }
+
+        return $isId;
+    }
+
+    /**
+     * Check whether property is annotated using @cascade
+     *
+     * @param string $comment The document comment which may contain the @cascade annotation
+     *
+     * @return boolean true in case of it is annotated, false otherwise
+     */
+    private function isCascadeAnnotated($comment)
+    {
+        $isCascade = false;
+
+        if (preg_match('/@cascade/', $comment)) {
+            $isCascade = true;
+        }
+
+        return $isCascade;
     }
 
     /**

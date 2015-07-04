@@ -575,7 +575,7 @@ class Orm
 
                         $setMethod->invoke($object, self::map($result, $type));
                     } catch (PDOException $ex) {
-                        $instance->rollBackTX();
+                        $instance->rollBackTX($ex);
                         throw OrmException::fromPrevious($ex);
                     }
                 }
@@ -863,7 +863,7 @@ class Orm
 
                             $instance->commitTX();
                         } catch (PDOException $ex) {
-                            $instance->rollBackTX();
+                            $instance->rollBackTX($ex);
                             throw $ex;
                         }
                     }
@@ -939,7 +939,7 @@ class Orm
             $instance->commitTX();
 
         } catch (PDOException $ex) {
-            $instance->rollBackTX();
+            $instance->rollBackTX($ex);
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
@@ -978,7 +978,7 @@ class Orm
             unset($statement);
             $instance->commitTX();
         } catch (PDOException $ex) {
-            $instance->rollBackTX();
+            $instance->rollBackTX($ex);
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
@@ -1041,17 +1041,17 @@ class Orm
      *
      * @throws OrmException
      */
-    private function rollBackTX()
+    private function rollBackTX(Exception $previousException = null)
     {
         $this->transactionStack = 0; // Yes, we just ignore any error and reset the transaction stack here
 
         if (!$this->connection->inTransaction()) {
-            throw new OrmException("Transaction not open");
+            throw new OrmException("Transaction not open", array(), 102, $previousException);
         }
 
         try {
             if (!$this->connection->rollBack()) {
-                throw new OrmException("Could not rollback!");
+                throw new OrmException("Could not rollback!", array(), 103, $previousException);
             }
         }
         catch (PDOException $ex) {
