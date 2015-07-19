@@ -70,6 +70,7 @@ class EnityListTest extends AbstractDatabaseTestCase
 
         $this->assertFalse(is_null($posts[0]->getUser()));
         $this->assertEquals('joe', $posts[0]->getUser()->getName());
+        $this->assertEquals('joe', $posts[0]->getUser()->toArray()[1]);
 
         $this->assertFalse(is_null($posts[1]->getUser()));
         $this->assertEquals('joe', $posts[1]->getUser()->getName());

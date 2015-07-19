@@ -30,7 +30,7 @@
 	<target name="update-deps" depends="update-deps-unix,update-deps-windows" />
 
 	<target name="build"
-		depends="prepare,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
+		depends="prepare,update-deps,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
 		description="" />
 
 	<target name="build-parallel" depends="prepare,lint,tools-parallel,phpunit,phpdox"
@@ -60,7 +60,7 @@
 		<property name="clean.done" value="true" />
 	</target>
 
-	<target name="prepare" unless="prepare.done" depends="clean,update-deps"
+	<target name="prepare" unless="prepare.done" depends="clean"
 		description="Prepare for build">
 		<mkdir dir="${basedir}/build/api" />
 		<mkdir dir="${basedir}/build/coverage" />
