@@ -371,7 +371,7 @@ class Orm
     private function createQuery(
         $class,
         $tableName,
-        array $criteria,
+        array &$criteria,
         array $columns,
         $orderBy = '',
         $limit = 0,

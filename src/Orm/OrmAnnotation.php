@@ -418,7 +418,7 @@ trait OrmAnnotation
      * @param string $comment The document comment string which may contain the @var annotation
      *
      * @return string The parsed type
-     * 
+     *
      * @throws OrmException
      */
     private function getAnnotatedType($comment, $namespace = null)
@@ -427,7 +427,7 @@ trait OrmAnnotation
         $matches = array();
         if (preg_match('/@var ([\w\\\\]+)/', $comment, $matches)) {
             $originType = $type = $matches[1];
-            
+
             if ($this->isPrimitive($type)) {
             	return $type;
             }
@@ -435,7 +435,7 @@ trait OrmAnnotation
             if (!class_exists($type) && !strchr($type, "\\") && $namespace !== null) {
                 $type = sprintf("\\%s\\%s", $namespace, $type);
             }
-            
+
             if (!class_exists($type)) {
             	throw new OrmException("Annotated type {type} could not be found nor loaded", array(
             		'type' => $originType
@@ -514,6 +514,42 @@ trait OrmAnnotation
     }
 
     /**
+     * Parse a complex crition into simple criterion
+     * @param unknown $criterion
+     */
+    private function getSimpleCriterionName($criterion)
+    {
+        $criterion = str_ireplace('OR ', '', $criterion);
+        if (strpos($criterion, '.')) {
+            list($criterion) = explode('.', $criterion);
+        }
+        return $criterion;
+    }
+
+    /**
+     * When criterion is a property but annotated column name differs, we take the column name
+     *
+     * @param string $className The entity class name
+     * @param string $criterion The criterion
+     */
+    private function getAnnotatedCriterion($className, $criterion)
+    {
+        $class = new ReflectionClass($className);
+        $simpleCriterion = $this->getSimpleCriterionName($criterion);
+        if ($class->hasProperty($simpleCriterion)) {
+            $property = $class->getProperty($simpleCriterion);
+            if ($criterion == $simpleCriterion) {
+                $column = $this->getAnnotatedColumn($property->getDocComment());
+                if (null != $column) {
+                    $criterion = str_replace($simpleCriterion, $column, $criterion);
+                }
+            }
+        }
+
+        return $criterion;
+    }
+
+    /**
      * Get the annotated join query
      *
      * @param string $class The name of class to use as left class
@@ -533,8 +569,11 @@ trait OrmAnnotation
 
         $rf = new ReflectionClass($class);
 
+        $replacedCriteria = array();
+
         // Example criterion: user.name => 'john'
         foreach (array_keys($criteria) as $criterion) {
+            $replacedCriteria[$this->getAnnotatedCriterion($class, $criterion)] = $criteria[$criterion];
             // from example criterionProperty will be 'name', criterion will now be 'user'
             if (strpos($criterion, '.') !== false) {
                 list ($criterion) = explode('.', $criterion);
@@ -596,6 +635,7 @@ trait OrmAnnotation
                 $columns[] = sprintf("%s.%s AS '%s.%s'", $criterion, $inversePkCol, $criterion, $inversePkCol);
             }
         }
+        $criteria = $replacedCriteria;
 
         return $joinQuery;
     }

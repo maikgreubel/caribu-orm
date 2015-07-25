@@ -77,6 +77,16 @@ class ReferencesTest extends AbstractDatabaseTestCase
             ->getId());
     }
 
+    public function testFindViaProperty()
+    {
+        $entity = ReferencedGuestBook::find(array("gid" => 1));
+        $this->assertFalse(is_null($entity));
+        $this->assertFalse(is_null($entity->getUser()));
+        $this->assertTrue($entity->getUser() instanceof User);
+        $this->assertEquals(1, $entity->getUser()
+            ->getId());
+    }
+
     /**
      * Test persisting referenced entities
      */
