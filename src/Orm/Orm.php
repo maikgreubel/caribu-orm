@@ -939,7 +939,6 @@ class Orm
             $instance->commitTX();
 
         } catch (PDOException $ex) {
-            $instance->rollBackTX($ex);
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
@@ -1044,6 +1043,10 @@ class Orm
     private function rollBackTX(Exception $previousException = null)
     {
         $this->transactionStack = 0; // Yes, we just ignore any error and reset the transaction stack here
+
+        if (!$this->connection) {
+            throw new OrmException("Connection not open", array(), 101, $previousException);
+        }
 
         if (!$this->connection->inTransaction()) {
             throw new OrmException("Transaction not open", array(), 102, $previousException);
