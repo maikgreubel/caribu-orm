@@ -388,6 +388,14 @@ class Orm
             $placeHolder = str_replace('OR ', 'OR_', $placeHolder);
             if (stristr($criteria[$criterion], 'LIKE')) {
                 $wheres[] = sprintf("%s LIKE :%s", $criterion, $placeHolder);
+            } elseif (stristr($criteria[$criterion], 'BETWEEN ')) {
+                $start = $end = null;
+                sscanf(strtoupper($criteria[$criterion]), "BETWEEN %d AND %d", $start, $end);
+                if(!$start || !$end) {
+                    throw new OrmException("Invalid range for between");
+                }
+                $wheres[] = sprintf("%s BETWEEN %d AND %d", $criterion, $start, $end);
+                unset($criteria[$criterion]);
             } else {
                 $wheres[] = sprintf("%s = :%s", $criterion, $placeHolder);
             }

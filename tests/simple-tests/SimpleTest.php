@@ -131,4 +131,10 @@ class SimpleTest extends AbstractDatabaseTestCase
         $entities = AnnotatedGuestBookModel::find(array('user' => 'LIKE jo%', 'OR user' => 'LIKE bo%'));
         $this->assertEquals(3, count($entities));
     }
+
+    public function testBetween()
+    {
+        $entities = AnnotatedGuestBookModel::find(array('gid' => 'BETWEEN 1 AND 3'));
+        $this->assertEquals(3, count($entities));
+    }
 }
