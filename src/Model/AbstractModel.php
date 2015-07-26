@@ -27,7 +27,10 @@ abstract class AbstractModel extends \Nkey\Caribu\Orm\Orm
         $rf = new \ReflectionClass(get_class($this));
         foreach ($rf->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
             assert($method instanceof \ReflectionMethod);
-            if(substr($method->getName(), 0, 3) == 'get' && $method->getName() != 'get') {
+            if ($method->getDeclaringClass() != $rf) {
+                continue;
+            }
+            if (substr($method->getName(), 0, 3) == 'get' && $method->getName() != 'get') {
                 $values[] = $method->invoke($this);
             }
         }
