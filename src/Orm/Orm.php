@@ -35,6 +35,21 @@ class Orm
     use OrmAnnotation;
 
     /**
+     * Include the connection related functionality
+     */
+    use OrmConnection;
+
+    /**
+     * Include the transaction related functionality
+     */
+    use OrmTransaction;
+
+    /**
+     * Include exception handling related functionality
+     */
+    use OrmExceptionHandler;
+
+    /**
      * Include logging facility
      */
     use LoggerTrait;
@@ -47,86 +62,9 @@ class Orm
     private static $instance = null;
 
     /**
-     * The concrete database type
-     *
-     * @var string
-     */
-    private $type = null;
-
-    /**
-     * The database schema
-     *
-     * @var string
-     */
-    private $schema = null;
-
-    /**
-     * Database connection user
-     *
-     * @var string
-     */
-    private $user = null;
-
-    /**
-     * Database connection password
-     *
-     * @var string
-     */
-    private $password = null;
-
-    /**
-     * Database connection host
-     *
-     * @var string
-     */
-    private $host = null;
-
-    /**
-     * Database connection port
-     *
-     * @var int
-     */
-    private $port = null;
-
-    /**
-     * Embedded database file
-     *
-     * @var string
-     */
-    private $file = null;
-
-    /**
-     * Settings to use for connection
-     *
-     * @var array
-     */
-    private $settings = null;
-
-    /**
-     * The database connection
-     *
-     * @var PDO
-     */
-    private $connection = null;
-
-    /**
-     * Database type
-     *
-     * @var AbstractType
-     */
-    private $dbType = null;
-
-    /**
-     * The stack of open transactions
-     *
-     * @var int
-     */
-    private $transactionStack = 0;
-
-    /**
      * Singleton pattern
      *
-     * @return \Nkey\Caribu\Orm\Orm
+     * @return Orm The current instance
      */
     public static function getInstance()
     {
@@ -155,59 +93,6 @@ class Orm
     }
 
     /**
-     * Configure the Orm
-     *
-     * @param array $options Various options to use for configuration. See documentation for details.
-     */
-    public static function configure($options = array())
-    {
-        self::parseOptions($options);
-    }
-
-    /**
-     * Parse the options
-     *
-     * @param array $options The options to parse
-     */
-    private static function parseOptions($options)
-    {
-        foreach ($options as $option => $value) {
-            switch ($option) {
-                case 'type':
-                    self::getInstance()->type = $value;
-                    break;
-
-                case 'schema':
-                    self::getInstance()->schema = $value;
-                    break;
-
-                case 'user':
-                    self::getInstance()->user = $value;
-                    break;
-
-                case 'password':
-                    self::getInstance()->password = $value;
-                    break;
-
-                case 'host':
-                    self::getInstance()->host = $value;
-                    break;
-
-                case 'port':
-                    self::getInstance()->port = $value;
-                    break;
-
-                case 'file':
-                    self::getInstance()->file = $value;
-                    break;
-
-                default:
-                    self::getInstance()->settings[$option] = $value;
-            }
-        }
-    }
-
-    /**
      * Interpolate a given string
      *
      * @param string $string The string to interpolate
@@ -218,59 +103,6 @@ class Orm
     protected function interp($string, array $context = array())
     {
         return self::interpolate($string, $context);
-    }
-
-    /**
-     * Create a new database connection
-     *
-     * @throws OrmException
-     */
-    private function createConnection()
-    {
-        $this->dbType = TypeFactory::create($this);
-
-        $dsn = $this->dbType->getDsn();
-
-        $dsn = $this->interp($dsn, array(
-            'host' => $this->host,
-            'port' => $this->port,
-            'schema' => $this->schema,
-            'file' => $this->file
-        ));
-
-        try {
-            $this->connection = new PDO($dsn, $this->user, $this->password, $this->settings);
-            $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            $this->getLog()->info("New instance of PDO connection established");
-        } catch (PDOException $ex) {
-            throw OrmException::fromPrevious($ex);
-        }
-    }
-
-    /**
-     * Retrieve the database connection
-     *
-     * @return PDO The database connection
-     *
-     * @throws OrmException
-     */
-    public function getConnection()
-    {
-        if (null == $this->connection) {
-            $this->createConnection();
-        }
-
-        return $this->connection;
-    }
-
-    /**
-     * Retrieve the selected schema of the connection
-     *
-     * @return string The name of schema
-     */
-    public function getSchema()
-    {
-        return $this->schema;
     }
 
     /**
@@ -288,8 +120,9 @@ class Orm
         $simpleClassName = end($parts);
         $tableName = strtolower($simpleClassName);
         $tableName = preg_replace('#model$#', '', $tableName);
-
-        return self::getInstance()->getAnnotatedTableName($class, $tableName);
+        $instance = self::getInstance();
+        assert($instance instanceof Orm);
+        return $instance->getAnnotatedTableName($class, $tableName);
     }
 
     /**
@@ -304,6 +137,7 @@ class Orm
     private function getPrimaryKeyCol($class)
     {
         $instance = self::getInstance();
+        assert($instance instanceof Orm);
 
         $pkColumn = $instance->getAnnotatedPrimaryKeyColumn($class);
         if (! $pkColumn) {
@@ -314,16 +148,6 @@ class Orm
         }
 
         return $pkColumn;
-    }
-
-    /**
-     * Retrieve the type of database
-     *
-     * @return string The type of database
-     */
-    public function getType()
-    {
-        return self::getInstance()->type;
     }
 
     /**
@@ -338,6 +162,7 @@ class Orm
     public static function get($id)
     {
         $instance = self::getInstance();
+        assert($instance instanceof Orm);
 
         $className = get_called_class();
 
@@ -386,9 +211,9 @@ class Orm
         foreach ($criterias as $criterion) {
             $placeHolder = str_replace('.', '_', $criterion);
             $placeHolder = str_replace('OR ', 'OR_', $placeHolder);
-            if (stristr($criteria[$criterion], 'LIKE')) {
+            if (strtoupper(substr($criteria[$criterion], 0, 4)) == 'LIKE') {
                 $wheres[] = sprintf("%s LIKE :%s", $criterion, $placeHolder);
-            } elseif (stristr($criteria[$criterion], 'BETWEEN ')) {
+            } elseif (strtoupper(substr($criteria[$criterion], 0, 7)) == 'BETWEEN') {
                 $start = $end = null;
                 sscanf(strtoupper($criteria[$criterion]), "BETWEEN %s AND %s", $start, $end);
                 if (!$start || !$end) {
@@ -460,6 +285,7 @@ class Orm
         $result = null;
         try {
             $instance = self::getInstance();
+            assert($instance instanceof Orm);
             $result = $instance->mapAnnotated($from, $toClass);
             $instance->mapReferenced($from, $toClass, $result);
             if ($instance->isEager($toClass)) {
@@ -576,6 +402,7 @@ class Orm
                     );
 
                     $instance = self::getInstance();
+                    assert($instance instanceof Orm);
 
                     try {
                         $connection = $instance->startTX();
@@ -604,37 +431,6 @@ class Orm
     }
 
     /**
-     * Handle a previous occured pdo exception
-     *
-     * @param PDO $connection The underlying database connection
-     * @param PDOStatement $statement The statement which caused the exception to rollback
-     * @param Exception $ex The exception cause
-     *
-     * @return OrmException
-     */
-    private function handleException(PDO $connection, $statement, Exception $ex, $message = null, $code = 0)
-    {
-        $toThrow = OrmException::fromPrevious($ex, $message, $code);
-
-        try {
-            if ($statement != null) {
-                $statement->closeCursor();
-            }
-            unset($statement);
-        } catch (PDOException $cex) {
-            // Ignore close cursor exception
-        }
-
-        try {
-            $this->rollBackTX();
-        } catch (PDOException $rbex) {
-            $toThrow = new OrmException($rbex->getMessage(), array(), $rbex->getCode(), $toThrow);
-        }
-
-        return $toThrow;
-    }
-
-    /**
      * Find data sets by given criteria
      *
      * @param array $criteria Array of criterias in form of "property" => "value"
@@ -652,6 +448,8 @@ class Orm
         $results = null;
 
         $instance = self::getInstance();
+        assert($instance instanceof Orm);
+
         $class = get_called_class();
 
         $table = $instance->getTableName($class);
@@ -678,7 +476,7 @@ class Orm
                 $statement->bindValue(":" . $placeHolder, $value);
             }
 
-            $statement->execute(); // Not good documented, but it seems, that execute() will throw an exception
+            $statement->execute();
 
             $unmapped = array();
             while ($result = $statement->fetch(PDO::FETCH_OBJ)) {
@@ -836,6 +634,7 @@ class Orm
     private function persistMappedBy($class, $object)
     {
         $instance = self::getInstance();
+        assert($instance instanceof Orm);
 
         try {
             $rf = new ReflectionClass($class);
@@ -901,6 +700,7 @@ class Orm
     public function persist()
     {
         $instance = self::getInstance();
+        assert($instance instanceof Orm);
 
         $class = get_class($this);
 
@@ -970,6 +770,7 @@ class Orm
     public function delete()
     {
         $instance = self::getInstance();
+        assert($instance instanceof Orm);
 
         $class = get_class($this);
 
@@ -1011,71 +812,6 @@ class Orm
 
         if (self::$instance) {
             self::$instance = null;
-        }
-    }
-
-    /**
-     * Begin a new transaction
-     *
-     * @return PDO
-     */
-    private function startTX()
-    {
-        if (null == $this->connection) {
-            $this->connection = $this->getConnection();
-        }
-
-        if (!$this->connection->inTransaction()) {
-            $this->connection->beginTransaction();
-        }
-
-        $this->transactionStack++;
-
-        return $this->connection;
-    }
-
-    /**
-     * Try to commit the complete transaction stack
-     *
-     * @throws OrmException
-     * @throws PDOException
-     */
-    private function commitTX()
-    {
-        if (!$this->connection->inTransaction()) {
-            throw new OrmException("Transaction is not open");
-        }
-
-        $this->transactionStack--;
-
-        if ($this->transactionStack === 0) {
-            $this->connection->commit();
-        }
-    }
-
-    /**
-     * Rollback the complete stack
-     *
-     * @throws OrmException
-     */
-    private function rollBackTX(Exception $previousException = null)
-    {
-        $this->transactionStack = 0; // Yes, we just ignore any error and reset the transaction stack here
-
-        if (!$this->connection) {
-            throw new OrmException("Connection not open", array(), 101, $previousException);
-        }
-
-        if (!$this->connection->inTransaction()) {
-            throw new OrmException("Transaction not open", array(), 102, $previousException);
-        }
-
-        try {
-            if (!$this->connection->rollBack()) {
-                throw new OrmException("Could not rollback!", array(), 103, $previousException);
-            }
-        } catch (PDOException $ex) {
-            throw OrmException::fromPrevious($ex);
         }
     }
 }

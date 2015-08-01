@@ -693,7 +693,7 @@ trait OrmAnnotation
     {
         $isPrimitive = false;
 
-        switch($type) {
+        switch ($type) {
             case 'int':
             case 'integer':
             case 'string':
