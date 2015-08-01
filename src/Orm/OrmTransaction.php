@@ -86,5 +86,4 @@ trait OrmTransaction
 
         return $previousException;
     }
-
 }

@@ -449,7 +449,6 @@ class Orm
                     $statement = null;
 
                     try {
-
                         $statement = $connection->prepare($query);
                         $statement->bindValue(sprintf(":%s", $ownPrimaryKeyName), $ownPrimaryKey);
 
@@ -723,7 +722,13 @@ class Orm
 
                             $instance->commitTX();
                         } catch (PDOException $ex) {
-                            throw $this->handleException($connection, $statement, $ex, "Persisting related entities failed", - 1010);
+                            throw $this->handleException(
+                                $connection,
+                                $statement,
+                                $ex,
+                                "Persisting related entities failed",
+                                -1010
+                            );
                         }
                     }
                 }
