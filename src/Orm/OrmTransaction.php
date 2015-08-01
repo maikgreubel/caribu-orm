@@ -2,6 +2,7 @@
 namespace Nkey\Caribu\Orm;
 
 use \Exception;
+use \PDO;
 
 /**
  * Transaction related functionality
@@ -61,27 +62,29 @@ trait OrmTransaction
     /**
      * Rollback the complete stack
      *
-     * @throws OrmException
+     * @return OrmException either previous exception or new occured during rollback containing previous
      */
-    private function rollBackTX(Exception $previousException = null)
+    private function rollBackTX(PDO $connection, Exception $previousException = null)
     {
         $this->transactionStack = 0; // Yes, we just ignore any error and reset the transaction stack here
 
-        if (!$this->connection) {
-            throw new OrmException("Connection not open", array(), 101, $previousException);
+        if (!$connection) {
+            $previousException = new OrmException("Connection not open", array(), 101, $previousException);
         }
 
-        if (!$this->connection->inTransaction()) {
-            throw new OrmException("Transaction not open", array(), 102, $previousException);
+        if (!$connection->inTransaction()) {
+            $previousException = new OrmException("Transaction not open", array(), 102, $previousException);
         }
 
         try {
-            if (!$this->connection->rollBack()) {
-                throw new OrmException("Could not rollback!", array(), 103, $previousException);
+            if (!$connection->rollBack()) {
+                $previousException = new OrmException("Could not rollback!", array(), 103, $previousException);
             }
         } catch (PDOException $ex) {
-            throw OrmException::fromPrevious($ex);
+            $previousException = OrmException::fromPrevious($ex);
         }
+
+        return $previousException;
     }
 
 }

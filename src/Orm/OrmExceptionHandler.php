@@ -35,11 +35,7 @@ trait OrmExceptionHandler
             // Ignore close cursor exception
         }
 
-        try {
-            $this->rollBackTX();
-        } catch (PDOException $rbex) {
-            $toThrow = new OrmException($rbex->getMessage(), array(), $rbex->getCode(), $toThrow);
-        }
+        $toThrow = $this->rollBackTX($connection, $toThrow);
 
         return $toThrow;
     }

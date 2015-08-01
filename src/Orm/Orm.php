@@ -180,6 +180,91 @@ class Orm
     }
 
     /**
+     * Loops over all where conditions and create a string of it
+     *
+     * @param array $wheres
+     * @return string The where conditions as string
+     */
+    private function whereConditionsAsString(array $wheres)
+    {
+        if (count($wheres)) {
+            $t = "";
+            foreach ($wheres as $where) {
+                $and = "";
+                if ($t) {
+                    $and = substr($where, 0, 3) == 'OR ' ? " " : " AND ";
+                }
+                $t .= $and . $where;
+            }
+            $wheres = sprintf("WHERE %s", $t);
+        } else {
+            $wheres = '';
+        }
+
+        return $wheres;
+    }
+
+    /**
+     * Parse criteria into where conditions
+     *
+     * @param array $criteria The criteria to parse
+     * @return string The where conditions
+     *
+     * @throws OrmException
+     */
+    private function parseCriteria(array &$criteria)
+    {
+        $wheres = array();
+
+        $criterias = array_keys($criteria);
+
+        foreach ($criterias as $criterion) {
+            $placeHolder = str_replace('.', '_', $criterion);
+            $placeHolder = str_replace('OR ', 'OR_', $placeHolder);
+            if (strtoupper(substr($criteria[$criterion], 0, 4)) == 'LIKE') {
+                $wheres[] = sprintf("%s LIKE :%s", $criterion, $placeHolder);
+            } elseif (strtoupper(substr($criteria[$criterion], 0, 7)) == 'BETWEEN') {
+                $start = $end = null;
+                sscanf(strtoupper($criteria[$criterion]), "BETWEEN %s AND %s", $start, $end);
+                if (!$start || !$end) {
+                    throw new OrmException("Invalid range for between");
+                }
+                $wheres[] = sprintf("%s BETWEEN %s AND %s", $criterion, $start, $end);
+                unset($criteria[$criterion]);
+            } else {
+                $wheres[] = sprintf("%s = :%s", $criterion, $placeHolder);
+            }
+        }
+
+        return $this->whereConditionsAsString($wheres);
+    }
+
+    /**
+     * Prepare the limit and offset modifier
+     *
+     * @param int $limit
+     * @param int $startFrom
+     *
+     * @return string The limit modifier or empty string
+     */
+    private function parseLimits($limit = 0, $startFrom = 0)
+    {
+        $limits = "";
+        if ($startFrom > 0) {
+            $limits = sprintf("%d,", $startFrom);
+        }
+        if ($limit > 0) {
+            $limits .= $limit;
+        }
+
+        if ($limits) {
+            $limits = sprintf("LIMIT %s", $limits);
+        }
+
+        return $limits;
+    }
+
+    /**
      * Create a query for selection
      *
      * @param string $class The class for which the query will be created
@@ -202,55 +287,11 @@ class Orm
         $limit = 0,
         $startFrom = 0
     ) {
-        $wheres = array();
-
         $joins = $this->getAnnotatedQuery($class, $tableName, $this, $criteria, $columns);
 
-        $criterias = array_keys($criteria);
+        $wheres = $this->parseCriteria($criteria);
 
-        foreach ($criterias as $criterion) {
-            $placeHolder = str_replace('.', '_', $criterion);
-            $placeHolder = str_replace('OR ', 'OR_', $placeHolder);
-            if (strtoupper(substr($criteria[$criterion], 0, 4)) == 'LIKE') {
-                $wheres[] = sprintf("%s LIKE :%s", $criterion, $placeHolder);
-            } elseif (strtoupper(substr($criteria[$criterion], 0, 7)) == 'BETWEEN') {
-                $start = $end = null;
-                sscanf(strtoupper($criteria[$criterion]), "BETWEEN %s AND %s", $start, $end);
-                if (!$start || !$end) {
-                    throw new OrmException("Invalid range for between");
-                }
-                $wheres[] = sprintf("%s BETWEEN %s AND %s", $criterion, $start, $end);
-                unset($criteria[$criterion]);
-            } else {
-                $wheres[] = sprintf("%s = :%s", $criterion, $placeHolder);
-            }
-        }
-
-        if (count($wheres)) {
-            $t = "";
-            foreach ($wheres as $where) {
-                $and = "";
-                if ($t) {
-                    $and = substr($where, 0, 3) == 'OR ' ? " " : " AND ";
-                }
-                $t .= $and . $where;
-            }
-            $wheres = sprintf("WHERE %s", $t);
-        } else {
-            $wheres = '';
-        }
-
-        $limits = "";
-        if ($startFrom > 0) {
-            $limits = sprintf("%d,", $startFrom);
-        }
-        if ($limit > 0) {
-            $limits .= $limit;
-        }
-
-        if ($limits) {
-            $limits = sprintf("LIMIT %s", $limits);
-        }
+        $limits = $this->parseLimits($limit, $startFrom);
 
         if ($orderBy && ! stristr($orderBy, 'ORDER BY ')) {
             $orderBy = sprintf("ORDER BY %s", $orderBy);
@@ -404,8 +445,10 @@ class Orm
                     $instance = self::getInstance();
                     assert($instance instanceof Orm);
 
+                    $connection = $instance->startTX();
+                    $statement = null;
+
                     try {
-                        $connection = $instance->startTX();
 
                         $statement = $connection->prepare($query);
                         $statement->bindValue(sprintf(":%s", $ownPrimaryKeyName), $ownPrimaryKey);
@@ -420,8 +463,7 @@ class Orm
 
                         $setMethod->invoke($object, self::map($result, $type));
                     } catch (PDOException $ex) {
-                        $instance->rollBackTX($ex);
-                        throw OrmException::fromPrevious($ex);
+                        throw $this->handleException($connection, $statement, $ex, "Mapping failed", - 1010);
                     }
                 }
             }
@@ -681,8 +723,7 @@ class Orm
 
                             $instance->commitTX();
                         } catch (PDOException $ex) {
-                            $instance->rollBackTX($ex);
-                            throw $ex;
+                            throw $this->handleException($connection, $statement, $ex, "Persisting related entities failed", - 1010);
                         }
                     }
                 }
@@ -690,6 +731,34 @@ class Orm
         } catch (ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
         }
+    }
+
+    /**
+     * Create a insert or update statement
+     *
+     * @param string    $class              The class of entity
+     * @param array     $pairs              The pairs of columns and its corresponding values
+     * @param string    $primaryKeyCol      The name of column which represents the primary key
+     * @param mixed     $primaryKeyValue    The primary key value
+     *
+     * @return string
+     */
+    private function createUpdateStatement($class, $pairs, $primaryKeyCol, $primaryKeyValue)
+    {
+        $tableName = $this->getTableName($class);
+
+        $query = sprintf("INSERT INTO %s ", $tableName);
+        if ($primaryKeyValue) {
+            $query = sprintf("UPDATE %s ", $tableName);
+        }
+
+        $query .= $this->persistenceQueryParams($pairs, $primaryKeyCol, is_null($primaryKeyValue));
+
+        if ($primaryKeyValue) {
+            $query .= sprintf(" WHERE %s = :%s", $primaryKeyCol, $primaryKeyCol);
+        }
+
+        return $query;
     }
 
     /**
@@ -706,8 +775,6 @@ class Orm
 
         $this->persistAnnotated($class, $this);
 
-        $tableName = $this->getTableName($class);
-
         $pk = $this->getPrimaryKey($class, $this);
         if (is_null($pk)) {
             throw new OrmException("No primary key column found!");
@@ -718,16 +785,7 @@ class Orm
 
         $pairs = $this->getAnnotatedColumnValuePairs($class, $this);
 
-        $query = sprintf("INSERT INTO %s ", $tableName);
-        if ($primaryKeyValue) {
-            $query = sprintf("UPDATE %s ", $tableName);
-        }
-
-        $query .= $this->persistenceQueryParams($pairs, $primaryKeyCol, is_null($primaryKeyValue));
-
-        if ($primaryKeyValue) {
-            $query .= sprintf(" WHERE %s = :%s", $primaryKeyCol, $primaryKeyCol);
-        }
+        $query = $this->createUpdateStatement($class, $pairs, $primaryKeyCol, $primaryKeyValue);
 
         $connection = $instance->startTX();
         $statement = null;
@@ -756,7 +814,6 @@ class Orm
             $this->persistMappedBy($class, $this);
 
             $instance->commitTX();
-
         } catch (PDOException $ex) {
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
@@ -785,9 +842,10 @@ class Orm
             throw new OrmException("Entity is not persisted or detached. Can not delete.");
         }
 
+        $query = sprintf("DELETE FROM %s WHERE %s = :%s", $tableName, $primaryKeyCol, $primaryKeyCol);
+
         $connection = $instance->startTX();
         $statement = null;
-        $query = sprintf("DELETE FROM %s WHERE %s = :%s", $tableName, $primaryKeyCol, $primaryKeyCol);
 
         try {
             $statement = $connection->prepare($query);
@@ -796,7 +854,6 @@ class Orm
             unset($statement);
             $instance->commitTX();
         } catch (PDOException $ex) {
-            $instance->rollBackTX($ex);
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
