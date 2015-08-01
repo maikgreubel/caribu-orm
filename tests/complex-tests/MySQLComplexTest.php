@@ -1,7 +1,7 @@
 <?php
 namespace Nkey\Caribu\Tests;
 
-require_once dirname(__FILE__).'/../AbstractDatabaseTestCase.php';
+require_once dirname(__FILE__).'/../MySqlAbstractDatabaseTestCase.php';
 require_once dirname(__FILE__).'/../Model/MockedModel.php';
 require_once dirname(__FILE__).'/../Model/GuestBookModel.php';
 require_once dirname(__FILE__).'/../Model/AnnotatedGuestBookModel.php';
@@ -10,7 +10,7 @@ use Nkey\Caribu\Tests\Model\MockedModel;
 use Nkey\Caribu\Tests\Model\GuestBookModel;
 use Nkey\Caribu\Tests\Model\AnnotatedGuestBookModel;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
+use Nkey\Caribu\Tests\MySqlAbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
 
 /**

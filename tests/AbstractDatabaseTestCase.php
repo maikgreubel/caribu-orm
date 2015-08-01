@@ -83,5 +83,4 @@ abstract class AbstractDatabaseTestCase extends PHPUnit_Extensions_Database_Test
         }
         return $this->dataset;
     }
-
 }

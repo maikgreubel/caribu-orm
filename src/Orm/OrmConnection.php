@@ -4,6 +4,7 @@ namespace Nkey\Caribu\Orm;
 use Nkey\Caribu\Type\TypeFactory;
 
 use \PDO;
+use \PDOException;
 
 /**
  * Connection related functionality for the ORM
@@ -160,7 +161,7 @@ trait OrmConnection
             $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
             $this->getLog()->info("New instance of PDO connection established");
         } catch (PDOException $ex) {
-            throw OrmException::fromPrevious($ex);
+            throw OrmException::fromPrevious($ex, $ex->getMessage(), $ex->getCode());
         }
     }
 
