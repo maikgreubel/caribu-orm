@@ -391,7 +391,7 @@ class Orm
             } elseif (stristr($criteria[$criterion], 'BETWEEN ')) {
                 $start = $end = null;
                 sscanf(strtoupper($criteria[$criterion]), "BETWEEN %s AND %s", $start, $end);
-                if(!$start || !$end) {
+                if (!$start || !$end) {
                     throw new OrmException("Invalid range for between");
                 }
                 $wheres[] = sprintf("%s BETWEEN %s AND %s", $criterion, $start, $end);
@@ -526,21 +526,24 @@ class Orm
         try {
             $rfToClass = new ReflectionClass($toClass);
 
-            foreach ($rfToClass->getProperties() as $property)
-            {
+            foreach ($rfToClass->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
 
                 if (null != ($parameters = $this->getAnnotatedMappedByParameters($property->getDocComment()))) {
                     $mappedBy = $this->parseMappedBy($parameters);
 
-                    if (null == ($type = $this->getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName()))) {
-                        throw new OrmException("Can't use mappedBy without specific type for property {property}",
+                    $type = $this->getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName());
+
+                    if (null == $type) {
+                        throw new OrmException(
+                            "Can't use mappedBy without specific type for property {property}",
                             array('property' => $property->getName())
                         );
                     }
 
                     if ($this->isPrimitive($type)) {
-                        throw new OrmException("Primitive type can not be used in mappedBy for property {property}",
+                        throw new OrmException(
+                            "Primitive type can not be used in mappedBy for property {property}",
                             array('property' => $property->getName())
                         );
                     }
@@ -560,9 +563,16 @@ class Orm
                         "SELECT %s.* FROM %s
                         JOIN %s ON %s.%s = %s.%s
                         WHERE %s.%s = :%s",
-                        $otherTable, $otherTable,
-                        $mappedBy['table'], $mappedBy['table'], $mappedBy['column'], $otherTable, $otherPrimaryKeyName,
-                        $mappedBy['table'], $mappedBy['inverseColumn'], $ownPrimaryKeyName
+                        $otherTable,
+                        $otherTable,
+                        $mappedBy['table'],
+                        $mappedBy['table'],
+                        $mappedBy['column'],
+                        $otherTable,
+                        $otherPrimaryKeyName,
+                        $mappedBy['table'],
+                        $mappedBy['inverseColumn'],
+                        $ownPrimaryKeyName
                     );
 
                     $instance = self::getInstance();
@@ -852,17 +862,18 @@ class Orm
                             throw new OrmException("No primary key column found!");
                         }
 
-                        $query = sprintf("INSERT INTO %s (%s, %s) VALUES (:%s, :%s)",
+                        $query = sprintf(
+                            "INSERT INTO %s (%s, %s) VALUES (:%s, :%s)",
                             $mappedBy['table'],
                             $mappedBy['inverseColumn'],
                             $mappedBy['column'],
                             $mappedBy['inverseColumn'],
-                            $mappedBy['column']);
+                            $mappedBy['column']
+                        );
 
                         $connection = $instance->startTX();
                         $statement = null;
-                        try
-                        {
+                        try {
                             $statement = $connection->prepare($query);
                             $statement->bindValue(sprintf(':%s', $mappedBy['inverseColumn']), $ownPrimaryKey);
                             $statement->bindValue(sprintf(':%s', $mappedBy['column']), $foreignPrimaryKey);
@@ -978,7 +989,6 @@ class Orm
         $query = sprintf("DELETE FROM %s WHERE %s = :%s", $tableName, $primaryKeyCol, $primaryKeyCol);
 
         try {
-
             $statement = $connection->prepare($query);
             $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
             $statement->execute();
@@ -1064,8 +1074,7 @@ class Orm
             if (!$this->connection->rollBack()) {
                 throw new OrmException("Could not rollback!", array(), 103, $previousException);
             }
-        }
-        catch (PDOException $ex) {
+        } catch (PDOException $ex) {
             throw OrmException::fromPrevious($ex);
         }
     }

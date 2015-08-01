@@ -214,7 +214,8 @@ trait OrmAnnotation
 
                         if (null != ($destinationProperty = $this->getAnnotatedColumn($docComments))) {
                             if ($destinationProperty == $property->getName()) {
-                                if (null != ($type = $this->getAnnotatedType($docComments, $resultClass->getNamespaceName()))) {
+                                $type = $this->getAnnotatedType($docComments, $resultClass->getNamespaceName());
+                                if (null != $type) {
                                     if (!$this->isPrimitive($type) && class_exists($type) && !$value instanceof $type) {
                                         continue 2;
                                     }
@@ -429,7 +430,7 @@ trait OrmAnnotation
             $originType = $type = $matches[1];
 
             if ($this->isPrimitive($type)) {
-            	return $type;
+                return $type;
             }
 
             if (!class_exists($type) && !strchr($type, "\\") && $namespace !== null) {
@@ -437,9 +438,9 @@ trait OrmAnnotation
             }
 
             if (!class_exists($type)) {
-            	throw new OrmException("Annotated type {type} could not be found nor loaded", array(
-            		'type' => $originType
-            	));
+                throw new OrmException("Annotated type {type} could not be found nor loaded", array(
+                    'type' => $originType
+                ));
             }
         }
         return $type;
@@ -670,13 +671,12 @@ trait OrmAnnotation
     private function isEager($class)
     {
         $eager = false;
-        try
-        {
+        try {
             $rf = new ReflectionClass($class);
             if (preg_match('/@eager/', $rf->getDocComment())) {
                 $eager = true;
             }
-        } catch(ReflectionException $ex) {
+        } catch (ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
         }
         return $eager;

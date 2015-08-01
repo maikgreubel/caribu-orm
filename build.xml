@@ -15,30 +15,56 @@
 		<os family="unix" />
 	</condition>
 
+	<!-- ========================================================================================================= -->
+	
+	<!-- Default build target -->
+	<target name="build"
+		depends="prepare,update-deps,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
+		description="Run a default build" />
+
+	<!-- Parallel build target -->
+	<target name="build-parallel" depends="prepare,update-deps,lint,tools-parallel,phpunit,phpdox"
+		description="Run a parallel executing tasks build" />
+
+	<!-- Perform a build without without updating the dependencies -->
+    <target name="no-update" depends="prepare,lint,tools-parallel,phpunit,phpdox"
+        description="Runs build without updating dependencies" />
+
+	<!-- ========================================================================================================= -->
+	
+	<!-- Clean the build directory -->
+	<target name="clean" unless="clean.done" description="Cleanup build artifacts">
+		<delete dir="${basedir}/build/api" />
+		<delete dir="${basedir}/build/coverage" />
+		<delete dir="${basedir}/build/logs" />
+		<delete dir="${basedir}/build/pdepend" />
+		<delete dir="${basedir}/build/phpdox" />
+		<property name="clean.done" value="true" />
+	</target>
+
+	<!-- ========================================================================================================= -->
+	
+	<!-- Update the dependencies using composer (enabled by default) -->
+	<target name="update-deps" depends="update-deps-unix,update-deps-windows"
+		description="Runs build including updating depedendencies" />
+
+	<!-- Update the dependencies on windows platform -->
 	<target name="update-deps-windows" if="is_windows">
 		<exec executable="composer.cmd" failonerror="true">
 			<arg value="update" />
 		</exec>
 	</target>
 
+	<!-- Update the dependencies on unix platform -->
 	<target name="update-deps-unix" if="is_unix">
 		<exec executable="composer" failonerror="true">
 			<arg value="update" />
 		</exec>
 	</target>
 
-	<target name="update-deps" depends="update-deps-unix,update-deps-windows" />
-
-	<target name="build"
-		depends="prepare,update-deps,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
-		description="" />
-
-	<target name="build-parallel" depends="prepare,lint,tools-parallel,phpunit,phpdox"
-		description="" />
-
-    <target name="no-update" depends="prepare,lint,tools-parallel,phpunit,phpdox"
-        description="Runs build without updating dependencies" />
-
+	<!-- ========================================================================================================= -->
+		
+	<!-- Perform a parallel build of various tasks -->
 	<target name="tools-parallel" description="Run tools in parallel">
 		<parallel threadCount="2">
 			<sequential>
@@ -51,17 +77,9 @@
 		</parallel>
 	</target>
 
-	<target name="clean" unless="clean.done" description="Cleanup build artifacts">
-		<delete dir="${basedir}/build/api" />
-		<delete dir="${basedir}/build/coverage" />
-		<delete dir="${basedir}/build/logs" />
-		<delete dir="${basedir}/build/pdepend" />
-		<delete dir="${basedir}/build/phpdox" />
-		<property name="clean.done" value="true" />
-	</target>
-
+	<!-- Prepare task -->
 	<target name="prepare" unless="prepare.done" depends="clean"
-		description="Prepare for build">
+		description="Prepare for build by creating essential directories">
 		<mkdir dir="${basedir}/build/api" />
 		<mkdir dir="${basedir}/build/coverage" />
 		<mkdir dir="${basedir}/build/logs" />
@@ -70,6 +88,9 @@
 		<property name="prepare.done" value="true" />
 	</target>
 
+	<!-- ========================================================================================================= -->
+
+		<!-- General source code syntax check -->
 	<target name="lint" description="Perform syntax check of sourcecode files">
 		<apply executable="php" failonerror="true">
 			<arg value="-l" />
@@ -86,6 +107,9 @@
 		</apply>
 	</target>
 
+	<!-- ========================================================================================================= -->
+
+	<!-- Lines of code check -->
 	<target name="phploc" depends="phploc-unix,phploc-windows"
 		description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line." />
 
@@ -104,7 +128,10 @@
 			<arg path="${basedir}/tests" />
 		</exec>
 	</target>
+	
+	<!-- ========================================================================================================= -->
 
+	<!-- Lines of code check for continous integration -->
 	<target name="phploc-ci" depends="prepare,phploc-ci-unix,phploc-ci-windows"
 		description="Measure project size using PHPLOC and log result in CSV and XML format. Intended for usage within a continuous integration environment." />
 
@@ -132,6 +159,9 @@
 		</exec>
 	</target>
 
+	<!-- ========================================================================================================= -->
+
+	<!-- Metrics calculation -->
 	<target name="pdepend" depends="prepare,pdepend-unix,pdepend-windows"
 		description="Calculate software metrics using PHP_Depend and log result in XML format. Intended for usage within a continuous integration environment." />
 
@@ -145,7 +175,6 @@
 		</exec>
 	</target>
 
-
 	<target name="pdepend-unix" if="is_unix">
 		<exec executable="${toolsdir}pdepend">
 			<arg value="--jdepend-xml=${basedir}/build/logs/jdepend.xml" />
@@ -156,6 +185,9 @@
 		</exec>
 	</target>
 
+	<!-- ========================================================================================================= -->
+
+	<!-- Mess detection -->
 	<target name="phpmd" depends="phpmd-unix,phpmd-windows"
 		description="Perform project mess detection using PHPMD and print human readable output. Intended for usage on the command line before committing." />
 
@@ -175,6 +207,9 @@
 		</exec>
 	</target>
 
+	<!-- ========================================================================================================= -->
+
+	<!-- Mess detection for command line -->
 	<target name="phpmd-ci" depends="prepare,phpmd-ci-unix,phpmd-ci-windows"
 		description="Perform project mess detection using PHPMD and log result in XML format. Intended for usage within a continuous integration environment." />
 
@@ -198,31 +233,9 @@
 		</exec>
 	</target>
 
-	<target name="phpcs"
-		description="Find coding standard violations using PHP_CodeSniffer and print human readable output. Intended for usage on the command line before committing." />
+	<!-- ========================================================================================================= -->
 
-	<target name="phpcs-windows" if="is_windows">
-		<exec executable="${toolsdir}phpcs.bat">
-			<arg value="--standard=PSR2" />
-			<arg value="--extensions=php" />
-			<arg value="--ignore=autoload.php" />
-			<arg value="--report=xml" />
-			<arg value="--report-file=build/logs/phpcs.log" />
-			<arg path="${basedir}/src" />
-			<arg path="${basedir}/tests" />
-		</exec>
-	</target>
-
-	<target name="phpcs-unix" if="is_unix">
-		<exec executable="${toolsdir}phpcs">
-			<arg value="--standard=PSR2" />
-			<arg value="--extensions=php" />
-			<arg value="--ignore=autoload.php" />
-			<arg path="${basedir}/src" />
-			<arg path="${basedir}/tests" />
-		</exec>
-	</target>
-
+	<!-- Checkstyle for continous integration -->
 	<target name="phpcs-ci" depends="prepare,phpcs-ci-unix,phpcs-ci-windows"
 		description="Find coding standard violations using PHP_CodeSniffer and log result in XML format. Intended for usage within a continuous integration environment." />
 
@@ -248,6 +261,9 @@
 		</exec>
 	</target>
 
+	<!-- ========================================================================================================= -->
+	
+	<!-- Copy&Paste detection -->
 	<target name="phpcpd" depends="phpcpd-unix,phpcpd-windows"
 		description="Find duplicate code using PHPCPD and print human readable output. Intended for usage on the command line before committing." />
 
@@ -263,6 +279,9 @@
 		</exec>
 	</target>
 
+	<!-- ========================================================================================================= -->
+
+	<!-- Copy&Paste detection for continous integration -->
 	<target name="phpcpd-ci" depends="prepare,phpcpd-ci-unix,phpcpd-ci-windows"
 		description="Find duplicate code using PHPCPD and log result in XML format. Intended for usage within a continuous integration environment." />
 
@@ -282,6 +301,9 @@
 		</exec>
 	</target>
 
+	<!-- ========================================================================================================= -->
+
+	<!-- PHPUnit -->
 	<target name="phpunit" depends="prepare,phpunit-unix,phpunit-windows"
 		description="Run unit tests with PHPUnit" />
 
@@ -319,8 +341,11 @@
 		</exec>
 	</target>
 
+	<!-- ========================================================================================================= -->
+
+	<!-- Documentation generation using phpdox -->
 	<target name="phpdox"
-		depends="phploc-ci,phpcs-ci,phpmd-ci,phpdox-unix,phpdox-windows"
+		depends="phpdox-unix,phpdox-windows"
 		description="Generate project documentation using phpDox" />
 
 	<target name="phpdox-windows" if="is_windows">
