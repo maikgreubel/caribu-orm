@@ -65,4 +65,22 @@ class Sqlite extends AbstractType
     {
         return null;
     }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::lock()
+     */
+    public function lock($table, $lockType, Orm $orm)
+    {
+        return;
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::unlock()
+     */
+    public function unlock($table, Orm $orm)
+    {
+        return;
+    }
 }

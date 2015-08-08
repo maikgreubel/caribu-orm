@@ -66,6 +66,43 @@ class MySQL extends AbstractType
         }
 
         return $name;
+    }
 
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::lock()
+     */
+    public function lock($table, $lockType, Orm $orm)
+    {
+        $lock = "READ";
+        if($lockType == IType::LOCK_TYPE_WRITE) {
+            $lock = "WRITE";
+        }
+
+        $connection = $orm->getConnection();
+        $lockStatement = sprintf("LOCK TABLES `%s` %s", $table, $lock);
+        try {
+            if ($connection->exec($lockStatement) === false) {
+                throw new OrmException("Could not lock table {table}", array('table' => $table));
+            }
+        } catch (\PDOException $ex) {
+            throw OrmException::fromPrevious($ex, "Could not lock table");
+        }
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::unlock()
+     */
+    public function unlock($table, Orm $orm)
+    {
+        $connection = $orm->getConnection();
+        try {
+            if ($connection->exec("UNLOCK TABLES") === false) {
+                throw new OrmException("Could not unlock table {table}", array('table' => $table));
+            }
+        } catch(\PDOException $ex) {
+            throw OrmException::fromPrevious($ex, "Could not unlock table");
+        }
     }
 }

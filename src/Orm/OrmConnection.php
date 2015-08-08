@@ -2,6 +2,7 @@
 namespace Nkey\Caribu\Orm;
 
 use Nkey\Caribu\Type\TypeFactory;
+use Nkey\Caribu\Type\AbstractType;
 
 use \PDO;
 use \PDOException;

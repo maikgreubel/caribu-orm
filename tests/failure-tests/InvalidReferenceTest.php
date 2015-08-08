@@ -2,23 +2,12 @@
 namespace Nkey\Caribu\Tests;
 
 require_once dirname(__FILE__).'/../AbstractDatabaseTestCase.php';
-require_once dirname(__FILE__).'/../Model/NoteModel.php';
+require_once dirname(__FILE__).'/../Model/InvalidReferenceModel.php';
 
-use Nkey\Caribu\Tests\Model\NoteModel;
-
-
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
+use Nkey\Caribu\Tests\Model\InvalidReferenceModel;
 use Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Orm\OrmException;
 
-/**
- * Failure test cases
- *
- * This class is part of Caribu package
- *
- * @author Maik Greubel <greubel@nkey.de>
- */
-class FailureTest extends AbstractDatabaseTestCase
+class InvalidReferenceTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
@@ -26,8 +15,6 @@ class FailureTest extends AbstractDatabaseTestCase
             'type' => 'sqlite',
             'file' => ':memory:'
         );
-
-        $this->flatDataSetFile = dirname(__FILE__).'/../_files/notes-seed.xml';
     }
 
     /**
@@ -40,7 +27,8 @@ class FailureTest extends AbstractDatabaseTestCase
 
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
-        $connection->exec("CREATE TABLE notes (id INTEGER, content TEXT, created TEXT)");
+        $connection->exec("CREATE TABLE blog (id INTEGER, content TEXT)");
+        $connection->exec("INSERT INTO blog VALUES (1, 'Some content')");
         $connection->commit();
 
         parent::setUp();
@@ -54,23 +42,20 @@ class FailureTest extends AbstractDatabaseTestCase
     {
         $connection = $this->getConnection()->getConnection();
         $connection->beginTransaction();
-        $connection->exec("DROP TABLE notes");
+        $connection->exec("DROP TABLE blog");
         $connection->commit();
 
         parent::tearDown();
     }
 
+
     /**
-     * Test missing primary key
-     *
-     * @expectedException Nkey\Caribu\Orm\OrmException
-     * @expectedExceptionMessage Exception ReflectionException occured:
+     * @expectedException \Nkey\Caribu\Orm\OrmException
+     * @expectedExceptionMessageRegex Annotated type \w+ could not be found nor loaded
      */
-    public function testMissingPrimaryKey()
+    public function testInvalidMappedBy()
     {
-        $entity = new NoteModel();
-        $entity->setContent("Will fail");
-        $entity->setCreated(time());
-        $entity->persist();
+        InvalidReferenceModel::find(array('id' => 1));
     }
+
 }

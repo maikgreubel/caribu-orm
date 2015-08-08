@@ -14,6 +14,7 @@ use \ReflectionClass;
 use \ReflectionMethod;
 use \ReflectionException;
 use \ReflectionProperty;
+use Nkey\Caribu\Type\IType;
 
 /**
  * The main object relational mapper class
@@ -33,11 +34,6 @@ class Orm
      * Include the or mapping annotation functionality
      */
     use OrmAnnotation;
-
-    /**
-     * Include the connection related functionality
-     */
-    use OrmConnection;
 
     /**
      * Include the transaction related functionality
@@ -456,6 +452,13 @@ class Orm
 
                         $result = $statement->fetch(PDO::FETCH_OBJ);
 
+                        if (false == $result) {
+                            throw new OrmException(
+                                "No foreign entity found for {entity} using primary key {pk}",
+                                array('entity' => $toClass, 'pk' => $$ownPrimaryKey)
+                            );
+                        }
+
                         $instance->commitTX();
 
                         $setMethod = new ReflectionMethod($toClass, sprintf("set%s", ucfirst($property->getName())));
@@ -778,6 +781,8 @@ class Orm
 
         $class = get_class($this);
 
+        $tableName = $this->getTableName($class);
+
         $this->persistAnnotated($class, $this);
 
         $pk = $this->getPrimaryKey($class, $this);
@@ -795,6 +800,7 @@ class Orm
         $connection = $instance->startTX();
         $statement = null;
 
+
         try {
             $statement = $connection->prepare($query);
 
@@ -808,8 +814,11 @@ class Orm
                 $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
             }
 
+            $instance->dbType->lock($tableName, IType::LOCK_TYPE_WRITE, $instance);
             $statement->execute();
             $pk = $connection->lastInsertId();
+            $instance->dbType->unlock($tableName, $instance);
+
             unset($statement);
 
             if (!$primaryKeyValue) {
@@ -820,6 +829,7 @@ class Orm
 
             $instance->commitTX();
         } catch (PDOException $ex) {
+            $instance->dbType->unlock($tableName, $instance);
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
@@ -852,13 +862,18 @@ class Orm
         $connection = $instance->startTX();
         $statement = null;
 
+
         try {
             $statement = $connection->prepare($query);
             $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
+
+            $instance->dbType->lock($tableName, IType::LOCK_TYPE_WRITE, $instance);
             $statement->execute();
+            $instance->dbType->unlock($tableName, $instance);
             unset($statement);
             $instance->commitTX();
         } catch (PDOException $ex) {
+            $instance->dbType->unlock($tableName, $instance);
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }

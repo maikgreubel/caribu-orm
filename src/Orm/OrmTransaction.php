@@ -14,6 +14,11 @@ use \PDO;
 trait OrmTransaction
 {
     /**
+     * Include the connection related functionality
+     */
+    use OrmConnection;
+
+    /**
      * The stack of open transactions
      *
      * @var int
