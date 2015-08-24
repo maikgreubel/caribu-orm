@@ -16,9 +16,9 @@ abstract class PostgresAbstractDatabaseTestCase extends AbstractDatabaseTestCase
         $this->options = array(
             'type' => 'postgres',
             'host' => 'localhost',
-            'schema' => getenv('TEST_DATABASE') === false ? 'testing' : getenv('TEST_DATABASE'),
-            'user' => getenv('TEST_USER') === false ? 'testing' : getenv('TEST_USER'),
-            'password' => getenv('TEST_PASSWORD') === false ? md5('testing') : getenv('TEST_PASSWORD')
+            'schema' => getenv('PG_TEST_DATABASE') === false ? 'testing' : getenv('PG_TEST_DATABASE'),
+            'user' => getenv('PG_TEST_USER') === false ? 'testing' : getenv('PG_TEST_USER'),
+            'password' => getenv('PG_TEST_PASSWORD') === false ? md5('testing') : getenv('PG_TEST_PASSWORD')
         );
     }
 }

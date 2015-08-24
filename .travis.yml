@@ -4,13 +4,17 @@ php:
   - 5.5
   - 5.6
 
-env: TEST_USER=root TEST_PASSWORD= TEST_DATABASE=caribu_test
+addons:
+  postgresql: "9.3"
+  
+env: TEST_USER=root TEST_PASSWORD= TEST_DATABASE=caribu_test PG_TEST_USER=postgres PG_TEST_PASSWORD= PG_TEST_DATABASE=caribu_test
 
 before_script:
   - wget http://getcomposer.org/composer.phar
   - php composer.phar install --dev --no-interaction
   - mysql -e 'create database caribu_test'
-
+  - psql -c 'create database caribu_test;' -U postgres
+  
 script:
   - mkdir -p build/logs
   - phpunit --coverage-clover build/logs/clover.xml
