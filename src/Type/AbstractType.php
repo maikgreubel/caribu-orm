@@ -3,8 +3,6 @@ namespace Nkey\Caribu\Type;
 
 use \Generics\Util\Interpolator;
 
-use \Nkey\Caribu\Orm\Orm;
-
 /**
  * Abstract database type
  *

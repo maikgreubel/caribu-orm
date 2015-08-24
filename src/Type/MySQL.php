@@ -105,4 +105,13 @@ class MySQL extends AbstractType
             throw OrmException::fromPrevious($ex, "Could not unlock table");
         }
     }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getEscapeSign()
+     */
+    public function getEscapeSign()
+    {
+        return "`";
+    }
 }

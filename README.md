@@ -55,11 +55,16 @@ Here is a very basic example about the usage (for sqlite):
   ```php
     /* write-data-example.php */
     
+    use \Nkey\Caribu\Orm\Orm;
+    
     /* First configure the ORM */
-    Nkey\Caribu\Orm\Orm::configure(array(
+    Orm::configure(array(
       'type' => 'sqlite',
       'file' => ':memory:'
     ));
+    
+    // Create sqlite database table for memory storage
+    // Orm::getInstance()->getConnection()->exec("CREATE TABLE super_duper_content (id INTEGER PRIMARY KEY, content TEXT)");
     
     /* Now create a new entity and persist it to database */
     $entity = new SuperDuperEntity();

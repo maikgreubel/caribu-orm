@@ -5,11 +5,8 @@ use \Exception;
 use \Generics\Logger\LoggerTrait;
 use \Generics\Util\Interpolator;
 use \Nkey\Caribu\Model\AbstractModel;
-use \Nkey\Caribu\Type\AbstractType;
-use \Nkey\Caribu\Type\TypeFactory;
 use \PDO;
 use \PDOException;
-use \PDOStatement;
 use \ReflectionClass;
 use \ReflectionMethod;
 use \ReflectionException;
@@ -137,7 +134,7 @@ class Orm
 
         $pkColumn = $instance->getAnnotatedPrimaryKeyColumn($class);
         if (! $pkColumn) {
-            $pkColumn = $instance->dbType->getPrimaryKeyColumn($this->getTableName($class), $instance);
+            $pkColumn = $instance->getDbType()->getPrimaryKeyColumn($this->getTableName($class), $instance);
         }
         if (! $pkColumn) {
             $pkColumn = 'id';
@@ -201,6 +198,25 @@ class Orm
     }
 
     /**
+     * Escape all parts of a criterion
+     *
+     * @param string $criterion The criterion pattern
+     * @param string $escapeSign The escape sign
+     */
+    private function escapeCriterion($criterion, $escapeSign)
+    {
+        $criterionEscaped = '';
+        $criterionParts = explode('.', $criterion);
+
+        foreach ($criterionParts as $part) {
+            $criterionEscaped .= $criterionEscaped ? '.' : '';
+            $criterionEscaped .= sprintf("%s%s%s", $escapeSign, $part, $escapeSign);
+        }
+
+        return $criterionEscaped;
+    }
+
+    /**
      * Parse criteria into where conditions
      *
      * @param array $criteria The criteria to parse
@@ -208,7 +224,7 @@ class Orm
      *
      * @throws OrmException
      */
-    private function parseCriteria(array &$criteria)
+    private function parseCriteria(array &$criteria, $escapeSign)
     {
         $wheres = array();
 
@@ -218,17 +234,17 @@ class Orm
             $placeHolder = str_replace('.', '_', $criterion);
             $placeHolder = str_replace('OR ', 'OR_', $placeHolder);
             if (strtoupper(substr($criteria[$criterion], 0, 4)) == 'LIKE') {
-                $wheres[] = sprintf("%s LIKE :%s", $criterion, $placeHolder);
+                $wheres[] = sprintf("%s LIKE :%s", $this->escapeCriterion($criterion, $escapeSign), $placeHolder);
             } elseif (strtoupper(substr($criteria[$criterion], 0, 7)) == 'BETWEEN') {
                 $start = $end = null;
                 sscanf(strtoupper($criteria[$criterion]), "BETWEEN %s AND %s", $start, $end);
                 if (!$start || !$end) {
                     throw new OrmException("Invalid range for between");
                 }
-                $wheres[] = sprintf("%s BETWEEN %s AND %s", $criterion, $start, $end);
+                $wheres[] = sprintf("%s BETWEEN %s AND %s", $this->escapeCriterion($criterion, $escapeSign), $start, $end);
                 unset($criteria[$criterion]);
             } else {
-                $wheres[] = sprintf("%s = :%s", $criterion, $placeHolder);
+                $wheres[] = sprintf("%s = :%s", $this->escapeCriterion($criterion, $escapeSign), $placeHolder);
             }
         }
 
@@ -283,20 +299,22 @@ class Orm
         $limit = 0,
         $startFrom = 0
     ) {
-        $joins = $this->getAnnotatedQuery($class, $tableName, $this, $criteria, $columns);
+        $escapeSign = $this->getDbType()->getEscapeSign();
 
-        $wheres = $this->parseCriteria($criteria);
+        $joins = $this->getAnnotatedQuery($class, $tableName, $this, $criteria, $columns, $escapeSign);
+
+        $wheres = $this->parseCriteria($criteria, $escapeSign);
 
         $limits = $this->parseLimits($limit, $startFrom);
 
         if ($orderBy && ! stristr($orderBy, 'ORDER BY ')) {
-            $orderBy = sprintf("ORDER BY %s", $orderBy);
+            $orderBy = sprintf("ORDER BY %s%s%s", $escapeSign, $orderBy, $escapeSign);
         }
 
         $query = sprintf(
-            "SELECT %s FROM %s %s %s %s %s",
+            "SELECT %s FROM %s%s%s %s %s %s %s",
             implode(',', $columns),
-            $tableName,
+            $escapeSign, $tableName, $escapeSign,
             $joins,
             $wheres,
             $orderBy,
@@ -498,11 +516,13 @@ class Orm
 
         $table = $instance->getTableName($class);
 
+        $escapeSign = $instance->getDbType()->getEscapeSign();
+
         $query = $instance->createQuery(
             $class,
             $table,
             $criteria,
-            array(sprintf("%s.*", $table)),
+            array(sprintf("%s%s%s.*", $escapeSign, $table, $escapeSign)),
             $orderBy,
             $limit,
             $startOffset
@@ -641,13 +661,15 @@ class Orm
 
         $columns = array_keys($pairs);
 
+        $escapeSign = $this->getDbType()->getEscapeSign();
+
         if ($insert) {
             $cols = "";
             $vals = "";
             foreach ($columns as $column) {
                 //if(!is_null($pairs[$column])) {
                     $cols .= ($cols ? ',' : '');
-                    $cols .= $column;
+                    $cols .= sprintf("%s%s%s", $escapeSign, $column, $escapeSign);
                     $vals .= ($vals ? ',' : '');
                     $vals .= sprintf(':%s', $column);
                 //}
@@ -659,7 +681,7 @@ class Orm
                     continue;
                 }
                 $query .= ($query ? ", " : "SET ");
-                $query .= sprintf("%s = :%s", $column, $column);
+                $query .= sprintf("%s%s%s = :%s", $escapeSign, $column, $escapeSign, $column);
             }
         }
 
@@ -679,6 +701,8 @@ class Orm
     {
         $instance = self::getInstance();
         assert($instance instanceof Orm);
+
+        $escapeSign = $this->getDbType()->getEscapeSign();
 
         try {
             $rf = new ReflectionClass($class);
@@ -706,10 +730,10 @@ class Orm
                         }
 
                         $query = sprintf(
-                            "INSERT INTO %s (%s, %s) VALUES (:%s, :%s)",
-                            $mappedBy['table'],
-                            $mappedBy['inverseColumn'],
-                            $mappedBy['column'],
+                            "INSERT INTO %s%s%s (%s%s%s, %s%s%s) VALUES (:%s, :%s)",
+                            $escapeSign, $mappedBy['table'], $escapeSign,
+                            $escapeSign, $mappedBy['inverseColumn'], $escapeSign,
+                            $escapeSign, $mappedBy['column'], $escapeSign,
                             $mappedBy['inverseColumn'],
                             $mappedBy['column']
                         );
@@ -755,15 +779,17 @@ class Orm
     {
         $tableName = $this->getTableName($class);
 
-        $query = sprintf("INSERT INTO %s ", $tableName);
+        $escapeSign = $this->getDbType()->getEscapeSign();
+
+        $query = sprintf("INSERT INTO %s%s%s ", $escapeSign, $tableName, $escapeSign);
         if ($primaryKeyValue) {
-            $query = sprintf("UPDATE %s ", $tableName);
+            $query = sprintf("UPDATE %s%s%s ", $escapeSign, $tableName, $escapeSign);
         }
 
         $query .= $this->persistenceQueryParams($pairs, $primaryKeyCol, is_null($primaryKeyValue));
 
         if ($primaryKeyValue) {
-            $query .= sprintf(" WHERE %s = :%s", $primaryKeyCol, $primaryKeyCol);
+            $query .= sprintf(" WHERE %s%s%s = :%s", $escapeSign, $primaryKeyCol, $escapeSign, $primaryKeyCol);
         }
 
         return $query;
@@ -814,10 +840,10 @@ class Orm
                 $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
             }
 
-            $instance->dbType->lock($tableName, IType::LOCK_TYPE_WRITE, $instance);
+            $instance->getDbType()->lock($tableName, IType::LOCK_TYPE_WRITE, $instance);
             $statement->execute();
             $pk = $connection->lastInsertId();
-            $instance->dbType->unlock($tableName, $instance);
+            $instance->getDbType()->unlock($tableName, $instance);
 
             unset($statement);
 
@@ -829,7 +855,7 @@ class Orm
 
             $instance->commitTX();
         } catch (PDOException $ex) {
-            $instance->dbType->unlock($tableName, $instance);
+            $instance->getDbType()->unlock($tableName, $instance);
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
@@ -848,6 +874,8 @@ class Orm
 
         $tableName = $this->getTableName($class);
 
+        $escapeSign = $this->getDbType()->getEscapeSign();
+
         $pk = $this->getPrimaryKey($class, $this);
         foreach ($pk as $primaryKeyCol => $primaryKeyValue) {
             //
@@ -857,7 +885,10 @@ class Orm
             throw new OrmException("Entity is not persisted or detached. Can not delete.");
         }
 
-        $query = sprintf("DELETE FROM %s WHERE %s = :%s", $tableName, $primaryKeyCol, $primaryKeyCol);
+        $query = sprintf("DELETE FROM %s%s%s WHERE %s%s%s = :%s",
+            $escapeSign, $tableName, $escapeSign,
+            $escapeSign, $primaryKeyCol, $escapeSign,
+            $primaryKeyCol);
 
         $connection = $instance->startTX();
         $statement = null;
@@ -867,13 +898,13 @@ class Orm
             $statement = $connection->prepare($query);
             $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
 
-            $instance->dbType->lock($tableName, IType::LOCK_TYPE_WRITE, $instance);
+            $instance->getDbType()->lock($tableName, IType::LOCK_TYPE_WRITE, $instance);
             $statement->execute();
-            $instance->dbType->unlock($tableName, $instance);
+            $instance->getDbType()->unlock($tableName, $instance);
             unset($statement);
             $instance->commitTX();
         } catch (PDOException $ex) {
-            $instance->dbType->unlock($tableName, $instance);
+            $instance->getDbType()->unlock($tableName, $instance);
             throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }

@@ -6,6 +6,7 @@ use Nkey\Caribu\Type\AbstractType;
 
 use \PDO;
 use \PDOException;
+use Nkey\Caribu\Type\IType;
 
 /**
  * Connection related functionality for the ORM
@@ -140,19 +141,30 @@ trait OrmConnection
     }
 
     /**
+     * Retrieve the database type
+     *
+     * @return Nkey\Caribu\Type\IType
+     */
+    private function getDbType()
+    {
+        if (null == $this->dbType) {
+            $this->dbType = TypeFactory::create($this);
+        }
+        return $this->dbType;
+    }
+
+    /**
      * Create a new database connection
      *
      * @throws OrmException
      */
     private function createConnection()
     {
-        $this->dbType = TypeFactory::create($this);
-
-        $dsn = $this->dbType->getDsn();
+        $dsn = $this->getDbType()->getDsn();
 
         $dsn = $this->interp($dsn, array(
             'host' => $this->host,
-            'port' => $this->port,
+            'port' => ($this->port ? $this->port : $this->dbType->getDefaultPort()),
             'schema' => $this->schema,
             'file' => $this->file
         ));

@@ -2,7 +2,6 @@
 namespace Nkey\Caribu\Tests;
 
 use Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Tests\Model\MockedModel;
 
 use \PHPUnit_Extensions_Database_TestCase;
 

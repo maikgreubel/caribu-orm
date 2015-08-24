@@ -8,7 +8,6 @@ use \ReflectionProperty;
 use \ReflectionObject;
 use \ReflectionException;
 use \ReflectionMethod;
-use Generics\GenericsException;
 
 /**
  * Annotation provider for Caribu Orm
@@ -564,7 +563,7 @@ trait OrmAnnotation
      *
      * @throws OrmException
      */
-    private function getAnnotatedQuery($class, $table, $object, &$criteria, &$columns)
+    private function getAnnotatedQuery($class, $table, $object, &$criteria, &$columns, $escapeSign)
     {
         $joinQuery = "";
 
@@ -604,36 +603,42 @@ trait OrmAnnotation
                 $inversePkCol = $this->getAnnotatedPrimaryKeyColumn($propertyClass);
 
                 $joinQuery = sprintf(
-                    "JOIN %s ON %s.%s = %s.%s ",
-                    $mappedBy['table'],
-                    $mappedBy['table'],
-                    $mappedBy['inverseColumn'],
-                    $table,
-                    $pkCol
+                    "JOIN %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s ",
+                    $escapeSign, $mappedBy['table'], $escapeSign,
+                    $escapeSign, $mappedBy['table'], $escapeSign,
+                    $escapeSign, $mappedBy['inverseColumn'], $escapeSign,
+                    $escapeSign, $table, $escapeSign,
+                    $escapeSign, $pkCol, $escapeSign
                 );
                 $joinQuery .= sprintf(
-                    "JOIN %s ON %s.%s = %s.%s",
-                    $inverseTable,
-                    $inverseTable,
-                    $inversePkCol,
-                    $mappedBy['table'],
-                    $mappedBy['column']
+                    "JOIN %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s",
+                    $escapeSign, $inverseTable, $escapeSign,
+                    $escapeSign, $inverseTable, $escapeSign,
+                    $escapeSign, $inversePkCol, $escapeSign,
+                    $escapeSign, $mappedBy['table'], $escapeSign,
+                    $escapeSign, $mappedBy['column'], $escapeSign
                 );
 
-                $columns[] = sprintf("%s.%s AS '%s.%s'", $inverseTable, $inversePkCol, $inverseTable, $inversePkCol);
+                $columns[] = sprintf("%s%s%s.%s%s%s AS '%s.%s'",
+                    $escapeSign, $inverseTable, $escapeSign,
+                    $escapeSign, $inversePkCol, $escapeSign,
+                    $inverseTable, $inversePkCol);
             } elseif ($propertyClass != "") {
                 $inversePkCol = $this->getAnnotatedPrimaryKeyColumn($propertyClass);
                 $column = $this->getAnnotatedColumnFromProperty($class, $rfProperty->getName());
                 $joinQuery = sprintf(
-                    "JOIN %s AS %s ON %s.%s = %s.%s",
-                    $inverseTable,
-                    $criterion,
-                    $criterion,
-                    $inversePkCol,
-                    $table,
-                    $column
+                    "JOIN %s%s%s AS %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s",
+                    $escapeSign, $inverseTable, $escapeSign,
+                    $escapeSign, $criterion, $escapeSign,
+                    $escapeSign, $criterion, $escapeSign,
+                    $escapeSign, $inversePkCol, $escapeSign,
+                    $escapeSign, $table, $escapeSign,
+                    $escapeSign, $column, $escapeSign
                 );
-                $columns[] = sprintf("%s.%s AS '%s.%s'", $criterion, $inversePkCol, $criterion, $inversePkCol);
+                $columns[] = sprintf("%s%s%s.%s%s%s AS '%s.%s'",
+                    $escapeSign, $criterion, $escapeSign,
+                    $escapeSign, $inversePkCol, $escapeSign,
+                    $criterion, $inversePkCol);
             }
         }
         $criteria = $replacedCriteria;

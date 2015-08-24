@@ -83,4 +83,13 @@ class Sqlite extends AbstractType
     {
         return;
     }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getEscapeSign()
+     */
+    public function getEscapeSign()
+    {
+        return "";
+    }
 }

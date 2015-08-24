@@ -64,4 +64,9 @@ interface IType
      * @throws \Nkey\Caribu\Orm\OrmException
      */
     public function unlock($table, \Nkey\Caribu\Orm\Orm $orm);
+
+    /**
+     * Retrieve the character for escaping special and reserved words
+     */
+    public function getEscapeSign();
 }
