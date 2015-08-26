@@ -1,9 +1,6 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use \Exception;
-use \PDO;
-
 /**
  * Transaction related functionality
  *
@@ -69,8 +66,10 @@ trait OrmTransaction
      *
      * @return OrmException either previous exception or new occured during rollback containing previous
      */
-    private function rollBackTX(PDO $connection, Exception $previousException = null)
+    private function rollBackTX(\Exception $previousException = null)
     {
+        $connection = $this->getConnection();
+
         $this->transactionStack = 0; // Yes, we just ignore any error and reset the transaction stack here
 
         if (!$connection) {
@@ -85,7 +84,7 @@ trait OrmTransaction
             if (!$connection->rollBack()) {
                 $previousException = new OrmException("Could not rollback!", array(), 103, $previousException);
             }
-        } catch (PDOException $ex) {
+        } catch (\PDOException $ex) {
             $previousException = OrmException::fromPrevious($ex);
         }
 

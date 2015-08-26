@@ -1,9 +1,6 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use \Exception;
-use \PDO;
-
 /**
  * Exception handling functionality
  *
@@ -22,7 +19,7 @@ trait OrmExceptionHandler
      *
      * @return OrmException
      */
-    private function handleException(PDO $connection, $statement, Exception $ex, $message = null, $code = 0)
+    private static function handleException(Orm $orm, $statement, \Exception $ex, $message = null, $code = 0)
     {
         $toThrow = OrmException::fromPrevious($ex, $message, $code);
 
@@ -35,7 +32,7 @@ trait OrmExceptionHandler
             // Ignore close cursor exception
         }
 
-        $toThrow = $this->rollBackTX($connection, $toThrow);
+        $toThrow = $orm->rollBackTX($toThrow);
 
         return $toThrow;
     }

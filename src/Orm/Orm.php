@@ -2,16 +2,20 @@
 namespace Nkey\Caribu\Orm;
 
 use \Exception;
+
 use \Generics\Logger\LoggerTrait;
 use \Generics\Util\Interpolator;
+
 use \Nkey\Caribu\Model\AbstractModel;
+use \Nkey\Caribu\Type\IType;
+
 use \PDO;
 use \PDOException;
+
 use \ReflectionClass;
 use \ReflectionMethod;
 use \ReflectionException;
 use \ReflectionProperty;
-use Nkey\Caribu\Type\IType;
 
 /**
  * The main object relational mapper class
@@ -22,11 +26,6 @@ use Nkey\Caribu\Type\IType;
  */
 class Orm
 {
-    /**
-     * Include the generics interpolation functionality
-     */
-    use Interpolator;
-
     /**
      * Include the or mapping annotation functionality
      */
@@ -48,6 +47,11 @@ class Orm
     use LoggerTrait;
 
     /**
+     * Include the generics interpolation functionality
+     */
+    use Interpolator;
+
+    /**
      * Singleton pattern
      *
      * @var Orm
@@ -57,7 +61,7 @@ class Orm
     /**
      * Singleton pattern
      *
-     * @return Orm The current instance
+     * @return Nkey\Caribu\Orm\Orm The current instance
      */
     public static function getInstance()
     {
@@ -86,19 +90,6 @@ class Orm
     }
 
     /**
-     * Interpolate a given string
-     *
-     * @param string $string The string to interpolate
-     * @param array $context The interpolation context key-value pairs
-     *
-     * @return string The interpolated string
-     */
-    protected function interp($string, array $context = array())
-    {
-        return self::interpolate($string, $context);
-    }
-
-    /**
      * Get the name of table
      *
      * @param string $class The name of class
@@ -107,15 +98,13 @@ class Orm
      *
      * @throws OrmException
      */
-    private function getTableName($class)
+    private static function getTableName($class)
     {
         $parts = explode('\\', $class);
         $simpleClassName = end($parts);
         $tableName = strtolower($simpleClassName);
         $tableName = preg_replace('#model$#', '', $tableName);
-        $instance = self::getInstance();
-        assert($instance instanceof Orm);
-        return $instance->getAnnotatedTableName($class, $tableName);
+        return self::getAnnotatedTableName($class, $tableName);
     }
 
     /**
@@ -127,14 +116,14 @@ class Orm
      *
      * @throws OrmException
      */
-    private function getPrimaryKeyCol($class)
+    private static function getPrimaryKeyCol($class)
     {
         $instance = self::getInstance();
         assert($instance instanceof Orm);
 
-        $pkColumn = $instance->getAnnotatedPrimaryKeyColumn($class);
+        $pkColumn = self::getAnnotatedPrimaryKeyColumn($class);
         if (! $pkColumn) {
-            $pkColumn = $instance->getDbType()->getPrimaryKeyColumn($this->getTableName($class), $instance);
+            $pkColumn = $instance->getDbType()->getPrimaryKeyColumn(self::getTableName($class), $instance);
         }
         if (! $pkColumn) {
             $pkColumn = 'id';
@@ -154,12 +143,9 @@ class Orm
      */
     public static function get($id)
     {
-        $instance = self::getInstance();
-        assert($instance instanceof Orm);
-
         $className = get_called_class();
 
-        $pkColumn = $instance->getPrimaryKeyCol($className);
+        $pkColumn = self::getPrimaryKeyCol($className);
 
         $result = self::find(array(
             $pkColumn => $id
@@ -178,7 +164,7 @@ class Orm
      * @param array $wheres
      * @return string The where conditions as string
      */
-    private function whereConditionsAsString(array $wheres)
+    private static function whereConditionsAsString(array $wheres)
     {
         if (count($wheres)) {
             $t = "";
@@ -203,7 +189,7 @@ class Orm
      * @param string $criterion The criterion pattern
      * @param string $escapeSign The escape sign
      */
-    private function escapeCriterion($criterion, $escapeSign)
+    private static function escapeCriterion($criterion, $escapeSign)
     {
         $criterionEscaped = '';
         $criterionParts = explode('.', $criterion);
@@ -224,7 +210,7 @@ class Orm
      *
      * @throws OrmException
      */
-    private function parseCriteria(array &$criteria, $escapeSign)
+    private static function parseCriteria(array &$criteria, $escapeSign)
     {
         $wheres = array();
 
@@ -234,21 +220,26 @@ class Orm
             $placeHolder = str_replace('.', '_', $criterion);
             $placeHolder = str_replace('OR ', 'OR_', $placeHolder);
             if (strtoupper(substr($criteria[$criterion], 0, 4)) == 'LIKE') {
-                $wheres[] = sprintf("%s LIKE :%s", $this->escapeCriterion($criterion, $escapeSign), $placeHolder);
+                $wheres[] = sprintf("%s LIKE :%s", self::escapeCriterion($criterion, $escapeSign), $placeHolder);
             } elseif (strtoupper(substr($criteria[$criterion], 0, 7)) == 'BETWEEN') {
                 $start = $end = null;
                 sscanf(strtoupper($criteria[$criterion]), "BETWEEN %s AND %s", $start, $end);
                 if (!$start || !$end) {
                     throw new OrmException("Invalid range for between");
                 }
-                $wheres[] = sprintf("%s BETWEEN %s AND %s", $this->escapeCriterion($criterion, $escapeSign), $start, $end);
+                $wheres[] = sprintf(
+                    "%s BETWEEN %s AND %s",
+                    self::escapeCriterion($criterion, $escapeSign),
+                    $start,
+                    $end
+                );
                 unset($criteria[$criterion]);
             } else {
-                $wheres[] = sprintf("%s = :%s", $this->escapeCriterion($criterion, $escapeSign), $placeHolder);
+                $wheres[] = sprintf("%s = :%s", self::escapeCriterion($criterion, $escapeSign), $placeHolder);
             }
         }
 
-        return $this->whereConditionsAsString($wheres);
+        return self::whereConditionsAsString($wheres);
     }
 
     /**
@@ -259,7 +250,7 @@ class Orm
      *
      * @return string The limit modifier or empty string
      */
-    private function parseLimits($limit = 0, $startFrom = 0)
+    private static function parseLimits($limit = 0, $startFrom = 0)
     {
         $limits = "";
         if ($startFrom > 0) {
@@ -290,22 +281,21 @@ class Orm
      *
      * @throws OrmException
      */
-    private function createQuery(
+    private static function createQuery(
         $class,
         $tableName,
         array &$criteria,
         array $columns,
         $orderBy = '',
         $limit = 0,
-        $startFrom = 0
+        $startFrom = 0,
+        $escapeSign = ""
     ) {
-        $escapeSign = $this->getDbType()->getEscapeSign();
+        $joins = self::getAnnotatedQuery($class, $tableName, $criteria, $columns, $escapeSign);
 
-        $joins = $this->getAnnotatedQuery($class, $tableName, $this, $criteria, $columns, $escapeSign);
+        $wheres = self::parseCriteria($criteria, $escapeSign);
 
-        $wheres = $this->parseCriteria($criteria, $escapeSign);
-
-        $limits = $this->parseLimits($limit, $startFrom);
+        $limits = self::parseLimits($limit, $startFrom);
 
         if ($orderBy && ! stristr($orderBy, 'ORDER BY ')) {
             $orderBy = sprintf("ORDER BY %s%s%s", $escapeSign, $orderBy, $escapeSign);
@@ -314,7 +304,9 @@ class Orm
         $query = sprintf(
             "SELECT %s FROM %s%s%s %s %s %s %s",
             implode(',', $columns),
-            $escapeSign, $tableName, $escapeSign,
+            $escapeSign,
+            $tableName,
+            $escapeSign,
             $joins,
             $wheres,
             $orderBy,
@@ -339,12 +331,10 @@ class Orm
     {
         $result = null;
         try {
-            $instance = self::getInstance();
-            assert($instance instanceof Orm);
-            $result = $instance->mapAnnotated($from, $toClass);
-            $instance->mapReferenced($from, $toClass, $result);
-            if ($instance->isEager($toClass)) {
-                $instance->injectMappedBy($toClass, $result);
+            $result = self::mapAnnotated($from, $toClass);
+            self::mapReferenced($from, $toClass, $result);
+            if (self::isEager($toClass)) {
+                self::injectMappedBy($toClass, $result);
             }
         } catch (OrmException $ex) {
             // TODO: implement simple handling without annotation
@@ -361,7 +351,7 @@ class Orm
      * @param string $toClass The name of class where the mapped data will be stored into
      * @param AbstractModel $result The mapped entity
      */
-    private function mapReferenced($from, $toClass, $result)
+    private static function mapReferenced($from, $toClass, $result)
     {
         try {
             $rfToClass = new ReflectionClass($toClass);
@@ -371,7 +361,7 @@ class Orm
                     list($toProperty, $column) = explode('.', $property);
 
                     if ($rfToClass->hasProperty($toProperty)) {
-                        $referencedClass = $this->getAnnotatedPropertyType($toClass, $toProperty);
+                        $referencedClass = self::getAnnotatedPropertyType($toClass, $toProperty);
 
                         if (!class_exists($referencedClass)) {
                             $referencedClass = sprintf("\\%s\\%s", $rfToClass->getNamespaceName(), $referencedClass);
@@ -402,18 +392,21 @@ class Orm
      * @throws OrmException
      * @throws PDOException
      */
-    private function injectMappedBy($toClass, &$object)
+    private static function injectMappedBy($toClass, &$object)
     {
+        $instance = self::getInstance();
+        assert($instance instanceof Orm);
+
         try {
             $rfToClass = new ReflectionClass($toClass);
 
             foreach ($rfToClass->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
 
-                if (null != ($parameters = $this->getAnnotatedMappedByParameters($property->getDocComment()))) {
-                    $mappedBy = $this->parseMappedBy($parameters);
+                if (null != ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
+                    $mappedBy = self::parseMappedBy($parameters);
 
-                    $type = $this->getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName());
+                    $type = self::getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName());
 
                     if (null == $type) {
                         throw new OrmException(
@@ -422,7 +415,7 @@ class Orm
                         );
                     }
 
-                    if ($this->isPrimitive($type)) {
+                    if (self::isPrimitive($type)) {
                         throw new OrmException(
                             "Primitive type can not be used in mappedBy for property {property}",
                             array('property' => $property->getName())
@@ -434,11 +427,11 @@ class Orm
                         continue;
                     }
 
-                    $ownPrimaryKey = $this->getPrimaryKey($toClass, $object, true);
+                    $ownPrimaryKey = self::getPrimaryKey($toClass, $object, true);
 
-                    $otherTable = $this->getTableName($type);
-                    $otherPrimaryKeyName = $this->getPrimaryKeyCol($type);
-                    $ownPrimaryKeyName =  $this->getPrimaryKeyCol($toClass);
+                    $otherTable = self::getTableName($type);
+                    $otherPrimaryKeyName = self::getPrimaryKeyCol($type);
+                    $ownPrimaryKeyName =  self::getPrimaryKeyCol($toClass);
 
                     $query = sprintf(
                         "SELECT %s.* FROM %s
@@ -456,14 +449,10 @@ class Orm
                         $ownPrimaryKeyName
                     );
 
-                    $instance = self::getInstance();
-                    assert($instance instanceof Orm);
-
-                    $connection = $instance->startTX();
                     $statement = null;
 
                     try {
-                        $statement = $connection->prepare($query);
+                        $statement = $instance->startTX()->prepare($query);
                         $statement->bindValue(sprintf(":%s", $ownPrimaryKeyName), $ownPrimaryKey);
 
                         $statement->execute();
@@ -483,7 +472,7 @@ class Orm
 
                         $setMethod->invoke($object, self::map($result, $type));
                     } catch (PDOException $ex) {
-                        throw $this->handleException($connection, $statement, $ex, "Mapping failed", - 1010);
+                        throw self::handleException($instance, $statement, $ex, "Mapping failed", - 1010);
                     }
                 }
             }
@@ -514,24 +503,24 @@ class Orm
 
         $class = get_called_class();
 
-        $table = $instance->getTableName($class);
+        $table = self::getTableName($class);
 
         $escapeSign = $instance->getDbType()->getEscapeSign();
 
-        $query = $instance->createQuery(
+        $query = self::createQuery(
             $class,
             $table,
             $criteria,
             array(sprintf("%s%s%s.*", $escapeSign, $table, $escapeSign)),
             $orderBy,
             $limit,
-            $startOffset
+            $startOffset,
+            $escapeSign
         );
         $statement = null;
 
         try {
-            $connection = $instance->startTX();
-            $statement = $connection->prepare($query);
+            $statement = $instance->startTX()->prepare($query);
 
             foreach ($criteria as $criterion => $value) {
                 $placeHolder = str_replace('.', '_', $criterion);
@@ -559,8 +548,8 @@ class Orm
 
             $instance->commitTX();
         } catch (Exception $ex) {
-            throw $instance->handleException(
-                $instance->getConnection(),
+            throw self::handleException(
+                $instance,
                 $statement,
                 $ex,
                 "Finding data set failed",
@@ -597,12 +586,12 @@ class Orm
      *
      * @throws OrmException
      */
-    private function getPrimaryKey($class, $object, $onlyValue = false)
+    private static function getPrimaryKey($class, $object, $onlyValue = false)
     {
-        $pk = $this->getAnnotatedPrimaryKey($class, $object, $onlyValue);
+        $pk = self::getAnnotatedPrimaryKey($class, $object, $onlyValue);
 
         if (null == $pk) {
-            $pkCol = $this->getPrimaryKeyCol($class);
+            $pkCol = self::getPrimaryKeyCol($class);
             $method = sprintf("get%s", ucfirst($pkCol));
 
             try {
@@ -630,11 +619,11 @@ class Orm
      * @param mixed $primaryKey The primary key value
      * @throws OrmException
      */
-    private function setPrimaryKey($class, $object, $primaryKey)
+    private static function setPrimaryKey($class, $object, $primaryKey)
     {
-        $pkCol = $this->getAnnotatedPrimaryKeyProperty($class);
+        $pkCol = self::getAnnotatedPrimaryKeyProperty($class);
         if (null == $pkCol) {
-            $pkCol = $this->getPrimaryKeyCol($class);
+            $pkCol = self::getPrimaryKeyCol($class);
         }
         $method = sprintf("set%s", ucfirst($pkCol));
 
@@ -655,13 +644,11 @@ class Orm
      *
      * @throws OrmException
      */
-    private function persistenceQueryParams($pairs, $primaryKeyCol, $insert = true)
+    private static function persistenceQueryParams($pairs, $primaryKeyCol, $insert = true, $escapeSign = "")
     {
         $query = "";
 
         $columns = array_keys($pairs);
-
-        $escapeSign = $this->getDbType()->getEscapeSign();
 
         if ($insert) {
             $cols = "";
@@ -697,12 +684,12 @@ class Orm
      * @throws OrmException
      * @throws PDOException
      */
-    private function persistMappedBy($class, $object)
+    private static function persistMappedBy($class, $object)
     {
         $instance = self::getInstance();
         assert($instance instanceof Orm);
 
-        $escapeSign = $this->getDbType()->getEscapeSign();
+        $escapeSign = $instance->getDbType()->getEscapeSign();
 
         try {
             $rf = new ReflectionClass($class);
@@ -710,8 +697,8 @@ class Orm
             foreach ($rf->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
 
-                if (null != ($parameters = $this->getAnnotatedMappedByParameters($property->getDocComment()))) {
-                    $mappedBy = $this->parseMappedBy($parameters);
+                if (null != ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
+                    $mappedBy = self::parseMappedBy($parameters);
 
                     $method = sprintf("get%s", ucfirst($property->getName()));
                     $rfMethod = new ReflectionMethod($class, $method);
@@ -719,8 +706,8 @@ class Orm
                     $foreignEntity = $rfMethod->invoke($object);
 
                     if (null !== $foreignEntity) {
-                        $foreignPrimaryKey = $this->getPrimaryKey(get_class($foreignEntity), $foreignEntity, true);
-                        $ownPrimaryKey = $this->getPrimaryKey($class, $this, true);
+                        $foreignPrimaryKey = self::getPrimaryKey(get_class($foreignEntity), $foreignEntity, true);
+                        $ownPrimaryKey = self::getPrimaryKey($class, $object, true);
 
                         if (is_null($foreignPrimaryKey)) {
                             throw new OrmException("No primary key column for foreign key found!");
@@ -731,17 +718,22 @@ class Orm
 
                         $query = sprintf(
                             "INSERT INTO %s%s%s (%s%s%s, %s%s%s) VALUES (:%s, :%s)",
-                            $escapeSign, $mappedBy['table'], $escapeSign,
-                            $escapeSign, $mappedBy['inverseColumn'], $escapeSign,
-                            $escapeSign, $mappedBy['column'], $escapeSign,
+                            $escapeSign,
+                            $mappedBy['table'],
+                            $escapeSign,
+                            $escapeSign,
+                            $mappedBy['inverseColumn'],
+                            $escapeSign,
+                            $escapeSign,
+                            $mappedBy['column'],
+                            $escapeSign,
                             $mappedBy['inverseColumn'],
                             $mappedBy['column']
                         );
 
-                        $connection = $instance->startTX();
                         $statement = null;
                         try {
-                            $statement = $connection->prepare($query);
+                            $statement = $instance->startTX()->prepare($query);
                             $statement->bindValue(sprintf(':%s', $mappedBy['inverseColumn']), $ownPrimaryKey);
                             $statement->bindValue(sprintf(':%s', $mappedBy['column']), $foreignPrimaryKey);
 
@@ -749,8 +741,8 @@ class Orm
 
                             $instance->commitTX();
                         } catch (PDOException $ex) {
-                            throw $this->handleException(
-                                $connection,
+                            throw self::handleException(
+                                $instance,
                                 $statement,
                                 $ex,
                                 "Persisting related entities failed",
@@ -775,18 +767,16 @@ class Orm
      *
      * @return string
      */
-    private function createUpdateStatement($class, $pairs, $primaryKeyCol, $primaryKeyValue)
+    private static function createUpdateStatement($class, $pairs, $primaryKeyCol, $primaryKeyValue, $escapeSign)
     {
-        $tableName = $this->getTableName($class);
-
-        $escapeSign = $this->getDbType()->getEscapeSign();
+        $tableName = self::getTableName($class);
 
         $query = sprintf("INSERT INTO %s%s%s ", $escapeSign, $tableName, $escapeSign);
         if ($primaryKeyValue) {
             $query = sprintf("UPDATE %s%s%s ", $escapeSign, $tableName, $escapeSign);
         }
 
-        $query .= $this->persistenceQueryParams($pairs, $primaryKeyCol, is_null($primaryKeyValue));
+        $query .= self::persistenceQueryParams($pairs, $primaryKeyCol, is_null($primaryKeyValue), $escapeSign);
 
         if ($primaryKeyValue) {
             $query .= sprintf(" WHERE %s%s%s = :%s", $escapeSign, $primaryKeyCol, $escapeSign, $primaryKeyCol);
@@ -805,13 +795,15 @@ class Orm
         $instance = self::getInstance();
         assert($instance instanceof Orm);
 
+        $escapeSign = $instance->getDbType()->getEscapeSign();
+
         $class = get_class($this);
 
-        $tableName = $this->getTableName($class);
+        $tableName = self::getTableName($class);
 
-        $this->persistAnnotated($class, $this);
+        self::persistAnnotated($class, $this);
 
-        $pk = $this->getPrimaryKey($class, $this);
+        $pk = self::getPrimaryKey($class, $this);
         if (is_null($pk)) {
             throw new OrmException("No primary key column found!");
         }
@@ -819,9 +811,9 @@ class Orm
             //
         }
 
-        $pairs = $this->getAnnotatedColumnValuePairs($class, $this);
+        $pairs = self::getAnnotatedColumnValuePairs($class, $this);
 
-        $query = $this->createUpdateStatement($class, $pairs, $primaryKeyCol, $primaryKeyValue);
+        $query = self::createUpdateStatement($class, $pairs, $primaryKeyCol, $primaryKeyValue, $escapeSign);
 
         $connection = $instance->startTX();
         $statement = null;
@@ -832,7 +824,7 @@ class Orm
 
             foreach ($pairs as $column => $value) {
                 if ($value instanceof \Nkey\Caribu\Model\AbstractModel) {
-                    $value = $this->getPrimaryKey(get_class($value), $value, true);
+                    $value = self::getPrimaryKey(get_class($value), $value, true);
                 }
                 $statement->bindValue(":{$column}", $value);
             }
@@ -856,7 +848,7 @@ class Orm
             $instance->commitTX();
         } catch (PDOException $ex) {
             $instance->getDbType()->unlock($tableName, $instance);
-            throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
+            throw self::handleException($instance, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
 
@@ -876,7 +868,7 @@ class Orm
 
         $escapeSign = $this->getDbType()->getEscapeSign();
 
-        $pk = $this->getPrimaryKey($class, $this);
+        $pk = self::getPrimaryKey($class, $this);
         foreach ($pk as $primaryKeyCol => $primaryKeyValue) {
             //
         }
@@ -885,17 +877,21 @@ class Orm
             throw new OrmException("Entity is not persisted or detached. Can not delete.");
         }
 
-        $query = sprintf("DELETE FROM %s%s%s WHERE %s%s%s = :%s",
-            $escapeSign, $tableName, $escapeSign,
-            $escapeSign, $primaryKeyCol, $escapeSign,
-            $primaryKeyCol);
+        $query = sprintf(
+            "DELETE FROM %s%s%s WHERE %s%s%s = :%s",
+            $escapeSign,
+            $tableName,
+            $escapeSign,
+            $escapeSign,
+            $primaryKeyCol,
+            $escapeSign,
+            $primaryKeyCol
+        );
 
-        $connection = $instance->startTX();
         $statement = null;
 
-
         try {
-            $statement = $connection->prepare($query);
+            $statement = $instance->startTX()->prepare($query);
             $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
 
             $instance->getDbType()->lock($tableName, IType::LOCK_TYPE_WRITE, $instance);
@@ -905,7 +901,7 @@ class Orm
             $instance->commitTX();
         } catch (PDOException $ex) {
             $instance->getDbType()->unlock($tableName, $instance);
-            throw $this->handleException($connection, $statement, $ex, "Persisting data set failed", - 1000);
+            throw self::handleException($instance, $statement, $ex, "Persisting data set failed", - 1000);
         }
     }
 

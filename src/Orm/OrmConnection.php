@@ -1,12 +1,12 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use Nkey\Caribu\Type\TypeFactory;
 use Nkey\Caribu\Type\AbstractType;
+use Nkey\Caribu\Type\IType;
+use Nkey\Caribu\Type\TypeFactory;
 
 use \PDO;
 use \PDOException;
-use Nkey\Caribu\Type\IType;
 
 /**
  * Connection related functionality for the ORM
@@ -162,7 +162,7 @@ trait OrmConnection
     {
         $dsn = $this->getDbType()->getDsn();
 
-        $dsn = $this->interp($dsn, array(
+        $dsn = self::interpolate($dsn, array(
             'host' => $this->host,
             'port' => ($this->port ? $this->port : $this->dbType->getDefaultPort()),
             'schema' => $this->schema,
