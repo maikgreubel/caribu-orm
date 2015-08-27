@@ -3,6 +3,7 @@ namespace Nkey\Caribu\Type;
 
 use \Nkey\Caribu\Orm\OrmException;
 use \Nkey\Caribu\Orm\Orm;
+use Nkey\Caribu\Orm\OrmDataType;
 
 /**
  * Concrete sqlite implementation of database type
@@ -91,5 +92,61 @@ class Sqlite extends AbstractType
     public function getEscapeSign()
     {
         return "";
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getColumnType()
+     */
+    public function getColumnType($table, $columnName, Orm $orm)
+    {
+        $query = "PRAGMA TABLE_INFO({table})";
+
+        $sql = $this->interp($query, array(
+            'table' => $table
+        ));
+
+        $type = null;
+
+        try {
+            $stmt = $orm->getConnection()->query($sql);
+            $stmt->setFetchMode(\PDO::FETCH_ASSOC);
+            while ($result = $stmt->fetch()) {
+                if ($result['name'] == $columnName) {
+                    switch ($result['type']) {
+                        case 'INTEGER':
+                            $type = OrmDataType::INTEGER;
+                            break;
+
+                        case 'REAL':
+                            $type = OrmDataType::DECIMAL;
+                            break;
+
+                        case 'TEXT':
+                            $type = OrmDataType::STRING;
+                            break;
+
+                        case 'BLOB':
+                            $type = OrmDataType::BLOB;
+                            break;
+                    }
+                    break;
+                }
+            }
+            $stmt->closeCursor();
+        } catch (\PDOException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
+
+        return $type;
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getSequenceNameForColumn()
+     */
+    public function getSequenceNameForColumn($table, $columnName, Orm $orm)
+    {
+        return null;
     }
 }

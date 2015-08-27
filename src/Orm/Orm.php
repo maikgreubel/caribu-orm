@@ -826,7 +826,9 @@ class Orm
                 if ($value instanceof \Nkey\Caribu\Model\AbstractModel) {
                     $value = self::getPrimaryKey(get_class($value), $value, true);
                 }
-                $statement->bindValue(":{$column}", $value);
+                $statement->bindValue(":{$column}", self::convertToDatabaseType(self::getColumnType(
+                    $instance, $tableName, $column), $value
+                ));
             }
             if ($primaryKeyValue) {
                 $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
@@ -834,7 +836,11 @@ class Orm
 
             $instance->getDbType()->lock($tableName, IType::LOCK_TYPE_WRITE, $instance);
             $statement->execute();
-            $pk = $connection->lastInsertId();
+            if (!$primaryKeyValue) {
+                $pk = $connection->lastInsertId($instance->getDbType()->getSequenceNameForColumn(
+                    $tableName, $primaryKeyCol, $instance
+                ));
+            }
             $instance->getDbType()->unlock($tableName, $instance);
 
             unset($statement);

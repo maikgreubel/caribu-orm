@@ -41,7 +41,7 @@ class PostgresComplexTest extends PostgresAbstractDatabaseTestCase
         $connection->exec("DROP TABLE IF EXISTS guestbook");
         $connection->exec("DROP SEQUENCE IF EXISTS seq_guestbook_id");
         $connection->exec("CREATE SEQUENCE seq_guestbook_id START WITH 100");
-        $connection->exec("CREATE TABLE guestbook (id INTEGER PRIMARY KEY DEFAULT NEXTVAL('seq_guestbook_id'), content TEXT, \"user\" CHARACTER(50), created CHARACTER(50))");
+        $connection->exec("CREATE TABLE guestbook (id INTEGER PRIMARY KEY DEFAULT NEXTVAL('seq_guestbook_id'), \"content\" TEXT, \"user\" CHARACTER(50), \"created\" CHARACTER(50))");
         $connection->commit();
 
         parent::setUp();

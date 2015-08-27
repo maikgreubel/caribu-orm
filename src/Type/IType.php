@@ -25,14 +25,14 @@ interface IType
     /**
      * Retrieve the data source name for the type
      *
-     * @return string
+     * @return string The data source name
      */
     public function getDsn();
 
     /**
      * Retrieve the default port of this type
      *
-     * @return int
+     * @return int The default port
      */
     public function getDefaultPort();
 
@@ -42,7 +42,7 @@ interface IType
      * @param string $table
      * @param \Nkey\Caribu\Orm\Orm $orm
      *
-     * @return string
+     * @return string The name of the column
      *
      * @throws \Nkey\Caribu\Orm\OrmException
      */
@@ -67,6 +67,33 @@ interface IType
 
     /**
      * Retrieve the character for escaping special and reserved words
+     *
+     * @return The escape character
      */
     public function getEscapeSign();
+
+    /**
+     * Retrieve the datatype of column
+     *
+     * @param string $table The name of table where the column exists
+     * @param string $columnName The name of column
+     * @param \Nkey\Caribu\Orm\Orm $orm The orm instance
+     *
+     * @return int The datatype of column
+     * @throws \Nkey\Caribu\Orm\OrmException
+     */
+    public function getColumnType($table, $columnName, \Nkey\Caribu\Orm\Orm $orm);
+
+    /**
+     * Retrieve the sequence name for a given column
+     *
+     * @param unknown $table
+     * @param unknown $columnName
+     * @param \Nkey\Caribu\Orm\Orm $orm
+     *
+     * @return string The name of the sequence
+     *
+     * @throws \Nkey\Caribu\Orm\OrmException
+     */
+    public function getSequenceNameForColumn($table, $columnName, \Nkey\Caribu\Orm\Orm $orm);
 }

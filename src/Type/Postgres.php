@@ -3,6 +3,7 @@ namespace Nkey\Caribu\Type;
 
 use \Nkey\Caribu\Orm\OrmException;
 use \Nkey\Caribu\Orm\Orm;
+use Nkey\Caribu\Orm\OrmDataType;
 
 /**
  * Concrete postgresql implementation of database type
@@ -82,7 +83,13 @@ class Postgres extends AbstractType
             $mode = "ROW EXCLUSIVE";
         }
 
-        $lockStatement = sprintf("LOCK TABLE %s IN %s MODE NOWAIT", $table, $mode);
+        $lockStatement = sprintf(
+            "LOCK TABLE %s%s%s IN %s MODE NOWAIT",
+            $this->getEscapeSign(),
+            $table,
+            $this->getEscapeSign(),
+            $mode
+        );
 
         $connection = $orm->getConnection();
         try {
@@ -110,5 +117,131 @@ class Postgres extends AbstractType
     public function getEscapeSign()
     {
         return '"';
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getColumnType()
+     */
+    public function getColumnType($table, $columnName, Orm $orm)
+    {
+        $type = null;
+
+        $query = "select data_type from information_schema.columns where table_catalog = '{schema}' and table_name = '{table}' and column_name = '{column}'";
+
+        $sql = $this->interp($query, array(
+            'schema' => $orm->getSchema(),
+            'table' => $table,
+            'column' => $columnName
+        ));
+
+        $stmt = null;
+
+        try {
+            $stmt = $orm->getConnection()->query($sql);
+            $stmt->setFetchMode(\PDO::FETCH_ASSOC);
+
+            $result = $stmt->fetch();
+
+            if (!$result) {
+                $stmt->closeCursor();
+                throw new OrmException("No such column {column} in {schema}.{table}", array(
+                    'column' => $columnName,
+                    'schema' => $orm->getSchema(),
+                    'table' => $table
+                ));
+            }
+
+            switch (strtoupper($result['data_type'])) {
+                case 'SMALLINT':
+                case 'INTEGER':
+                case 'BIGINT':
+                    $type = OrmDataType::INTEGER;
+                    break;
+
+                case 'NUMERIC':
+                case 'MONEY':
+                    $type = OrmDataType::DECIMAL;
+                    break;
+
+                case 'CHARACTER VARYING':
+                case 'CHARACTER':
+                case 'TEXT':
+                case 'TIME':
+                    $type = OrmDataType::STRING;
+                    break;
+
+                case 'BYTEA':
+                    $type = OrmDataType::BLOB;
+                    break;
+
+                case 'TIMESTAMP':
+                case 'DATE':
+                case 'TIMESTAMP WITHOUT TIME ZONE':
+                    $type = OrmDataType::DATETIME;
+                    break;
+
+                default:
+                    $type = OrmDataType::STRING;
+            }
+
+            $stmt->closeCursor();
+        } catch (\PDOException $ex) {
+            if ($stmt) {
+                $stmt->closeCursor();
+            }
+            throw OrmException::fromPrevious($ex);
+        }
+
+        return $type;
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getSequenceNameForColumn()
+     */
+    public function getSequenceNameForColumn($table, $columnName, Orm $orm)
+    {
+        $sequenceName = null;
+
+        $query = "select column_default from information_schema.columns where table_catalog = '{schema}' " .
+            "AND table_name = '{table}' and column_name = '{column}'";
+
+        $sql = $this->interp($query, array(
+            'schema' => $orm->getSchema(),
+            'table' => $table,
+            'column' => $columnName
+        ));
+
+        $stmt = null;
+
+        try {
+            $stmt = $orm->getConnection()->query($sql);
+            $stmt->setFetchMode(\PDO::FETCH_ASSOC);
+
+            $result = $stmt->fetch();
+
+            if (!$result) {
+                $stmt->closeCursor();
+                throw new OrmException("No such column {column} in {schema}.{table}", array(
+                    'column' => $columnName,
+                    'schema' => $orm->getSchema(),
+                    'table' => $table
+                ));
+            }
+
+            $matches = array();
+            if (preg_match("/nextval\('([^']+)'.*\)/", $result['column_default'], $matches)) {
+                $sequenceName = $matches[1];
+            }
+            $stmt->closeCursor();
+        } catch (\PDOException $ex) {
+            if ($stmt) {
+                $stmt->closeCursor();
+            }
+            throw OrmException::fromPrevious($ex);
+        }
+
+        return $sequenceName;
     }
 }

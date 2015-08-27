@@ -3,6 +3,7 @@ namespace Nkey\Caribu\Type;
 
 use \Nkey\Caribu\Orm\OrmException;
 use \Nkey\Caribu\Orm\Orm;
+use Nkey\Caribu\Orm\OrmDataType;
 
 /**
  * Concrete mysql implementation of database type
@@ -113,5 +114,108 @@ class MySQL extends AbstractType
     public function getEscapeSign()
     {
         return "`";
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getColumnType()
+     */
+    public function getColumnType($table, $columnName, Orm $orm)
+    {
+        $query = "SELECT `DATA_TYPE` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = '{schema}' " .
+            "AND `TABLE_NAME` = '{table}' AND `COLUMN_NAME` = '{column}'";
+
+        $sql = $this->interp($query, array(
+            'table' => $table,
+            'schema' => $orm->getSchema(),
+            'column' => $columnName
+        ));
+
+        $type = null;
+
+        $stmt = null;
+        try
+        {
+            $stmt = $orm->getConnection()->query($sql);
+            $stmt->setFetchMode(\PDO::FETCH_ASSOC);
+
+            $result = $stmt->fetch();
+            if (!$result) {
+                $stmt->closeCursor();
+                throw new OrmException("No such column {column} in {schema}.{table}", array(
+                    'column' => $columnName,
+                    'schema' => $orm->getSchema(),
+                    'table' => $table
+                ));
+            }
+
+            switch (strtoupper($result['DATA_TYPE'])) {
+                case 'CHAR':
+                case 'VARCHAR':
+                case 'TEXT':
+                case 'TINYTEXT':
+                case 'MEDIUMTEXT':
+                case 'LONGTEXT':
+                case 'ENUM':
+                case 'SET':
+                    $type = OrmDataType::STRING;
+                    break;
+
+                case 'BINARY':
+                case 'VARBINARY':
+                case 'TINYBLOB':
+                case 'BLOB':
+                case 'MEDIUMBLOB':
+                case 'LONGBLOB':
+                    $type = OrmDataType::BLOB;
+                    break;
+
+                case 'INTEGER':
+                case 'INT':
+                case 'SMALLINT':
+                case 'TINYINT':
+                case 'MEDIUMINT':
+                case 'BIGINT':
+                    $type = OrmDataType::INTEGER;
+                    break;
+
+                case 'DECIMAL':
+                case 'NUMERIC':
+                case 'FLOAT':
+                case 'REAL':
+                case 'FIXED':
+                case 'DEC':
+                case 'DOUBLE PRECISION':
+                    $type = OrmDataType::DECIMAL;
+                    break;
+
+                case 'DATE':
+                case 'DATETIME':
+                case 'TIMESTAMP':
+                    $type = OrmDataType::DATETIME;
+                    break;
+
+                default:
+                    $type = OrmDataType::STRING;
+            }
+
+            $stmt->closeCursor();
+        } catch (\PDOException $ex) {
+            if ($stmt) {
+                $stmt->closeCursor();
+            }
+            throw OrmException::fromPrevious($ex);
+        }
+
+        return $type;
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getSequenceNameForColumn()
+     */
+    public function getSequenceNameForColumn($table, $columnName, Orm $orm)
+    {
+        return null;
     }
 }

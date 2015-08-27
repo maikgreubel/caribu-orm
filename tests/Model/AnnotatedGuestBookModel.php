@@ -35,7 +35,7 @@ class AnnotatedGuestBookModel extends AbstractModel
 
     /**
      *
-     * @var string
+     * @var \DateTime
      */
     private $created;
 

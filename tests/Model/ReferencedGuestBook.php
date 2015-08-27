@@ -36,7 +36,7 @@ class ReferencedGuestBook extends AbstractModel
 
     /**
      *
-     * @var string
+     * @var \DateTime
      */
     private $created;
 

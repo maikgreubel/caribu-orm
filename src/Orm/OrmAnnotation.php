@@ -19,6 +19,7 @@ use \ReflectionMethod;
  */
 trait OrmAnnotation
 {
+    use OrmDataTypeConverter;
 
     /**
      * Retrieve the annotated table name
@@ -193,11 +194,18 @@ trait OrmAnnotation
 
                 if ($type && !self::isPrimitive($type) && class_exists($type)) {
                     $rfPropertyType = new ReflectionClass($type);
-                    if (strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0) {
+                    if (
+                        $rfPropertyType->getParentClass() &&
+                        strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0
+                    ) {
                         $getById = new ReflectionMethod($type, "get");
                         $value = $getById->invoke(null, $value);
                     } else {
-                        $value = $rfPropertyType->newInstance($value);
+                        if ($rfPropertyType->isInternal()) {
+                            $value = self::convertType($type, $value);
+                        } else {
+                            $value = $rfPropertyType->newInstance($value);
+                        }
                     }
                 }
 
@@ -205,7 +213,7 @@ trait OrmAnnotation
 
                 if ($resultClass->hasMethod($method)) {
                     $rfMethod = new ReflectionMethod($toClass, $method);
-                    $rfMethod->invoke($result, $value);
+                    $rfMethod->invoke($result, self::convertType($type, $value));
                 } else {
                     $resultClassProperties = $resultClass->getProperties();
                     foreach ($resultClassProperties as $resultClassProperty) {
