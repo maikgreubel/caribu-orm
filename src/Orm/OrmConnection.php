@@ -1,6 +1,8 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
+use \Generics\Logger\LoggerTrait;
+
 use Nkey\Caribu\Type\AbstractType;
 use Nkey\Caribu\Type\IType;
 use Nkey\Caribu\Type\TypeFactory;
@@ -17,6 +19,11 @@ use \PDOException;
  */
 trait OrmConnection
 {
+    /**
+     * Include logging facility
+     */
+    use LoggerTrait;
+
     /**
      * The database connection
      *
@@ -145,7 +152,7 @@ trait OrmConnection
      *
      * @return Nkey\Caribu\Type\IType
      */
-    private function getDbType()
+    public function getDbType()
     {
         if (null == $this->dbType) {
             $this->dbType = TypeFactory::create($this);

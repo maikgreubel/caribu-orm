@@ -27,7 +27,7 @@ trait OrmTransaction
      *
      * @return PDO
      */
-    private function startTX()
+    public function startTX()
     {
         if (null == $this->connection) {
             $this->connection = $this->getConnection();
@@ -48,7 +48,7 @@ trait OrmTransaction
      * @throws OrmException
      * @throws PDOException
      */
-    private function commitTX()
+    public function commitTX()
     {
         if (!$this->connection->inTransaction()) {
             throw new OrmException("Transaction is not open");
@@ -66,7 +66,7 @@ trait OrmTransaction
      *
      * @return OrmException either previous exception or new occured during rollback containing previous
      */
-    private function rollBackTX(\Exception $previousException = null)
+    public function rollBackTX(\Exception $previousException = null)
     {
         $connection = $this->getConnection();
 

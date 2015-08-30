@@ -91,7 +91,7 @@ trait OrmAnnotation
      *
      * @param string $class The name of class to retrieve the primary key column of
      *
-     * @return string The name of primary key column
+     * @return string|null The name of primary key column
      *
      * @throws OrmException
      */
@@ -108,7 +108,7 @@ trait OrmAnnotation
                 assert($property instanceof ReflectionProperty);
                 $docComment = $property->getDocComment();
                 if (self::isIdAnnotated($docComment)) {
-                    if (null == ($columnName = self::getAnnotatedColumn($docComment))) {
+                    if (null === ($columnName = self::getAnnotatedColumn($docComment))) {
                         $columnName = $property->getName();
                     }
                 }
@@ -148,7 +148,7 @@ trait OrmAnnotation
                 continue;
             }
 
-            if (null != ($type = self::getAnnotatedType($docComments, $rf->getNamespaceName()))) {
+            if (null !== ($type = self::getAnnotatedType($docComments, $rf->getNamespaceName()))) {
                 break;
             }
         }
@@ -192,7 +192,7 @@ trait OrmAnnotation
                     $type = sprintf("\\%s\\%s", $rf->getNamespaceName(), $type);
                 }
 
-                if ($type && !self::isPrimitive($type) && class_exists($type)) {
+                if (null !== $type && !self::isPrimitive($type) && class_exists($type)) {
                     $rfPropertyType = new ReflectionClass($type);
                     if (
                         $rfPropertyType->getParentClass() &&
@@ -223,7 +223,7 @@ trait OrmAnnotation
                         if (null != ($destinationProperty = self::getAnnotatedColumn($docComments))) {
                             if ($destinationProperty == $property->getName()) {
                                 $type = self::getAnnotatedType($docComments, $resultClass->getNamespaceName());
-                                if (null != $type) {
+                                if (null !== $type) {
                                     if (!self::isPrimitive($type) && class_exists($type) && !$value instanceof $type) {
                                         continue 2;
                                     }
@@ -275,7 +275,7 @@ trait OrmAnnotation
             foreach ($rf->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
 
-                if (null != ($type = self::getAnnotatedType($property->getDocComment(), $rf->getNamespaceName()))) {
+                if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $rf->getNamespaceName()))) {
                     if (!self::isPrimitive($type)) {
                         if (! $persist) {
                             if (self::isCascadeAnnotated($property->getDocComment())) {
@@ -288,7 +288,7 @@ trait OrmAnnotation
                         $entity = $rfMethod->invoke($object);
                         if ($entity instanceof AbstractModel) {
                             if (! $persist) {
-                                $pk = self::getAnnotatedPrimaryKey($type);
+                                $pk = self::getAnnotatedPrimaryKey($type, $entity);
                                 if (null == $pk) {
                                     // TODO Retrieve using fallback
                                 } elseif (is_array($pk)) {
@@ -337,7 +337,7 @@ trait OrmAnnotation
                 if (preg_match('/@mappedBy/i', $docComments)) {
                     continue;
                 }
-                if (null == ($column = self::getAnnotatedColumn($docComments))) {
+                if (null === ($column = self::getAnnotatedColumn($docComments))) {
                     $column = $property->getName();
                 }
 
@@ -382,7 +382,7 @@ trait OrmAnnotation
                     $method = sprintf("get%s", ucfirst($property->getName()));
                     $rfMethod = new ReflectionMethod($class, $method);
 
-                    if (null == ($columnName = self::getAnnotatedColumn($docComment))) {
+                    if (null === ($columnName = self::getAnnotatedColumn($docComment))) {
                         $columnName = $property->getName();
                     }
 
@@ -549,7 +549,7 @@ trait OrmAnnotation
             $property = $class->getProperty($simpleCriterion);
             if ($criterion == $simpleCriterion) {
                 $column = self::getAnnotatedColumn($property->getDocComment());
-                if (null != $column) {
+                if (null !== $column) {
                     $criterion = str_replace($simpleCriterion, $column, $criterion);
                 }
             }
@@ -562,7 +562,7 @@ trait OrmAnnotation
      * Get the annotated join query
      *
      * @param string $class The name of class to use as left class
-     * @param AbstractModel $object The entity to use for join
+     * @param string $table The name of table
      * @param array $criteria
      *            (by reference) List of criterias
      * @param array $columns
@@ -597,7 +597,7 @@ trait OrmAnnotation
             // check annotations
             $propertyClass = "";
             // search the type of property value
-            if (null != ($type = self::getAnnotatedType($rfProperty->getDocComment(), $rf->getNamespaceName()))) {
+            if (null !== ($type = self::getAnnotatedType($rfProperty->getDocComment(), $rf->getNamespaceName()))) {
                 if (!self::isPrimitive($type) && class_exists($type)) {
                     $propertyClass = $type;
                 }
@@ -605,7 +605,7 @@ trait OrmAnnotation
             $inverseTable = $propertyClass ? self::getAnnotatedTableName($propertyClass, $criterion) : $criterion;
 
             // search the table mapping conditions
-            if (null != ($parameters = self::getAnnotatedMappedByParameters($rfProperty->getDocComment()))) {
+            if (null !== ($parameters = self::getAnnotatedMappedByParameters($rfProperty->getDocComment()))) {
                 $mappedBy = self::parseMappedBy($parameters);
 
                 $pkCol = self::getAnnotatedPrimaryKeyColumn($class);

@@ -3,7 +3,6 @@ namespace Nkey\Caribu\Orm;
 
 use \Exception;
 
-use \Generics\Logger\LoggerTrait;
 use \Generics\Util\Interpolator;
 
 use \Nkey\Caribu\Model\AbstractModel;
@@ -40,11 +39,6 @@ class Orm
      * Include exception handling related functionality
      */
     use OrmExceptionHandler;
-
-    /**
-     * Include logging facility
-     */
-    use LoggerTrait;
 
     /**
      * Include the generics interpolation functionality
@@ -122,10 +116,10 @@ class Orm
         assert($instance instanceof Orm);
 
         $pkColumn = self::getAnnotatedPrimaryKeyColumn($class);
-        if (! $pkColumn) {
+        if (null === $pkColumn) {
             $pkColumn = $instance->getDbType()->getPrimaryKeyColumn(self::getTableName($class), $instance);
         }
-        if (! $pkColumn) {
+        if (null === $pkColumn) {
             $pkColumn = 'id';
         }
 
@@ -403,12 +397,12 @@ class Orm
             foreach ($rfToClass->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
 
-                if (null != ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
+                if (null !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
                     $mappedBy = self::parseMappedBy($parameters);
 
                     $type = self::getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName());
 
-                    if (null == $type) {
+                    if (null === $type) {
                         throw new OrmException(
                             "Can't use mappedBy without specific type for property {property}",
                             array('property' => $property->getName())
@@ -490,7 +484,7 @@ class Orm
      * @param int $startOffset The offset where to get results of
      * @param boolean $asList Fetch results as list, also if number of results is one
      *
-     * @return mixed Either an array of object, a single object (if only one was found) or null
+     * @return Nkey\Caribu\Orm\AbstractModel|array|null Either an array of entities, a single entity (if only one was found) or null
      *
      * @throws OrmException
      */
@@ -622,7 +616,7 @@ class Orm
     private static function setPrimaryKey($class, $object, $primaryKey)
     {
         $pkCol = self::getAnnotatedPrimaryKeyProperty($class);
-        if (null == $pkCol) {
+        if (null === $pkCol) {
             $pkCol = self::getPrimaryKeyCol($class);
         }
         $method = sprintf("set%s", ucfirst($pkCol));
@@ -697,7 +691,7 @@ class Orm
             foreach ($rf->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
 
-                if (null != ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
+                if (null !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
                     $mappedBy = self::parseMappedBy($parameters);
 
                     $method = sprintf("get%s", ucfirst($property->getName()));
@@ -807,9 +801,8 @@ class Orm
         if (is_null($pk)) {
             throw new OrmException("No primary key column found!");
         }
-        foreach ($pk as $primaryKeyCol => $primaryKeyValue) {
-            //
-        }
+        $primaryKeyCol = array_keys($pk)[0];
+        $primaryKeyValue = array_values($pk)[0];
 
         $pairs = self::getAnnotatedColumnValuePairs($class, $this);
 
@@ -875,9 +868,8 @@ class Orm
         $escapeSign = $this->getDbType()->getEscapeSign();
 
         $pk = self::getPrimaryKey($class, $this);
-        foreach ($pk as $primaryKeyCol => $primaryKeyValue) {
-            //
-        }
+        $primaryKeyCol = array_keys($pk)[0];
+        $primaryKeyValue = array_values($pk)[0];
 
         if (is_null($primaryKeyValue)) {
             throw new OrmException("Entity is not persisted or detached. Can not delete.");

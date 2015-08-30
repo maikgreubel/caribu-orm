@@ -13,9 +13,11 @@ trait OrmExceptionHandler
     /**
      * Handle a previous occured pdo exception
      *
-     * @param PDO $connection The underlying database connection
+     * @param Orm $orm The orm instance
      * @param PDOStatement $statement The statement which caused the exception to rollback
      * @param Exception $ex The exception cause
+     * @param string $message Optional message
+     * @param integer $code Optional code
      *
      * @return OrmException
      */
@@ -28,7 +30,7 @@ trait OrmExceptionHandler
                 $statement->closeCursor();
             }
             unset($statement);
-        } catch (PDOException $cex) {
+        } catch (\PDOException $cex) {
             // Ignore close cursor exception
         }
 

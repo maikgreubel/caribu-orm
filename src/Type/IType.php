@@ -42,7 +42,7 @@ interface IType
      * @param string $table
      * @param \Nkey\Caribu\Orm\Orm $orm
      *
-     * @return string The name of the column
+     * @return string|null The name of the column
      *
      * @throws \Nkey\Caribu\Orm\OrmException
      */
@@ -68,7 +68,7 @@ interface IType
     /**
      * Retrieve the character for escaping special and reserved words
      *
-     * @return The escape character
+     * @return string The escape character
      */
     public function getEscapeSign();
 
@@ -87,9 +87,9 @@ interface IType
     /**
      * Retrieve the sequence name for a given column
      *
-     * @param unknown $table
-     * @param unknown $columnName
-     * @param \Nkey\Caribu\Orm\Orm $orm
+     * @param string $table The name of table to get the sequence name of
+     * @param string $columnName The name of column to get the sequence name of
+     * @param \Nkey\Caribu\Orm\Orm $orm The orm instance
      *
      * @return string The name of the sequence
      *
