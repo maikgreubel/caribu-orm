@@ -788,21 +788,22 @@ class Orm
 
         $escapeSign = $instance->getDbType()->getEscapeSign();
 
-        assert($this instanceof \Nkey\Caribu\Model\AbstractModel);
-        $class = get_class($this);
+        $entity = $this;
+        assert($entity instanceof \Nkey\Caribu\Model\AbstractModel);
+        $class = get_class($entity);
 
         $tableName = self::getTableName($class);
 
-        self::persistAnnotated($class, $this);
+        self::persistAnnotated($class, $entity);
 
-        $pk = self::getPrimaryKey($class, $this);
+        $pk = self::getPrimaryKey($class, $entity);
         if (is_null($pk)) {
             throw new OrmException("No primary key column found!");
         }
         $primaryKeyCol = array_keys($pk)[0];
         $primaryKeyValue = array_values($pk)[0];
 
-        $pairs = self::getAnnotatedColumnValuePairs($class, $this);
+        $pairs = self::getAnnotatedColumnValuePairs($class, $entity);
 
         $query = self::createUpdateStatement($class, $pairs, $primaryKeyCol, $primaryKeyValue, $escapeSign);
 
@@ -837,10 +838,10 @@ class Orm
             unset($statement);
 
             if (!$primaryKeyValue) {
-                $this->setPrimaryKey($class, $this, $pk);
+                $this->setPrimaryKey($class, $entity, $pk);
             }
 
-            $this->persistMappedBy($class, $this);
+            $this->persistMappedBy($class, $entity);
 
             $instance->commitTX();
         } catch (PDOException $ex) {

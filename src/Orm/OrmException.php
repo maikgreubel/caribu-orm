@@ -19,7 +19,7 @@ class OrmException extends \Generics\GenericsException
      * @param integer $number Optional exception code
      * @param \Exception $previous Optional previous occured exception to embed
      */
-    public function __construct($message, array $context = array(), $number = 0, $previous = null)
+    public function __construct($message, array $context = array(), $number = 0, \Exception $previous = null)
     {
         parent::__construct($message, $context, $number, $previous);
     }
