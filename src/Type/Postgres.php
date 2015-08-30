@@ -49,7 +49,7 @@ class Postgres extends AbstractType
            'schema' => $orm->getSchema()
        ));
 
-       return parent::getPrimaryColumnViaSql($orm, $table, $sql);
+       return $this->getPrimaryColumnViaSql($orm, $table, $sql);
     }
 
     /**
@@ -71,14 +71,7 @@ class Postgres extends AbstractType
             $mode
         );
 
-        $connection = $orm->getConnection();
-        try {
-            if ($connection->exec($lockStatement) === false) {
-                throw new OrmException("Could not lock table {table}", array('table' => $table));
-            }
-        } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex, "Could not lock table");
-        }
+        $this->lockViaSql($orm, $table, $lockStatement);
     }
 
     /**

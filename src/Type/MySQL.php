@@ -46,7 +46,7 @@ class MySQL extends AbstractType
             'schema' => $orm->getSchema()
         ));
 
-        return parent::getPrimaryColumnViaSql($orm, $table, $sql);
+        return $this->getPrimaryColumnViaSql($orm, $table, $sql);
     }
 
     /**
@@ -60,15 +60,7 @@ class MySQL extends AbstractType
             $lock = "WRITE";
         }
 
-        $connection = $orm->getConnection();
-        $lockStatement = sprintf("LOCK TABLES `%s` %s", $table, $lock);
-        try {
-            if ($connection->exec($lockStatement) === false) {
-                throw new OrmException("Could not lock table {table}", array('table' => $table));
-            }
-        } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex, "Could not lock table");
-        }
+        $this->lockViaSql($orm, $table, sprintf("LOCK TABLES `%s` %s", $table, $lock));
     }
 
     /**

@@ -66,6 +66,27 @@ abstract class AbstractType implements IType
         }
 
         return $name;
+    }
 
+    /**
+     * Lock table or row via sql
+     *
+     * @param Orm $orm The Orm instance
+     * @param string $table The table name
+     * @param string $sql The sql to execute for locking
+     *
+     * @throws OrmException
+     */
+    protected function lockViaSql(Orm $orm, $table, $sql)
+    {
+        $connection = $orm->getConnection();
+
+        try {
+            if ($connection->exec($sql) === false) {
+                throw new OrmException("Could not lock table {table}", array('table' => $table));
+            }
+        } catch (\PDOException $ex) {
+            throw OrmException::fromPrevious($ex, "Could not lock table");
+        }
     }
 }
