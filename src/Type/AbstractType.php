@@ -102,14 +102,14 @@ abstract class AbstractType implements IType
      *
      * @return integer The orm type mapped
      */
-    protected abstract function mapType($result);
+    abstract protected function mapType($result);
 
     /**
      * Retrieve query which is results a mapable type from database
      *
      * @return string The query
      */
-    protected abstract function getTypeQuery();
+    abstract protected function getTypeQuery();
 
     /**
      * (non-PHPdoc)

@@ -1,4 +1,6 @@
 <?php
+namespace Nkey\Caribu\Tests;
+
 require_once dirname(__FILE__).'/../AbstractDatabaseTestCase.php';
 require_once dirname(__FILE__).'/../Model/MockedModel.php';
 
