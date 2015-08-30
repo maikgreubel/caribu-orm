@@ -44,12 +44,7 @@ class Postgres extends AbstractType
             "inner join information_schema.table_constraints tc on ccu.constraint_name = tc.constraint_name " .
             "where tc.table_catalog = '{schema}' AND tc.table_name = '{table}'";
 
-       $sql = $this->interp($query, array(
-           'table' => $table,
-           'schema' => $orm->getSchema()
-       ));
-
-       return $this->getPrimaryColumnViaSql($orm, $table, $sql);
+       return $this->getPrimaryColumnViaSql($orm, $table, $query);
     }
 
     /**
@@ -71,7 +66,7 @@ class Postgres extends AbstractType
             $mode
         );
 
-        $this->lockViaSql($orm, $table, $lockStatement);
+        $this->changeLockViaSql($orm, $table, $lockStatement);
     }
 
     /**

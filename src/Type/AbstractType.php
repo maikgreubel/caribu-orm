@@ -37,14 +37,19 @@ abstract class AbstractType implements IType
      *
      * @param Orm $orm The Orm instance
      * @param string $table The name of tablee
-     * @param string $sql The sql query which retrieves the column name
+     * @param string $query The sql query which retrieves the column name
      *
      * @throws OrmException
      *
      * @return string The column name
      */
-    protected function getPrimaryColumnViaSql(Orm $orm, $table, $sql)
+    protected function getPrimaryColumnViaSql(Orm $orm, $table, $query)
     {
+        $sql = $this->interp($query, array(
+            'table' => $table,
+            'schema' => $orm->getSchema()
+        ));
+
         $name = null;
         try {
             $stmt = $orm->getConnection()->query($sql);
@@ -69,24 +74,24 @@ abstract class AbstractType implements IType
     }
 
     /**
-     * Lock table or row via sql
+     * Change the locks on table or row via sql
      *
      * @param Orm $orm The Orm instance
      * @param string $table The table name
-     * @param string $sql The sql to execute for locking
+     * @param string $sql The sql to execute for changing the lock level
      *
      * @throws OrmException
      */
-    protected function lockViaSql(Orm $orm, $table, $sql)
+    protected function changeLockViaSql(Orm $orm, $table, $sql)
     {
         $connection = $orm->getConnection();
 
         try {
             if ($connection->exec($sql) === false) {
-                throw new OrmException("Could not lock table {table}", array('table' => $table));
+                throw new OrmException("Could not change lock type table {table}", array('table' => $table));
             }
         } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex, "Could not lock table");
+            throw OrmException::fromPrevious($ex, "Could not change lock type of table");
         }
     }
 }

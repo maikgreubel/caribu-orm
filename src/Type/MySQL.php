@@ -41,12 +41,7 @@ class MySQL extends AbstractType
         $query = "SELECT `COLUMN_NAME` as column_name FROM `information_schema`.`columns` " . //
             "WHERE `TABLE_NAME` = '{table}' AND `TABLE_SCHEMA` = '{schema}' AND `COLUMN_KEY` = 'PRI'";
 
-        $sql = $this->interp($query, array(
-            'table' => $table,
-            'schema' => $orm->getSchema()
-        ));
-
-        return $this->getPrimaryColumnViaSql($orm, $table, $sql);
+        return $this->getPrimaryColumnViaSql($orm, $table, $query);
     }
 
     /**
@@ -60,7 +55,7 @@ class MySQL extends AbstractType
             $lock = "WRITE";
         }
 
-        $this->lockViaSql($orm, $table, sprintf("LOCK TABLES `%s` %s", $table, $lock));
+        $this->changeLockViaSql($orm, $table, sprintf("LOCK TABLES `%s` %s", $table, $lock));
     }
 
     /**
@@ -69,14 +64,7 @@ class MySQL extends AbstractType
      */
     public function unlock($table, Orm $orm)
     {
-        $connection = $orm->getConnection();
-        try {
-            if ($connection->exec("UNLOCK TABLES") === false) {
-                throw new OrmException("Could not unlock table {table}", array('table' => $table));
-            }
-        } catch(\PDOException $ex) {
-            throw OrmException::fromPrevious($ex, "Could not unlock table");
-        }
+        $this->changeLockViaSql($orm, $table, "UNLOCK TABLES");
     }
 
     /**
