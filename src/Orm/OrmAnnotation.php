@@ -157,6 +157,19 @@ trait OrmAnnotation
     }
 
     /**
+     * Build a full qualified class name including namespace
+     *
+     * @param string $ns The namespace of class
+     * @param string $class The name of class
+     *
+     * @return string The full qualified class name
+     */
+    private static function fullQualifiedName($ns, $class)
+    {
+        return sprintf("\\%s\\%s", $ns, $class);
+    }
+
+    /**
      * Map default class object into specific by annotation
      *
      * @param object $from The unmapped dataset
@@ -189,7 +202,7 @@ trait OrmAnnotation
                 $type = self::getAnnotatedPropertyType($toClass, $property->getName());
 
                 if (null !== $type && !self::isPrimitive($type) && !class_exists($type)) {
-                    $type = sprintf("\\%s\\%s", $rf->getNamespaceName(), $type);
+                    $type = self::fullQualifiedName($rf->getNamespaceName(), $type);
                 }
 
                 if (null !== $type && !self::isPrimitive($type) && class_exists($type)) {
@@ -435,7 +448,7 @@ trait OrmAnnotation
             }
 
             if (!class_exists($type) && !strchr($type, "\\") && $namespace !== null) {
-                $type = sprintf("\\%s\\%s", $namespace, $type);
+                $type = self::fullQualifiedName($namespace, $type);
             }
 
             if (!class_exists($type)) {

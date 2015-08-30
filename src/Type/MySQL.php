@@ -38,7 +38,7 @@ class MySQL extends AbstractType
      */
     public function getPrimaryKeyColumn($table, Orm $orm)
     {
-        $query = "SELECT `COLUMN_NAME` FROM `information_schema`.`columns` " . //
+        $query = "SELECT `COLUMN_NAME` as column_name FROM `information_schema`.`columns` " . //
             "WHERE `TABLE_NAME` = '{table}' AND `TABLE_SCHEMA` = '{schema}' AND `COLUMN_KEY` = 'PRI'";
 
         $sql = $this->interp($query, array(
@@ -46,27 +46,7 @@ class MySQL extends AbstractType
             'schema' => $orm->getSchema()
         ));
 
-        $name = null;
-        try {
-            $stmt = $orm->getConnection()->query($sql);
-            $stmt->setFetchMode(\PDO::FETCH_ASSOC);
-            $count = 0;
-            while ($result = $stmt->fetch()) {
-                $name = $result['COLUMN_NAME'];
-                $count++;
-            }
-            $stmt->closeCursor();
-
-            if ($count > 1) {
-                throw new OrmException("Table {table} contains more than one primary key! Please annotate!", array(
-                    'table' => $table
-                ));
-            }
-        } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex);
-        }
-
-        return $name;
+        return parent::getPrimaryColumnViaSql($orm, $table, $sql);
     }
 
     /**

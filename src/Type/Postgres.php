@@ -49,27 +49,7 @@ class Postgres extends AbstractType
            'schema' => $orm->getSchema()
        ));
 
-       $name = null;
-       try {
-           $stmt = $orm->getConnection()->query($sql);
-           $stmt->setFetchMode(\PDO::FETCH_ASSOC);
-           $count = 0;
-           while ($result = $stmt->fetch()) {
-               $name = $result['column_name'];
-               $count++;
-           }
-           $stmt->closeCursor();
-
-           if ($count > 1) {
-               throw new OrmException("Table {table} contains more than one primary key! Please annotate!", array(
-                   'table' => $table
-               ));
-           }
-       } catch (\PDOException $ex) {
-           throw OrmException::fromPrevious($ex);
-       }
-
-       return $name;
+       return parent::getPrimaryColumnViaSql($orm, $table, $sql);
     }
 
     /**
