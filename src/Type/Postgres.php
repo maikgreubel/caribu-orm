@@ -125,8 +125,6 @@ class Postgres extends AbstractType
      */
     public function getColumnType($table, $columnName, Orm $orm)
     {
-        $type = null;
-
         $query = "select data_type from information_schema.columns where table_catalog = '{schema}' and table_name = '{table}' and column_name = '{column}'";
 
         $sql = $this->interp($query, array(

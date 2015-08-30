@@ -188,7 +188,7 @@ trait OrmAnnotation
 
                 $type = self::getAnnotatedPropertyType($toClass, $property->getName());
 
-                if ($type && !self::isPrimitive($type) && !class_exists($type)) {
+                if (null !== $type && !self::isPrimitive($type) && !class_exists($type)) {
                     $type = sprintf("\\%s\\%s", $rf->getNamespaceName(), $type);
                 }
 
@@ -220,7 +220,7 @@ trait OrmAnnotation
                         assert($resultClassProperty instanceof ReflectionProperty);
                         $docComments = $resultClassProperty->getDocComment();
 
-                        if (null != ($destinationProperty = self::getAnnotatedColumn($docComments))) {
+                        if (null !== ($destinationProperty = self::getAnnotatedColumn($docComments))) {
                             if ($destinationProperty == $property->getName()) {
                                 $type = self::getAnnotatedType($docComments, $resultClass->getNamespaceName());
                                 if (null !== $type) {
@@ -238,12 +238,6 @@ trait OrmAnnotation
                             }
                         }
                     }
-                    /*
-                     * throw new OrmException("No method {method} provided by {class}", array(
-                     * 'method' => $method,
-                     * 'class' => $toClass
-                     * ));
-                     */
                 }
             }
 
@@ -289,9 +283,7 @@ trait OrmAnnotation
                         if ($entity instanceof AbstractModel) {
                             if (! $persist) {
                                 $pk = self::getAnnotatedPrimaryKey($type, $entity);
-                                if (null == $pk) {
-                                    // TODO Retrieve using fallback
-                                } elseif (is_array($pk)) {
+                                if (is_array($pk)) {
                                     list ($pkCol) = $pk;
                                     if (is_empty($pk[$pkCol])) {
                                         $persist = true;
@@ -425,6 +417,7 @@ trait OrmAnnotation
      * Get the annotated type
      *
      * @param string $comment The document comment string which may contain the @var annotation
+     * @param string $namespace Optional namespace where class is part of
      *
      * @return string The parsed type
      *
@@ -473,7 +466,7 @@ trait OrmAnnotation
      *
      * @param string $comment The document comment which may contain the @column annotation
      *
-     * @return The parsed column name
+     * @return string|null The parsed column name
      */
     private static function getAnnotatedColumn($comment)
     {
@@ -524,7 +517,10 @@ trait OrmAnnotation
 
     /**
      * Parse a complex crition into simple criterion
-     * @param unknown $criterion
+     *
+     * @param string $criterion The full criterion pattern
+     *
+     * @return string The simple criterion name
      */
     private static function getSimpleCriterionName($criterion)
     {
@@ -547,7 +543,7 @@ trait OrmAnnotation
         $simpleCriterion = self::getSimpleCriterionName($criterion);
         if ($class->hasProperty($simpleCriterion)) {
             $property = $class->getProperty($simpleCriterion);
-            if ($criterion == $simpleCriterion) {
+            if (strcmp($criterion, $simpleCriterion) == 0) {
                 $column = self::getAnnotatedColumn($property->getDocComment());
                 if (null !== $column) {
                     $criterion = str_replace($simpleCriterion, $column, $criterion);
@@ -567,6 +563,7 @@ trait OrmAnnotation
      *            (by reference) List of criterias
      * @param array $columns
      *            (by reference) List of columns
+     * @param string $escapeSign The character which escapes special literals
      *
      * @return string The join query sql statment
      *

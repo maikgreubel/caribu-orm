@@ -131,8 +131,6 @@ class MySQL extends AbstractType
             'column' => $columnName
         ));
 
-        $type = null;
-
         $stmt = null;
         try
         {

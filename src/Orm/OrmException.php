@@ -16,7 +16,7 @@ class OrmException extends \Generics\GenericsException
      *
      * @param string $message The message to throw
      * @param array $context Optional context key-value-pairs
-     * @param number $number Optional exception code
+     * @param integer $number Optional exception code
      * @param \Exception $previous Optional previous occured exception to embed
      */
     public function __construct($message, array $context = array(), $number = 0, $previous = null)
@@ -28,6 +28,9 @@ class OrmException extends \Generics\GenericsException
      * Throw derived ORMException setting the previous as internal
      *
      * @param \Exception $ex
+     * @param string $message Optional message to embed
+     * @param integer $code Optional exception code to embed
+     *
      * @throws OrmException
      */
     public static function fromPrevious(\Exception $ex, $message = null, $code = 0)

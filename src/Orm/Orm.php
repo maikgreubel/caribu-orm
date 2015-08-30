@@ -72,7 +72,6 @@ class Orm
     private function __construct()
     {
         //TODO:Implement console logging of sql for debugging purposes
-        //$this->setLogger(new ConsoleLogger(new ConsoleOutput()));
     }
 
     /**
@@ -648,12 +647,10 @@ class Orm
             $cols = "";
             $vals = "";
             foreach ($columns as $column) {
-                //if(!is_null($pairs[$column])) {
-                    $cols .= ($cols ? ',' : '');
-                    $cols .= sprintf("%s%s%s", $escapeSign, $column, $escapeSign);
-                    $vals .= ($vals ? ',' : '');
-                    $vals .= sprintf(':%s', $column);
-                //}
+                $cols .= ($cols ? ',' : '');
+                $cols .= sprintf("%s%s%s", $escapeSign, $column, $escapeSign);
+                $vals .= ($vals ? ',' : '');
+                $vals .= sprintf(':%s', $column);
             }
             $query = sprintf("(%s) VALUES (%s)", $cols, $vals);
         } else {
@@ -791,6 +788,7 @@ class Orm
 
         $escapeSign = $instance->getDbType()->getEscapeSign();
 
+        assert($this instanceof \Nkey\Caribu\Model\AbstractModel);
         $class = get_class($this);
 
         $tableName = self::getTableName($class);

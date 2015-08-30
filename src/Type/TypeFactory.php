@@ -29,15 +29,12 @@ abstract class TypeFactory
         switch ($type) {
             case 'sqlite':
                 return new Sqlite();
-                break;
 
             case 'mysql':
                 return new MySQL();
-                break;
 
             case 'postgres':
                 return new Postgres();
-                break;
 
             default:
                 throw new OrmException("No such type {type}", array(
