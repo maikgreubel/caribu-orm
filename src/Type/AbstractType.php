@@ -107,11 +107,9 @@ abstract class AbstractType implements IType
     /**
      * Retrieve query which is results a mapable type from database
      *
-     * @param Orm $orm The Orm instance
-     * @param string $table The name of table
-     * @param string $columnName The name of column
+     * @return string The query
      */
-    protected abstract function getTypeQuery(Orm $orm, $table, $columnName);
+    protected abstract function getTypeQuery();
 
     /**
      * (non-PHPdoc)
@@ -119,7 +117,11 @@ abstract class AbstractType implements IType
      */
     public function getColumnType($table, $columnName, Orm $orm)
     {
-        $sql = $this->getTypeQuery($orm, $table, $columnName);
+        $sql = $this->interp($this->getTypeQuery(), array(
+            'table' => $table,
+            'schema' => $orm->getSchema(),
+            'column' => $columnName
+        ));
 
         $stmt = null;
         try

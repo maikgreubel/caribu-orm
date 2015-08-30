@@ -98,15 +98,11 @@ class Sqlite extends AbstractType
      * (non-PHPdoc)
      * @see \Nkey\Caribu\Type\AbstractType::getTypeQuery()
      */
-    protected function getTypeQuery(Orm $orm, $table, $columnName)
+    protected function getTypeQuery()
     {
         $query = "PRAGMA TABLE_INFO({table})";
 
-        $sql = $this->interp($query, array(
-            'table' => $table
-        ));
-
-        return $sql;
+        return $query;
     }
 
     /**
@@ -140,7 +136,11 @@ class Sqlite extends AbstractType
         $type = null;
 
         try {
-            $stmt = $orm->getConnection()->query($this->getTypeQuery($orm, $table, $columnName));
+            $stmt = $orm->getConnection()->query(
+                $this->interp($this->getTypeQuery(), array(
+                    'table' => $table
+                ))
+            );
             $stmt->setFetchMode(\PDO::FETCH_ASSOC);
             while ($result = $stmt->fetch()) {
                 if ($result['name'] == $columnName) {

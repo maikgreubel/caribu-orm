@@ -91,18 +91,12 @@ class Postgres extends AbstractType
      * (non-PHPdoc)
      * @see \Nkey\Caribu\Type\AbstractType::getTypeQuery()
      */
-    protected function getTypeQuery(Orm $orm, $table, $columnName)
+    protected function getTypeQuery()
     {
         $query = "select data_type from information_schema.columns where table_catalog = '{schema}' " .
             "and table_name = '{table}' and column_name = '{column}'";
 
-        $sql = $this->interp($query, array(
-            'schema' => $orm->getSchema(),
-            'table' => $table,
-            'column' => $columnName
-        ));
-
-        return $sql;
+        return $query;
     }
 
     /**
@@ -116,29 +110,24 @@ class Postgres extends AbstractType
             case 'INTEGER':
             case 'BIGINT':
                 return OrmDataType::INTEGER;
-                break;
 
             case 'NUMERIC':
             case 'MONEY':
                 return OrmDataType::DECIMAL;
-                break;
 
             case 'CHARACTER VARYING':
             case 'CHARACTER':
             case 'TEXT':
             case 'TIME':
                 return OrmDataType::STRING;
-                break;
 
             case 'BYTEA':
                 return OrmDataType::BLOB;
-                break;
 
             case 'TIMESTAMP':
             case 'DATE':
             case 'TIMESTAMP WITHOUT TIME ZONE':
                 return OrmDataType::DATETIME;
-                break;
 
             default:
                 return OrmDataType::STRING;

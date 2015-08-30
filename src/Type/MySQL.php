@@ -88,18 +88,12 @@ class MySQL extends AbstractType
      * (non-PHPdoc)
      * @see \Nkey\Caribu\Type\AbstractType::getTypeQuery()
      */
-    protected function getTypeQuery(Orm $orm, $table, $columnName)
+    protected function getTypeQuery()
     {
         $query = "SELECT `DATA_TYPE` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = '{schema}' " .
             "AND `TABLE_NAME` = '{table}' AND `COLUMN_NAME` = '{column}'";
 
-        $sql = $this->interp($query, array(
-            'table' => $table,
-            'schema' => $orm->getSchema(),
-            'column' => $columnName
-        ));
-
-        return $sql;
+        return $query;
     }
 
     /**
@@ -118,7 +112,6 @@ class MySQL extends AbstractType
             case 'ENUM':
             case 'SET':
                 return OrmDataType::STRING;
-                break;
 
             case 'BINARY':
             case 'VARBINARY':
@@ -127,7 +120,6 @@ class MySQL extends AbstractType
             case 'MEDIUMBLOB':
             case 'LONGBLOB':
                 return OrmDataType::BLOB;
-                break;
 
             case 'INTEGER':
             case 'INT':
@@ -136,7 +128,6 @@ class MySQL extends AbstractType
             case 'MEDIUMINT':
             case 'BIGINT':
                 return OrmDataType::INTEGER;
-                break;
 
             case 'DECIMAL':
             case 'NUMERIC':
@@ -146,13 +137,11 @@ class MySQL extends AbstractType
             case 'DEC':
             case 'DOUBLE PRECISION':
                 return OrmDataType::DECIMAL;
-                break;
 
             case 'DATE':
             case 'DATETIME':
             case 'TIMESTAMP':
                 return OrmDataType::DATETIME;
-                break;
 
             default:
                 return OrmDataType::STRING;
