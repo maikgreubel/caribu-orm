@@ -89,11 +89,12 @@ class Postgres extends AbstractType
 
     /**
      * (non-PHPdoc)
-     * @see \Nkey\Caribu\Type\IType::getColumnType()
+     * @see \Nkey\Caribu\Type\AbstractType::getTypeQuery()
      */
-    public function getColumnType($table, $columnName, Orm $orm)
+    protected function getTypeQuery(Orm $orm, $table, $columnName)
     {
-        $query = "select data_type from information_schema.columns where table_catalog = '{schema}' and table_name = '{table}' and column_name = '{column}'";
+        $query = "select data_type from information_schema.columns where table_catalog = '{schema}' " .
+            "and table_name = '{table}' and column_name = '{column}'";
 
         $sql = $this->interp($query, array(
             'schema' => $orm->getSchema(),
@@ -101,65 +102,47 @@ class Postgres extends AbstractType
             'column' => $columnName
         ));
 
-        $stmt = null;
+        return $sql;
+    }
 
-        try {
-            $stmt = $orm->getConnection()->query($sql);
-            $stmt->setFetchMode(\PDO::FETCH_ASSOC);
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\AbstractType::mapType()
+     */
+    protected function mapType($result)
+    {
+        switch (strtoupper($result['data_type'])) {
+            case 'SMALLINT':
+            case 'INTEGER':
+            case 'BIGINT':
+                return OrmDataType::INTEGER;
+                break;
 
-            $result = $stmt->fetch();
+            case 'NUMERIC':
+            case 'MONEY':
+                return OrmDataType::DECIMAL;
+                break;
 
-            if (!$result) {
-                $stmt->closeCursor();
-                throw new OrmException("No such column {column} in {schema}.{table}", array(
-                    'column' => $columnName,
-                    'schema' => $orm->getSchema(),
-                    'table' => $table
-                ));
-            }
+            case 'CHARACTER VARYING':
+            case 'CHARACTER':
+            case 'TEXT':
+            case 'TIME':
+                return OrmDataType::STRING;
+                break;
 
-            switch (strtoupper($result['data_type'])) {
-                case 'SMALLINT':
-                case 'INTEGER':
-                case 'BIGINT':
-                    $type = OrmDataType::INTEGER;
-                    break;
+            case 'BYTEA':
+                return OrmDataType::BLOB;
+                break;
 
-                case 'NUMERIC':
-                case 'MONEY':
-                    $type = OrmDataType::DECIMAL;
-                    break;
+            case 'TIMESTAMP':
+            case 'DATE':
+            case 'TIMESTAMP WITHOUT TIME ZONE':
+                return OrmDataType::DATETIME;
+                break;
 
-                case 'CHARACTER VARYING':
-                case 'CHARACTER':
-                case 'TEXT':
-                case 'TIME':
-                    $type = OrmDataType::STRING;
-                    break;
-
-                case 'BYTEA':
-                    $type = OrmDataType::BLOB;
-                    break;
-
-                case 'TIMESTAMP':
-                case 'DATE':
-                case 'TIMESTAMP WITHOUT TIME ZONE':
-                    $type = OrmDataType::DATETIME;
-                    break;
-
-                default:
-                    $type = OrmDataType::STRING;
-            }
-
-            $stmt->closeCursor();
-        } catch (\PDOException $ex) {
-            if ($stmt) {
-                $stmt->closeCursor();
-            }
-            throw OrmException::fromPrevious($ex);
+            default:
+                return OrmDataType::STRING;
         }
-
-        return $type;
     }
 
     /**

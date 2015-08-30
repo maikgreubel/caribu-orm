@@ -96,9 +96,9 @@ class Sqlite extends AbstractType
 
     /**
      * (non-PHPdoc)
-     * @see \Nkey\Caribu\Type\IType::getColumnType()
+     * @see \Nkey\Caribu\Type\AbstractType::getTypeQuery()
      */
-    public function getColumnType($table, $columnName, Orm $orm)
+    protected function getTypeQuery(Orm $orm, $table, $columnName)
     {
         $query = "PRAGMA TABLE_INFO({table})";
 
@@ -106,30 +106,45 @@ class Sqlite extends AbstractType
             'table' => $table
         ));
 
+        return $sql;
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\AbstractType::mapType()
+     */
+    protected function mapType($result)
+    {
+        switch ($result['type']) {
+            case 'INTEGER':
+                return OrmDataType::INTEGER;
+
+            case 'REAL':
+                return OrmDataType::DECIMAL;
+
+            case 'BLOB':
+                return OrmDataType::BLOB;
+
+            case 'TEXT':
+            default:
+                return OrmDataType::STRING;
+        }
+    }
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getColumnType()
+     */
+    public function getColumnType($table, $columnName, Orm $orm)
+    {
         $type = null;
 
         try {
-            $stmt = $orm->getConnection()->query($sql);
+            $stmt = $orm->getConnection()->query($this->getTypeQuery($orm, $table, $columnName));
             $stmt->setFetchMode(\PDO::FETCH_ASSOC);
             while ($result = $stmt->fetch()) {
                 if ($result['name'] == $columnName) {
-                    switch ($result['type']) {
-                        case 'INTEGER':
-                            $type = OrmDataType::INTEGER;
-                            break;
-
-                        case 'REAL':
-                            $type = OrmDataType::DECIMAL;
-                            break;
-
-                        case 'TEXT':
-                            $type = OrmDataType::STRING;
-                            break;
-
-                        case 'BLOB':
-                            $type = OrmDataType::BLOB;
-                            break;
-                    }
+                    $type = $this->mapType($result);
                     break;
                 }
             }

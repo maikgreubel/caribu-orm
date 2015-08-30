@@ -94,4 +94,60 @@ abstract class AbstractType implements IType
             throw OrmException::fromPrevious($ex, "Could not change lock type of table");
         }
     }
+
+    /**
+     * Map the type result from statement into an orm type
+     *
+     * @param array $result
+     *
+     * @return integer The orm type mapped
+     */
+    protected abstract function mapType($result);
+
+    /**
+     * Retrieve query which is results a mapable type from database
+     *
+     * @param Orm $orm The Orm instance
+     * @param string $table The name of table
+     * @param string $columnName The name of column
+     */
+    protected abstract function getTypeQuery(Orm $orm, $table, $columnName);
+
+    /**
+     * (non-PHPdoc)
+     * @see \Nkey\Caribu\Type\IType::getColumnType()
+     */
+    public function getColumnType($table, $columnName, Orm $orm)
+    {
+        $sql = $this->getTypeQuery($orm, $table, $columnName);
+
+        $stmt = null;
+        try
+        {
+            $stmt = $orm->getConnection()->query($sql);
+            $stmt->setFetchMode(\PDO::FETCH_ASSOC);
+
+            $result = $stmt->fetch();
+            if (!$result) {
+                $stmt->closeCursor();
+                throw new OrmException("No such column {column} in {schema}.{table}", array(
+                    'column' => $columnName,
+                    'schema' => $orm->getSchema(),
+                    'table' => $table
+                ));
+            }
+
+            $type = $this->mapType($result);
+
+            $stmt->closeCursor();
+        } catch (\PDOException $ex) {
+            if ($stmt) {
+                $stmt->closeCursor();
+            }
+            throw OrmException::fromPrevious($ex);
+        }
+
+        return $type;
+    }
+
 }
