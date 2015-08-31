@@ -159,14 +159,7 @@ class Postgres extends AbstractType
 
             $result = $stmt->fetch();
 
-            if (!$result) {
-                $stmt->closeCursor();
-                throw new OrmException("No such column {column} in {schema}.{table}", array(
-                    'column' => $columnName,
-                    'schema' => $orm->getSchema(),
-                    'table' => $table
-                ));
-            }
+            $this->handleNoColumn($table, $columnName, $orm, $stmt, $result);
 
             $matches = array();
             if (preg_match("/nextval\('([^']+)'.*\)/", $result['column_default'], $matches)) {

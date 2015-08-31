@@ -130,14 +130,8 @@ abstract class AbstractType implements IType
             $stmt->setFetchMode(\PDO::FETCH_ASSOC);
 
             $result = $stmt->fetch();
-            if (!$result) {
-                $stmt->closeCursor();
-                throw new OrmException("No such column {column} in {schema}.{table}", array(
-                    'column' => $columnName,
-                    'schema' => $orm->getSchema(),
-                    'table' => $table
-                ));
-            }
+
+            $this->handleNoColumn($table, $columnName, $orm, $stmt, $result);
 
             $type = $this->mapType($result);
 
@@ -151,5 +145,28 @@ abstract class AbstractType implements IType
 
         return $type;
     }
+    /**
+     * Handle empty result while query table column
+     *
+     * @param string $table The name of table
+     * @param string $columnName The name of column
+     * @param Orm $orm The orm instance
+     * @param \PDOStatement $stmt The prepared statement
+     * @param array $result The result either filled or empty
+     *
+     * @throws OrmException
+     */
+    protected function handleNoColumn($table, $columnName, $orm, $stmt, $result)
+    {
+        if (!$result) {
+            $stmt->closeCursor();
+            throw new OrmException("No such column {column} in {schema}.{table}", array(
+                'column' => $columnName,
+                'schema' => $orm->getSchema(),
+                'table' => $table
+            ));
+        }
+    }
+
 
 }
