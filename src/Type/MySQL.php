@@ -50,7 +50,7 @@ class MySQL extends AbstractType
     public function lock($table, $lockType, Orm $orm)
     {
         $lock = "READ";
-        if($lockType == IType::LOCK_TYPE_WRITE) {
+        if ($lockType == IType::LOCK_TYPE_WRITE) {
             $lock = "WRITE";
         }
 

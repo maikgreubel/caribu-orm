@@ -40,11 +40,11 @@ class Postgres extends AbstractType
      */
     public function getPrimaryKeyColumn($table, Orm $orm)
     {
-       $query = "select ccu.column_name as column_name from information_schema.constraint_column_usage ccu " .
+        $query = "select ccu.column_name as column_name from information_schema.constraint_column_usage ccu " .
             "inner join information_schema.table_constraints tc on ccu.constraint_name = tc.constraint_name " .
             "where tc.table_catalog = '{schema}' AND tc.table_name = '{table}'";
 
-       return $this->getPrimaryColumnViaSql($orm, $table, $query);
+        return $this->getPrimaryColumnViaSql($orm, $table, $query);
     }
 
     /**
@@ -54,7 +54,7 @@ class Postgres extends AbstractType
     public function lock($table, $lockType, Orm $orm)
     {
         $mode = "ACCESS SHARE";
-        if($lockType == IType::LOCK_TYPE_WRITE) {
+        if ($lockType == IType::LOCK_TYPE_WRITE) {
             $mode = "ROW EXCLUSIVE";
         }
 

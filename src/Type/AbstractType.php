@@ -124,8 +124,7 @@ abstract class AbstractType implements IType
         ));
 
         $stmt = null;
-        try
-        {
+        try {
             $stmt = $orm->getConnection()->query($sql);
             $stmt->setFetchMode(\PDO::FETCH_ASSOC);
 
@@ -167,6 +166,4 @@ abstract class AbstractType implements IType
             ));
         }
     }
-
-
 }

@@ -22,9 +22,7 @@ trait OrmDataTypeConverter
         try {
             $rf = new \ReflectionClass($type);
             return $rf->isInternal();
-        }
-        catch(\ReflectionException $ex)
-        {
+        } catch (\ReflectionException $ex) {
             // we do nothing and assume that the class is not checkable
         }
         return false;
@@ -39,7 +37,7 @@ trait OrmDataTypeConverter
      */
     private static function boolval($value)
     {
-        if(!function_exists('boolval')) {
+        if (!function_exists('boolval')) {
             return (bool)$value;
         }
         return boolval($value);
@@ -62,7 +60,7 @@ trait OrmDataTypeConverter
     {
         try {
             $date = new \DateTime(sprintf("@%s", $value));
-        } catch(\Exception $ex) {
+        } catch (\Exception $ex) {
             try {
                 $date = \DateTime::createFromFormat("Y-m-d", $value);
 

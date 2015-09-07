@@ -483,7 +483,8 @@ class Orm
      * @param int $startOffset The offset where to get results of
      * @param boolean $asList Fetch results as list, also if number of results is one
      *
-     * @return Nkey\Caribu\Orm\AbstractModel|array|null Either an array of entities, a single entity (if only one was found) or null
+     * @return Nkey\Caribu\Orm\AbstractModel|array|null
+     *          Either an array of entities, a single entity (if only one was found) or null
      *
      * @throws OrmException
      */
@@ -818,9 +819,10 @@ class Orm
                 if ($value instanceof \Nkey\Caribu\Model\AbstractModel) {
                     $value = self::getPrimaryKey(get_class($value), $value, true);
                 }
-                $statement->bindValue(":{$column}", self::convertToDatabaseType(self::getColumnType(
-                    $instance, $tableName, $column), $value
-                ));
+                $statement->bindValue(
+                    ":{$column}",
+                    self::convertToDatabaseType(self::getColumnType($instance, $tableName, $column), $value)
+                );
             }
             if ($primaryKeyValue) {
                 $statement->bindValue(":{$primaryKeyCol}", $primaryKeyValue);
@@ -830,7 +832,9 @@ class Orm
             $statement->execute();
             if (!$primaryKeyValue) {
                 $pk = $connection->lastInsertId($instance->getDbType()->getSequenceNameForColumn(
-                    $tableName, $primaryKeyCol, $instance
+                    $tableName,
+                    $primaryKeyCol,
+                    $instance
                 ));
             }
             $instance->getDbType()->unlock($tableName, $instance);

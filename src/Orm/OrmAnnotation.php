@@ -207,8 +207,7 @@ trait OrmAnnotation
 
                 if (null !== $type && !self::isPrimitive($type) && class_exists($type)) {
                     $rfPropertyType = new ReflectionClass($type);
-                    if (
-                        $rfPropertyType->getParentClass() &&
+                    if ($rfPropertyType->getParentClass() &&
                         strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0
                     ) {
                         $getById = new ReflectionMethod($type, "get");
@@ -282,30 +281,24 @@ trait OrmAnnotation
             foreach ($rf->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
 
-                if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $rf->getNamespaceName()))) {
-                    if (!self::isPrimitive($type)) {
-                        if (! $persist) {
-                            if (self::isCascadeAnnotated($property->getDocComment())) {
+                if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $rf->getNamespaceName())) &&
+                    !self::isPrimitive($type)) {
+                    if (! $persist && self::isCascadeAnnotated($property->getDocComment())) {
+                        $persist = true;
+                    }
+
+                    $method = sprintf("get%s", ucfirst($property->getName()));
+                    $rfMethod = new ReflectionMethod($class, $method);
+                    $entity = $rfMethod->invoke($object);
+                    if ($entity instanceof AbstractModel) {
+                        if (! $persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity))) {
+                            list ($pkCol) = $pk;
+                            if (is_empty($pk[$pkCol])) {
                                 $persist = true;
                             }
                         }
-
-                        $method = sprintf("get%s", ucfirst($property->getName()));
-                        $rfMethod = new ReflectionMethod($class, $method);
-                        $entity = $rfMethod->invoke($object);
-                        if ($entity instanceof AbstractModel) {
-                            if (! $persist) {
-                                $pk = self::getAnnotatedPrimaryKey($type, $entity);
-                                if (is_array($pk)) {
-                                    list ($pkCol) = $pk;
-                                    if (is_empty($pk[$pkCol])) {
-                                        $persist = true;
-                                    }
-                                }
-                            }
-                            if ($persist) {
-                                $entity->persist();
-                            }
+                        if ($persist) {
+                            $entity->persist();
                         }
                     }
                 }
@@ -623,41 +616,87 @@ trait OrmAnnotation
 
                 $joinQuery = sprintf(
                     "JOIN %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s ",
-                    $escapeSign, $mappedBy['table'], $escapeSign,
-                    $escapeSign, $mappedBy['table'], $escapeSign,
-                    $escapeSign, $mappedBy['inverseColumn'], $escapeSign,
-                    $escapeSign, $table, $escapeSign,
-                    $escapeSign, $pkCol, $escapeSign
+                    $escapeSign,
+                    $mappedBy['table'],
+                    $escapeSign,
+                    $escapeSign,
+                    $mappedBy['table'],
+                    $escapeSign,
+                    $escapeSign,
+                    $mappedBy['inverseColumn'],
+                    $escapeSign,
+                    $escapeSign,
+                    $table,
+                    $escapeSign,
+                    $escapeSign,
+                    $pkCol,
+                    $escapeSign
                 );
                 $joinQuery .= sprintf(
                     "JOIN %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s",
-                    $escapeSign, $inverseTable, $escapeSign,
-                    $escapeSign, $inverseTable, $escapeSign,
-                    $escapeSign, $inversePkCol, $escapeSign,
-                    $escapeSign, $mappedBy['table'], $escapeSign,
-                    $escapeSign, $mappedBy['column'], $escapeSign
+                    $escapeSign,
+                    $inverseTable,
+                    $escapeSign,
+                    $escapeSign,
+                    $inverseTable,
+                    $escapeSign,
+                    $escapeSign,
+                    $inversePkCol,
+                    $escapeSign,
+                    $escapeSign,
+                    $mappedBy['table'],
+                    $escapeSign,
+                    $escapeSign,
+                    $mappedBy['column'],
+                    $escapeSign
                 );
 
-                $columns[] = sprintf("%s%s%s.%s%s%s AS '%s.%s'",
-                    $escapeSign, $inverseTable, $escapeSign,
-                    $escapeSign, $inversePkCol, $escapeSign,
-                    $inverseTable, $inversePkCol);
+                $columns[] = sprintf(
+                    "%s%s%s.%s%s%s AS '%s.%s'",
+                    $escapeSign,
+                    $inverseTable,
+                    $escapeSign,
+                    $escapeSign,
+                    $inversePkCol,
+                    $escapeSign,
+                    $inverseTable,
+                    $inversePkCol
+                );
             } elseif ($propertyClass != "") {
                 $inversePkCol = self::getAnnotatedPrimaryKeyColumn($propertyClass);
                 $column = self::getAnnotatedColumnFromProperty($class, $rfProperty->getName());
                 $joinQuery = sprintf(
                     "JOIN %s%s%s AS %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s",
-                    $escapeSign, $inverseTable, $escapeSign,
-                    $escapeSign, $criterion, $escapeSign,
-                    $escapeSign, $criterion, $escapeSign,
-                    $escapeSign, $inversePkCol, $escapeSign,
-                    $escapeSign, $table, $escapeSign,
-                    $escapeSign, $column, $escapeSign
+                    $escapeSign,
+                    $inverseTable,
+                    $escapeSign,
+                    $escapeSign,
+                    $criterion,
+                    $escapeSign,
+                    $escapeSign,
+                    $criterion,
+                    $escapeSign,
+                    $escapeSign,
+                    $inversePkCol,
+                    $escapeSign,
+                    $escapeSign,
+                    $table,
+                    $escapeSign,
+                    $escapeSign,
+                    $column,
+                    $escapeSign
                 );
-                $columns[] = sprintf("%s%s%s.%s%s%s AS '%s.%s'",
-                    $escapeSign, $criterion, $escapeSign,
-                    $escapeSign, $inversePkCol, $escapeSign,
-                    $criterion, $inversePkCol);
+                $columns[] = sprintf(
+                    "%s%s%s.%s%s%s AS '%s.%s'",
+                    $escapeSign,
+                    $criterion,
+                    $escapeSign,
+                    $escapeSign,
+                    $inversePkCol,
+                    $escapeSign,
+                    $criterion,
+                    $inversePkCol
+                );
             }
         }
         $criteria = $replacedCriteria;
