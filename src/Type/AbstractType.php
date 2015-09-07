@@ -157,7 +157,7 @@ abstract class AbstractType implements IType
      */
     protected function handleNoColumn($table, $columnName, $orm, $stmt, $result)
     {
-        if (!$result) {
+        if (false === $result) {
             $stmt->closeCursor();
             throw new OrmException("No such column {column} in {schema}.{table}", array(
                 'column' => $columnName,

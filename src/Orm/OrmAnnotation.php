@@ -259,6 +259,31 @@ trait OrmAnnotation
         }
     }
 
+    private static function persistProperty($property, $class, $object, $namespace, $persist)
+    {
+        if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) &&
+            !self::isPrimitive($type)) {
+            if (! $persist && self::isCascadeAnnotated($property->getDocComment())) {
+                $persist = true;
+            }
+
+            $method = sprintf("get%s", ucfirst($property->getName()));
+            $rfMethod = new ReflectionMethod($class, $method);
+            $entity = $rfMethod->invoke($object);
+            if ($entity instanceof AbstractModel) {
+                if (! $persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity))) {
+                    list ($pkCol) = $pk;
+                    if (is_empty($pk[$pkCol])) {
+                        $persist = true;
+                    }
+                }
+                if ($persist) {
+                    $entity->persist();
+                }
+            }
+        }
+    }
+
     /**
      * Persist the entity and all sub entities if necessary
      *
@@ -280,28 +305,7 @@ trait OrmAnnotation
 
             foreach ($rf->getProperties() as $property) {
                 assert($property instanceof ReflectionProperty);
-
-                if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $rf->getNamespaceName())) &&
-                    !self::isPrimitive($type)) {
-                    if (! $persist && self::isCascadeAnnotated($property->getDocComment())) {
-                        $persist = true;
-                    }
-
-                    $method = sprintf("get%s", ucfirst($property->getName()));
-                    $rfMethod = new ReflectionMethod($class, $method);
-                    $entity = $rfMethod->invoke($object);
-                    if ($entity instanceof AbstractModel) {
-                        if (! $persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity))) {
-                            list ($pkCol) = $pk;
-                            if (is_empty($pk[$pkCol])) {
-                                $persist = true;
-                            }
-                        }
-                        if ($persist) {
-                            $entity->persist();
-                        }
-                    }
-                }
+                self::persistProperty($property, $class, $object, $rf->getNamespaceName(), $persist);
             }
         } catch (ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
