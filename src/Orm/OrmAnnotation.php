@@ -170,6 +170,97 @@ trait OrmAnnotation
     }
 
     /**
+     * Get the value from property
+     *
+     * @param unknown $from
+     * @param unknown $toClass
+     * @param unknown $property
+     * @param unknown $namespace
+     */
+    private static function getAnnotatedPropertyValue($from, $toClass, $property, $namespace)
+    {
+        $value = $property->getValue($from);
+
+        $type = self::getAnnotatedPropertyType($toClass, $property->getName());
+
+        if (null !== $type && !self::isPrimitive($type) && !class_exists($type)) {
+            $type = self::fullQualifiedName($namespace, $type);
+        }
+
+        if (null !== $type && !self::isPrimitive($type) && class_exists($type)) {
+            $rfPropertyType = new ReflectionClass($type);
+            if ($rfPropertyType->getParentClass() &&
+                strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0
+                ) {
+                $getById = new ReflectionMethod($type, "get");
+                $value = $getById->invoke(null, $value);
+            } else {
+                if ($rfPropertyType->isInternal()) {
+                    $value = self::convertType($type, $value);
+                } else {
+                    $value = $rfPropertyType->newInstance($value);
+                }
+            }
+        }
+
+        return array($type,$value);
+    }
+
+    /**
+     * Assign the property value to result object
+     *
+     * @param object $result
+     * @param ReflectionClass $resultClass
+     * @param string $propertyName
+     * @param string $type
+     * @param mixed $value
+     *
+     * @return object The assigned result object
+     */
+    private static function assignPropertyValue($result, ReflectionClass $resultClass, $propertyName, $type, $value)
+    {
+        $method = sprintf("set%s", ucfirst($propertyName));
+
+        if ($resultClass->hasMethod($method)) {
+            $rfMethod = new ReflectionMethod($resultClass->getName(), $method);
+            $rfMethod->invoke($result, self::convertType($type, $value));
+        } else {
+            $resultClassProperties = $resultClass->getProperties();
+            foreach ($resultClassProperties as $resultClassProperty) {
+                assert($resultClassProperty instanceof ReflectionProperty);
+                $docComments = $resultClassProperty->getDocComment();
+
+                if (null === ($destinationProperty = self::getAnnotatedColumn($docComments))) {
+                    continue;
+                }
+
+                if ($destinationProperty !== $propertyName) {
+                    continue;
+                }
+
+                $type = self::getAnnotatedType($docComments, $resultClass->getNamespaceName());
+                if (null === $type) {
+                    continue;
+                }
+
+                if (!self::isPrimitive($type) && class_exists($type) && !$value instanceof $type) {
+                    break;
+                }
+
+                $method = sprintf("set%s", ucfirst($resultClassProperty->getName()));
+                if ($resultClass->hasMethod($method)) {
+                    $rfMethod = new ReflectionMethod($resultClass->getName(), $method);
+                    $rfMethod->invoke($result, $value);
+                    break;
+                }
+            }
+        }
+
+        return $result;
+
+    }
+
+    /**
      * Map default class object into specific by annotation
      *
      * @param object $from The unmapped dataset
@@ -197,60 +288,9 @@ trait OrmAnnotation
                     continue;
                 }
 
-                $value = $property->getValue($from);
+                list($type, $value) = self::getAnnotatedPropertyValue($from, $toClass, $property, $rf->getNamespaceName());
 
-                $type = self::getAnnotatedPropertyType($toClass, $property->getName());
-
-                if (null !== $type && !self::isPrimitive($type) && !class_exists($type)) {
-                    $type = self::fullQualifiedName($rf->getNamespaceName(), $type);
-                }
-
-                if (null !== $type && !self::isPrimitive($type) && class_exists($type)) {
-                    $rfPropertyType = new ReflectionClass($type);
-                    if ($rfPropertyType->getParentClass() &&
-                        strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0
-                    ) {
-                        $getById = new ReflectionMethod($type, "get");
-                        $value = $getById->invoke(null, $value);
-                    } else {
-                        if ($rfPropertyType->isInternal()) {
-                            $value = self::convertType($type, $value);
-                        } else {
-                            $value = $rfPropertyType->newInstance($value);
-                        }
-                    }
-                }
-
-                $method = sprintf("set%s", ucfirst($property->getName()));
-
-                if ($resultClass->hasMethod($method)) {
-                    $rfMethod = new ReflectionMethod($toClass, $method);
-                    $rfMethod->invoke($result, self::convertType($type, $value));
-                } else {
-                    $resultClassProperties = $resultClass->getProperties();
-                    foreach ($resultClassProperties as $resultClassProperty) {
-                        assert($resultClassProperty instanceof ReflectionProperty);
-                        $docComments = $resultClassProperty->getDocComment();
-
-                        if (null !== ($destinationProperty = self::getAnnotatedColumn($docComments))) {
-                            if ($destinationProperty == $property->getName()) {
-                                $type = self::getAnnotatedType($docComments, $resultClass->getNamespaceName());
-                                if (null !== $type) {
-                                    if (!self::isPrimitive($type) && class_exists($type) && !$value instanceof $type) {
-                                        continue 2;
-                                    }
-                                }
-
-                                $method = sprintf("set%s", ucfirst($resultClassProperty->getName()));
-                                if ($resultClass->hasMethod($method)) {
-                                    $rfMethod = new ReflectionMethod($toClass, $method);
-                                    $rfMethod->invoke($result, $value);
-                                    continue 2;
-                                }
-                            }
-                        }
-                    }
-                }
+                $result = self::assignPropertyValue($result, $resultClass, $property->getName(), $type, $value);
             }
 
             return $result;
@@ -259,7 +299,18 @@ trait OrmAnnotation
         }
     }
 
-    private static function persistProperty($property, $class, $object, $namespace, $persist)
+    /**
+     * Persist inner entity
+     *
+     * @param ReflectionProperty $property The property which represents the inner entity
+     * @param string $class The result class name
+     * @param object $object The object which holds the entity
+     * @param string $namespace The result class namespace
+     * @param boolean $persist Whether to persist
+     *
+     * @throws OrmException
+     */
+    private static function persistProperty(ReflectionProperty $property, $class, $object, $namespace, $persist)
     {
         if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) &&
             !self::isPrimitive($type)) {
@@ -304,7 +355,6 @@ trait OrmAnnotation
             }
 
             foreach ($rf->getProperties() as $property) {
-                assert($property instanceof ReflectionProperty);
                 self::persistProperty($property, $class, $object, $rf->getNamespaceName(), $persist);
             }
         } catch (ReflectionException $ex) {
