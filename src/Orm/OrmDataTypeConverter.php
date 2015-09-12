@@ -152,42 +152,6 @@ trait OrmDataTypeConverter
     }
 
     /**
-     * Convert data from column into php datatype representation
-     *
-     * @param int $type The database type
-     * @param mixed $value
-     *
-     * @return mixed The converted data
-     *
-     * @throws OrmException
-     */
-    private static function convertFromDatabaseType($type, $value, $wanted = null)
-    {
-        switch ($type) {
-            case OrmDataType::STRING:
-                return strval($value);
-
-            case OrmDataType::DECIMAL:
-                return doubleval($value);
-
-            case OrmDataType::INTEGER:
-                if (OrmDataType::DATETIME == $wanted) {
-                    return new \DateTime(sprintf("@%d", $value));
-                }
-                return intval($value);
-
-            case OrmDataType::BLOB:
-                return strval($value);
-
-            case OrmDataType::DATETIME:
-                return new \DateTime($value);
-
-            default:
-                throw new OrmException("No such type {type}", array('type' => $type));
-        }
-    }
-
-    /**
      * Convert type into database type representation
      *
      * @param integer $type The type to convert from
