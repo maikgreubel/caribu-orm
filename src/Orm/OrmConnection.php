@@ -211,4 +211,12 @@ trait OrmConnection
     {
         return self::getInstance()->type;
     }
+
+    /**
+     * Detach connection
+     */
+    private function passivateConnection()
+    {
+        unset($this->connection);
+    }
 }

@@ -11,11 +11,6 @@ use \Nkey\Caribu\Type\IType;
 use \PDO;
 use \PDOException;
 
-use \ReflectionClass;
-use \ReflectionMethod;
-use \ReflectionException;
-use \ReflectionProperty;
-
 /**
  * The main object relational mapper class
  *
@@ -31,14 +26,9 @@ class Orm
     use OrmTransaction;
 
     /**
-     * Include exception handling related functionality
+     * Include persisting related functionality
      */
-    use OrmExceptionHandler;
-
-    /**
-     * Include statement related functionality
-     */
-    use OrmStatement;
+    use OrmPersister;
 
     /**
      * Include the generics interpolation functionality
@@ -206,112 +196,6 @@ class Orm
     }
 
     /**
-     * Set the primary key value after persist
-     *
-     * @param string $class The name of class of entity
-     * @param \Nkey\Caribu\Model\AbstractModel $object The object where the primary key should be set
-     * @param mixed $primaryKey The primary key value
-     * @throws OrmException
-     */
-    private static function setPrimaryKey($class, $object, $primaryKey)
-    {
-        $pkCol = self::getAnnotatedPrimaryKeyProperty($class);
-        if (null === $pkCol) {
-            $pkCol = self::getPrimaryKeyCol($class);
-        }
-        $method = sprintf("set%s", ucfirst($pkCol));
-
-        try {
-            $rfMethod = new ReflectionMethod($class, $method);
-            $rfMethod->invoke($object, $primaryKey);
-        } catch (ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
-        }
-    }
-
-    /**
-     * Persist the mapped-by entities
-     *
-     * @param string $class The name of class of which the data has to be persisted
-     * @param AbstractModel $object The entity which contain mapped-by entries to persist
-     *
-     * @throws OrmException
-     * @throws PDOException
-     */
-    private static function persistMappedBy($class, $object)
-    {
-        $instance = self::getInstance();
-        assert($instance instanceof Orm);
-
-        $escapeSign = $instance->getDbType()->getEscapeSign();
-
-        try {
-            $rf = new ReflectionClass($class);
-
-            foreach ($rf->getProperties() as $property) {
-                assert($property instanceof ReflectionProperty);
-
-                if (null !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
-                    $mappedBy = self::parseMappedBy($parameters);
-
-                    $method = sprintf("get%s", ucfirst($property->getName()));
-                    $rfMethod = new ReflectionMethod($class, $method);
-                    assert($rfMethod instanceof ReflectionMethod);
-                    $foreignEntity = $rfMethod->invoke($object);
-
-                    if (null !== $foreignEntity) {
-                        $foreignPrimaryKey = self::getPrimaryKey(get_class($foreignEntity), $foreignEntity, true);
-                        $ownPrimaryKey = self::getPrimaryKey($class, $object, true);
-
-                        if (is_null($foreignPrimaryKey)) {
-                            throw new OrmException("No primary key column for foreign key found!");
-                        }
-                        if (is_null($ownPrimaryKey)) {
-                            throw new OrmException("No primary key column found!");
-                        }
-
-                        $query = sprintf(
-                            "INSERT INTO %s%s%s (%s%s%s, %s%s%s) VALUES (:%s, :%s)",
-                            $escapeSign,
-                            $mappedBy['table'],
-                            $escapeSign,
-                            $escapeSign,
-                            $mappedBy['inverseColumn'],
-                            $escapeSign,
-                            $escapeSign,
-                            $mappedBy['column'],
-                            $escapeSign,
-                            $mappedBy['inverseColumn'],
-                            $mappedBy['column']
-                        );
-
-                        $statement = null;
-                        try {
-                            $statement = $instance->startTX()->prepare($query);
-                            $statement->bindValue(sprintf(':%s', $mappedBy['inverseColumn']), $ownPrimaryKey);
-                            $statement->bindValue(sprintf(':%s', $mappedBy['column']), $foreignPrimaryKey);
-
-                            $statement->execute();
-
-                            $instance->commitTX();
-                        } catch (PDOException $ex) {
-                            throw self::handleException(
-                                $instance,
-                                $statement,
-                                $ex,
-                                "Persisting related entities failed",
-                                -1010
-                            );
-                        }
-                    }
-                }
-            }
-        } catch (ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
-        }
-    }
-
-    /**
      * Persist the object into database
      *
      * @throws OrmException
@@ -445,11 +329,8 @@ class Orm
      */
     public static function passivate()
     {
-        if (self::$instance && self::$instance->connection) {
-            unset(self::$instance->connection);
-        }
-
         if (self::$instance) {
+            self::$instance->passivateConnection();
             self::$instance = null;
         }
     }

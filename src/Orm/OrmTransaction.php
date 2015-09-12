@@ -25,7 +25,7 @@ trait OrmTransaction
     /**
      * Begin a new transaction
      *
-     * @return PDO
+     * @return \PDO
      */
     public function startTX()
     {

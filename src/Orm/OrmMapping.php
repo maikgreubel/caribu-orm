@@ -205,4 +205,57 @@ trait OrmMapping
             throw OrmException::fromPrevious($ex);
         }
     }
+
+    /**
+     * Assign the property value to result object
+     *
+     * @param object $result
+     * @param \ReflectionClass $resultClass
+     * @param string $propertyName
+     * @param string $type
+     * @param mixed $value
+     *
+     * @return object The assigned result object
+     */
+    private static function assignPropertyValue($result, \ReflectionClass $resultClass, $propertyName, $type, $value)
+    {
+        $method = sprintf("set%s", ucfirst($propertyName));
+
+        if ($resultClass->hasMethod($method)) {
+            $rfMethod = new \ReflectionMethod($resultClass->getName(), $method);
+            $rfMethod->invoke($result, self::convertType($type, $value));
+        } else {
+            $resultClassProperties = $resultClass->getProperties();
+            foreach ($resultClassProperties as $resultClassProperty) {
+                assert($resultClassProperty instanceof \ReflectionProperty);
+                $docComments = $resultClassProperty->getDocComment();
+
+                if (null === ($destinationProperty = self::getAnnotatedColumn($docComments))) {
+                    continue;
+                }
+
+                if ($destinationProperty !== $propertyName) {
+                    continue;
+                }
+
+                $type = self::getAnnotatedType($docComments, $resultClass->getNamespaceName());
+                if (null === $type) {
+                    continue;
+                }
+
+                if (!self::isPrimitive($type) && class_exists($type) && !$value instanceof $type) {
+                    break;
+                }
+
+                $method = sprintf("set%s", ucfirst($resultClassProperty->getName()));
+                if ($resultClass->hasMethod($method)) {
+                    $rfMethod = new \ReflectionMethod($resultClass->getName(), $method);
+                    $rfMethod->invoke($result, $value);
+                    break;
+                }
+            }
+        }
+
+        return $result;
+    }
 }

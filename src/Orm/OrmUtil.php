@@ -4,6 +4,11 @@ namespace Nkey\Caribu\Orm;
 trait OrmUtil
 {
     /**
+     * Include exception handling related functionality
+     */
+    use OrmExceptionHandler;
+
+    /**
      * Checks whether a given string equals identifier of a primitive type
      *
      * @param string $type The type identifier
