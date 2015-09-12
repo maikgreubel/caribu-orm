@@ -172,10 +172,12 @@ trait OrmAnnotation
     /**
      * Get the value from property
      *
-     * @param unknown $from
-     * @param unknown $toClass
-     * @param unknown $property
-     * @param unknown $namespace
+     * @param object $from The source object
+     * @param string $toClass The type of destination class
+     * @param ReflectionProperty $property The property to get value of
+     * @param string $namespace The namespace of destination class
+     *
+     * @return array The type and value from property
      */
     private static function getAnnotatedPropertyValue($from, $toClass, $property, $namespace)
     {
