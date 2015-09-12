@@ -193,21 +193,24 @@ trait OrmAnnotation
             $type = self::fullQualifiedName($namespace, $type);
         }
 
-        if (null !== $type && !self::isPrimitive($type) && class_exists($type)) {
-            $rfPropertyType = new ReflectionClass($type);
-            if ($rfPropertyType->getParentClass() &&
-                strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0
-                ) {
-                $getById = new ReflectionMethod($type, "get");
-                $value = $getById->invoke(null, $value);
-            } else {
-                if ($rfPropertyType->isInternal()) {
-                    $value = self::convertType($type, $value);
-                } else {
-                    $value = $rfPropertyType->newInstance($value);
-                }
-            }
+        if (null === $type || self::isPrimitive($type) || !class_exists($type)) {
+            return array($type, $value);
         }
+
+        $rfPropertyType = new ReflectionClass($type);
+
+        if ($rfPropertyType->getParentClass() &&
+            strcmp($rfPropertyType->getParentClass()->name, 'Nkey\Caribu\Model\AbstractModel') == 0
+            ) {
+            $getById = new ReflectionMethod($type, "get");
+            $value = $getById->invoke(null, $value);
+
+            return array($type, $value);
+        }
+
+        $value = $rfPropertyType->isInternal() ?
+            self::convertType($type, $value) :
+            $rfPropertyType->newInstance($value);
 
         return array($type, $value);
     }
