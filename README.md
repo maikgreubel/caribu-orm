@@ -1,5 +1,5 @@
-[![Build Status](https://travis-ci.org/maikgreubel/caribu-orm.png)](https://travis-ci.org/maikgreubel/caribu-orm)
-[![Coverage Status](https://coveralls.io/repos/maikgreubel/caribu-orm/badge.svg?branch=master)](https://coveralls.io/r/maikgreubel/caribu-orm?branch=master)
+[![Build Status](https://scrutinizer-ci.com/g/maikgreubel/caribu-orm/badges/build.png?b=master)](https://scrutinizer-ci.com/g/maikgreubel/caribu-orm/build-status/master)
+[![Code Coverage](https://scrutinizer-ci.com/g/maikgreubel/caribu-orm/badges/coverage.png?b=master)](https://scrutinizer-ci.com/g/maikgreubel/caribu-orm/?branch=master)
 [![Scrutinizer Code Quality](https://scrutinizer-ci.com/g/maikgreubel/caribu-orm/badges/quality-score.png?b=master)](https://scrutinizer-ci.com/g/maikgreubel/caribu-orm/?branch=master)
 [![Dependency Status](https://www.versioneye.com/user/projects/55e2c672c6d8f2001d000335/badge.svg?style=flat)](https://www.versioneye.com/user/projects/55e2c672c6d8f2001d000335)
 [![Codacy Badge](https://api.codacy.com/project/badge/409051ceae4f41dabb0cb79bf0f2d5e1)](https://www.codacy.com/app/greubel/caribu-orm)
