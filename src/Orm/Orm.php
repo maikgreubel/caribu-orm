@@ -144,7 +144,7 @@ class Orm
             $pkColumn => $id
         ));
 
-        if (! $result || is_array($result)) {
+        if (!$result || is_array($result)) {
             throw new OrmException("More than one entity found (expected exactly one)");
         }
 
@@ -290,7 +290,7 @@ class Orm
 
         $limits = self::parseLimits($limit, $startFrom);
 
-        if ($orderBy && ! stristr($orderBy, 'ORDER BY ')) {
+        if ($orderBy && !stristr($orderBy, 'ORDER BY ')) {
             $orderBy = sprintf("ORDER BY %s%s%s", $escapeSign, $orderBy, $escapeSign);
         }
 
@@ -424,7 +424,7 @@ class Orm
 
                     $otherTable = self::getTableName($type);
                     $otherPrimaryKeyName = self::getPrimaryKeyCol($type);
-                    $ownPrimaryKeyName =  self::getPrimaryKeyCol($toClass);
+                    $ownPrimaryKeyName = self::getPrimaryKeyCol($toClass);
 
                     $query = sprintf(
                         "SELECT %s.* FROM %s

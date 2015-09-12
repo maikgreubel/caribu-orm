@@ -50,6 +50,18 @@ trait OrmAnnotation
     }
 
     /**
+     * Retrieve the properties from class
+     *
+     * @return array Array of Reflection properties
+     */
+    private static function getClassProperties($class)
+    {
+        $rf = new ReflectionClass($class);
+
+        return $rf->getProperties();
+    }
+
+    /**
      * Get the annotated primary key property name
      *
      * The property is annotated with the @id annotation
@@ -63,21 +75,17 @@ trait OrmAnnotation
     private static function getAnnotatedPrimaryKeyProperty($class)
     {
         try {
-            $rf = new ReflectionClass($class);
+            $propertyName = null;
 
-            $properties = $rf->getProperties();
-
-            $properyName = null;
-
-            foreach ($properties as $property) {
+            foreach (self::getClassProperties($class) as $property) {
                 assert($property instanceof ReflectionProperty);
                 if (self::isIdAnnotated($property->getDocComment())) {
-                    $properyName = $property->getName();
+                    $propertyName = $property->getName();
                     break;
                 }
             }
 
-            return $properyName;
+            return $propertyName;
         } catch (ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
         }
@@ -98,13 +106,9 @@ trait OrmAnnotation
     private static function getAnnotatedPrimaryKeyColumn($class)
     {
         try {
-            $rf = new ReflectionClass($class);
-
-            $properties = $rf->getProperties();
-
             $columnName = null;
 
-            foreach ($properties as $property) {
+            foreach (self::getClassProperties($class) as $property) {
                 assert($property instanceof ReflectionProperty);
                 $docComment = $property->getDocComment();
                 if (self::isIdAnnotated($docComment)) {
@@ -144,7 +148,7 @@ trait OrmAnnotation
                 $isDestinationProperty = true;
             }
 
-            if (! $isDestinationProperty) {
+            if (!$isDestinationProperty) {
                 continue;
             }
 
@@ -205,7 +209,7 @@ trait OrmAnnotation
             }
         }
 
-        return array($type,$value);
+        return array($type, $value);
     }
 
     /**
@@ -316,7 +320,7 @@ trait OrmAnnotation
     {
         if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) &&
             !self::isPrimitive($type)) {
-            if (! $persist && self::isCascadeAnnotated($property->getDocComment())) {
+            if (!$persist && self::isCascadeAnnotated($property->getDocComment())) {
                 $persist = true;
             }
 
@@ -324,7 +328,7 @@ trait OrmAnnotation
             $rfMethod = new ReflectionMethod($class, $method);
             $entity = $rfMethod->invoke($object);
             if ($entity instanceof AbstractModel) {
-                if (! $persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity))) {
+                if (!$persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity))) {
                     list ($pkCol) = $pk;
                     if (is_empty($pk[$pkCol])) {
                         $persist = true;
@@ -442,7 +446,7 @@ trait OrmAnnotation
 
                     $pk = $rfMethod->invoke($object);
 
-                    if (! $onlyValue) {
+                    if (!$onlyValue) {
                         $pk = array(
                             $columnName => $pk
                         );

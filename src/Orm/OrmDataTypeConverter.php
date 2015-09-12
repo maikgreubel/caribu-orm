@@ -187,6 +187,14 @@ trait OrmDataTypeConverter
         }
     }
 
+    /**
+     * Convert type into database type representation
+     *
+     * @param integer $type The type to convert from
+     * @param mixed $value The value to convert from
+     *
+     * @return mixed The converted value data
+     */
     private static function convertToDatabaseType($type, $value)
     {
         switch ($type) {
