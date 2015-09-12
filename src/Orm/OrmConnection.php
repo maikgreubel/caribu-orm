@@ -1,15 +1,6 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use \Generics\Logger\LoggerTrait;
-
-use Nkey\Caribu\Type\AbstractType;
-use Nkey\Caribu\Type\IType;
-use Nkey\Caribu\Type\TypeFactory;
-
-use \PDO;
-use \PDOException;
-
 /**
  * Connection related functionality for the ORM
  *
@@ -22,7 +13,7 @@ trait OrmConnection
     /**
      * Include logging facility
      */
-    use LoggerTrait;
+    use \Generics\Logger\LoggerTrait;
 
     /**
      * The database connection
@@ -155,7 +146,7 @@ trait OrmConnection
     public function getDbType()
     {
         if (null == $this->dbType) {
-            $this->dbType = TypeFactory::create($this);
+            $this->dbType = \Nkey\Caribu\Type\TypeFactory::create($this);
         }
         return $this->dbType;
     }
@@ -177,10 +168,10 @@ trait OrmConnection
         ));
 
         try {
-            $this->connection = new PDO($dsn, $this->user, $this->password, $this->settings);
-            $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            $this->connection = new \PDO($dsn, $this->user, $this->password, $this->settings);
+            $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->getLog()->info("New instance of PDO connection established");
-        } catch (PDOException $ex) {
+        } catch (\PDOException $ex) {
             throw OrmException::fromPrevious($ex, $ex->getMessage(), $ex->getCode());
         }
     }
@@ -188,7 +179,7 @@ trait OrmConnection
     /**
      * Retrieve the database connection
      *
-     * @return PDO The database connection
+     * @return \PDO The database connection
      *
      * @throws OrmException
      */

@@ -38,30 +38,30 @@ trait OrmStatement
         $limit = 0,
         $startFrom = 0,
         $escapeSign = ""
-        ) {
-            $joins = self::getAnnotatedQuery($class, $tableName, $criteria, $columns, $escapeSign);
+    ) {
+        $joins = self::getAnnotatedQuery($class, $tableName, $criteria, $columns, $escapeSign);
 
-            $wheres = self::parseCriteria($criteria, $escapeSign);
+        $wheres = self::parseCriteria($criteria, $escapeSign);
 
-            $limits = self::parseLimits($limit, $startFrom);
+        $limits = self::parseLimits($limit, $startFrom);
 
-            if ($orderBy && !stristr($orderBy, 'ORDER BY ')) {
-                $orderBy = sprintf("ORDER BY %s%s%s", $escapeSign, $orderBy, $escapeSign);
-            }
+        if ($orderBy && !stristr($orderBy, 'ORDER BY ')) {
+            $orderBy = sprintf("ORDER BY %s%s%s", $escapeSign, $orderBy, $escapeSign);
+        }
 
-            $query = sprintf(
-                "SELECT %s FROM %s%s%s %s %s %s %s",
-                implode(',', $columns),
-                $escapeSign,
-                $tableName,
-                $escapeSign,
-                $joins,
-                $wheres,
-                $orderBy,
-                $limits
-                );
+        $query = sprintf(
+            "SELECT %s FROM %s%s%s %s %s %s %s",
+            implode(',', $columns),
+            $escapeSign,
+            $tableName,
+            $escapeSign,
+            $joins,
+            $wheres,
+            $orderBy,
+            $limits
+        );
 
-            return $query;
+        return $query;
     }
 
     /**
@@ -141,7 +141,7 @@ trait OrmStatement
                     self::escapeCriterion($criterion, $escapeSign),
                     $start,
                     $end
-                    );
+                );
                 unset($criteria[$criterion]);
             } else {
                 $wheres[] = sprintf("%s = :%s", self::escapeCriterion($criterion, $escapeSign), $placeHolder);
@@ -237,5 +237,178 @@ trait OrmStatement
         }
 
         return $query;
+    }
+
+    /**
+     * When criterion is a property but annotated column name differs, we take the column name
+     *
+     * @param string $className The entity class name
+     * @param string $criterion The criterion
+     */
+    private static function getAnnotatedCriterion($className, $criterion)
+    {
+        $class = new \ReflectionClass($className);
+        $simpleCriterion = self::getSimpleCriterionName($criterion);
+        if (!$class->hasProperty($simpleCriterion)) {
+            return $criterion;
+        }
+
+        $property = $class->getProperty($simpleCriterion);
+
+        if (strcmp($criterion, $simpleCriterion) != 0) {
+            return $criterion;
+        }
+
+        $column = self::getAnnotatedColumn($property->getDocComment());
+
+        if (null !== $column) {
+            $criterion = str_replace($simpleCriterion, $column, $criterion);
+        }
+
+        return $criterion;
+    }
+
+    /**
+     * Get the annotated join query
+     *
+     * @param string $class The name of class to use as left class
+     * @param string $table The name of table
+     * @param array $criteria
+     *            (by reference) List of criterias
+     * @param array $columns
+     *            (by reference) List of columns
+     * @param string $escapeSign The character which escapes special literals
+     *
+     * @return string The join query sql statment
+     *
+     * @throws OrmException
+     */
+    private static function getAnnotatedQuery($class, $table, &$criteria, &$columns, $escapeSign)
+    {
+        $joinQuery = "";
+
+        $rf = new \ReflectionClass($class);
+
+        $replacedCriteria = array();
+
+        // Example criterion: user.name => 'john'
+        foreach (array_keys($criteria) as $criterion) {
+            $replacedCriteria[self::getAnnotatedCriterion($class, $criterion)] = $criteria[$criterion];
+            // from example criterionProperty will be 'name', criterion will now be 'user'
+            if (strpos($criterion, '.') !== false) {
+                list ($criterion) = explode('.', $criterion);
+            }
+
+            // class must have a property named by criterion
+            $rfProperty = $rf->hasProperty($criterion) ? $rf->getProperty($criterion) : null;
+            if ($rfProperty == null) {
+                continue;
+            }
+
+            // check annotations
+            $propertyClass = "";
+            // search the type of property value
+            if (null !== ($type = self::getAnnotatedType($rfProperty->getDocComment(), $rf->getNamespaceName()))) {
+                if (!self::isPrimitive($type) && class_exists($type)) {
+                    $propertyClass = $type;
+                }
+            }
+            $inverseTable = $propertyClass ? self::getAnnotatedTableName($propertyClass, $criterion) : $criterion;
+
+            // search the table mapping conditions
+            if (null !== ($parameters = self::getAnnotatedMappedByParameters($rfProperty->getDocComment()))) {
+                $mappedBy = self::parseMappedBy($parameters);
+
+                $pkCol = self::getAnnotatedPrimaryKeyColumn($class);
+                $inversePkCol = self::getAnnotatedPrimaryKeyColumn($propertyClass);
+
+                $joinQuery = sprintf(
+                    "JOIN %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s ",
+                    $escapeSign,
+                    $mappedBy['table'],
+                    $escapeSign,
+                    $escapeSign,
+                    $mappedBy['table'],
+                    $escapeSign,
+                    $escapeSign,
+                    $mappedBy['inverseColumn'],
+                    $escapeSign,
+                    $escapeSign,
+                    $table,
+                    $escapeSign,
+                    $escapeSign,
+                    $pkCol,
+                    $escapeSign
+                );
+                $joinQuery .= sprintf(
+                    "JOIN %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s",
+                    $escapeSign,
+                    $inverseTable,
+                    $escapeSign,
+                    $escapeSign,
+                    $inverseTable,
+                    $escapeSign,
+                    $escapeSign,
+                    $inversePkCol,
+                    $escapeSign,
+                    $escapeSign,
+                    $mappedBy['table'],
+                    $escapeSign,
+                    $escapeSign,
+                    $mappedBy['column'],
+                    $escapeSign
+                );
+
+                $columns[] = sprintf(
+                    "%s%s%s.%s%s%s AS '%s.%s'",
+                    $escapeSign,
+                    $inverseTable,
+                    $escapeSign,
+                    $escapeSign,
+                    $inversePkCol,
+                    $escapeSign,
+                    $inverseTable,
+                    $inversePkCol
+                );
+            } elseif ($propertyClass != "") {
+                $inversePkCol = self::getAnnotatedPrimaryKeyColumn($propertyClass);
+                $column = self::getAnnotatedColumnFromProperty($class, $rfProperty->getName());
+                $joinQuery = sprintf(
+                    "JOIN %s%s%s AS %s%s%s ON %s%s%s.%s%s%s = %s%s%s.%s%s%s",
+                    $escapeSign,
+                    $inverseTable,
+                    $escapeSign,
+                    $escapeSign,
+                    $criterion,
+                    $escapeSign,
+                    $escapeSign,
+                    $criterion,
+                    $escapeSign,
+                    $escapeSign,
+                    $inversePkCol,
+                    $escapeSign,
+                    $escapeSign,
+                    $table,
+                    $escapeSign,
+                    $escapeSign,
+                    $column,
+                    $escapeSign
+                );
+                $columns[] = sprintf(
+                    "%s%s%s.%s%s%s AS '%s.%s'",
+                    $escapeSign,
+                    $criterion,
+                    $escapeSign,
+                    $escapeSign,
+                    $inversePkCol,
+                    $escapeSign,
+                    $criterion,
+                    $inversePkCol
+                );
+            }
+        }
+        $criteria = $replacedCriteria;
+
+        return $joinQuery;
     }
 }

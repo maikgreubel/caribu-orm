@@ -26,11 +26,6 @@ use \ReflectionProperty;
 class Orm
 {
     /**
-     * Include the or mapping annotation functionality
-     */
-    use OrmAnnotation;
-
-    /**
      * Include the transaction related functionality
      */
     use OrmTransaction;
@@ -177,7 +172,7 @@ class Orm
             $statement->closeCursor();
 
             foreach ($unmapped as $result) {
-                $results[] = self::map($result, $class);
+                $results[] = self::map($result, $class, $instance);
             }
 
             if (!$asList && count($results) == 1) {

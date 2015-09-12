@@ -1,8 +1,6 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use Generics\GenericsException;
-
 /**
  * Derived exception for the Caribu package
  *

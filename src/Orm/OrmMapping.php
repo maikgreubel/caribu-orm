@@ -3,6 +3,8 @@ namespace Nkey\Caribu\Orm;
 
 trait OrmMapping
 {
+    use OrmAnnotation;
+
     /**
      * Map a object from default class into specific
      *
@@ -14,14 +16,14 @@ trait OrmMapping
      * @throws OrmException
      * @throws PDOException
      */
-    private static function map($from, $toClass)
+    private static function map($from, $toClass, Orm $orm)
     {
         $result = null;
         try {
             $result = self::mapAnnotated($from, $toClass);
             self::mapReferenced($from, $toClass, $result);
             if (self::isEager($toClass)) {
-                self::injectMappedBy($toClass, $result);
+                self::injectMappedBy($toClass, $result, $orm);
             }
         } catch (OrmException $ex) {
             // TODO: implement simple handling without annotation
@@ -79,11 +81,8 @@ trait OrmMapping
      * @throws OrmException
      * @throws PDOException
      */
-    private static function injectMappedBy($toClass, &$object)
+    private static function injectMappedBy($toClass, &$object, Orm $orm)
     {
-        $instance = self::getInstance();
-        assert($instance instanceof Orm);
-
         try {
             $rfToClass = new \ReflectionClass($toClass);
 
@@ -99,14 +98,14 @@ trait OrmMapping
                         throw new OrmException(
                             "Can't use mappedBy without specific type for property {property}",
                             array('property' => $property->getName())
-                            );
+                        );
                     }
 
                     if (self::isPrimitive($type)) {
                         throw new OrmException(
                             "Primitive type can not be used in mappedBy for property {property}",
                             array('property' => $property->getName())
-                            );
+                        );
                     }
 
                     $getMethod = new \ReflectionMethod($toClass, sprintf("get%s", ucfirst($property->getName())));
@@ -134,12 +133,12 @@ trait OrmMapping
                         $mappedBy['table'],
                         $mappedBy['inverseColumn'],
                         $ownPrimaryKeyName
-                        );
+                    );
 
                     $statement = null;
 
                     try {
-                        $statement = $instance->startTX()->prepare($query);
+                        $statement = $orm->startTX()->prepare($query);
                         $statement->bindValue(sprintf(":%s", $ownPrimaryKeyName), $ownPrimaryKey);
 
                         $statement->execute();
@@ -150,19 +149,58 @@ trait OrmMapping
                             throw new OrmException(
                                 "No foreign entity found for {entity} using primary key {pk}",
                                 array('entity' => $toClass, 'pk' => $$ownPrimaryKey)
-                                );
+                            );
                         }
 
-                        $instance->commitTX();
+                        $orm->commitTX();
 
                         $setMethod = new \ReflectionMethod($toClass, sprintf("set%s", ucfirst($property->getName())));
 
-                        $setMethod->invoke($object, self::map($result, $type));
+                        $setMethod->invoke($object, self::map($result, $type, $orm));
                     } catch (\PDOException $ex) {
-                        throw self::handleException($instance, $statement, $ex, "Mapping failed", - 1010);
+                        throw self::handleException($orm, $statement, $ex, "Mapping failed", - 1010);
                     }
                 }
             }
+        } catch (\ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
+    }
+
+    /**
+     * Map default class object into specific by annotation
+     *
+     * @param object $from The unmapped dataset
+     * @param string $toClass The name of class where to map data in
+     *
+     * @return AbstractModel The mapped data as entity
+     *
+     * @throws OrmException
+     */
+    private static function mapAnnotated($from, $toClass)
+    {
+        try {
+            $resultClass = new \ReflectionClass($toClass);
+
+            $rf = new \ReflectionObject($from);
+
+            $result = $resultClass->newInstanceWithoutConstructor();
+
+            $properties = $rf->getProperties();
+            foreach ($properties as $property) {
+                assert($property instanceof \ReflectionProperty);
+
+                // attached property by annotation mapping => map later
+                if (strpos($property->getName(), '.')) {
+                    continue;
+                }
+
+                list($type, $value) = self::getAnnotatedPropertyValue($from, $toClass, $property, $rf->getNamespaceName());
+
+                $result = self::assignPropertyValue($result, $resultClass, $property->getName(), $type, $value);
+            }
+
+            return $result;
         } catch (\ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
         }

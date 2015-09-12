@@ -79,6 +79,4 @@ trait OrmEntityAnalyzer
 
         return $pkColumn;
     }
-
-
 }
