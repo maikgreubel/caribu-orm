@@ -1,7 +1,6 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use Nkey\Caribu\Type\IType;
 /**
  * Connection related functionality for the ORM
  *

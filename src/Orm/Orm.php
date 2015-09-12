@@ -31,11 +31,6 @@ class Orm
     use OrmTransaction;
 
     /**
-     * Include mapping related functionality
-     */
-    use OrmMapping;
-
-    /**
      * Include exception handling related functionality
      */
     use OrmExceptionHandler;

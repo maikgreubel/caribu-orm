@@ -4,6 +4,11 @@ namespace Nkey\Caribu\Orm;
 trait OrmEntityAnalyzer
 {
     /**
+     * Include mapping related functionality
+     */
+    use OrmMapping;
+
+    /**
      * Get the name of table
      *
      * @param string $class The name of class

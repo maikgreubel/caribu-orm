@@ -11,37 +11,9 @@ namespace Nkey\Caribu\Orm;
 trait OrmDataTypeConverter
 {
     /**
-     * Checks whether a type is an internal class defined by core or any extension
-     *
-     * @param string $type The type (class name) to check
-     *
-     * @return boolean
+     * Include some basic utility functions
      */
-    private static function isInternalClass($type)
-    {
-        try {
-            $rf = new \ReflectionClass($type);
-            return $rf->isInternal();
-        } catch (\ReflectionException $ex) {
-            // we do nothing and assume that the class is not checkable
-        }
-        return false;
-    }
-
-    /**
-     * Convert a value to a boolean value
-     *
-     * @param mixed $value
-     *
-     * @return boolean true or false
-     */
-    private static function boolval($value)
-    {
-        if (!function_exists('boolval')) {
-            return (bool)$value;
-        }
-        return boolval($value);
-    }
+    use OrmUtil;
 
     /**
      * Convert a date string into DateTime object

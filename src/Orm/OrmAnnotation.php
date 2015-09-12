@@ -41,20 +41,6 @@ trait OrmAnnotation
     }
 
     /**
-     * Retrieve the properties from class
-     *
-     * @param string $class The name of class to get properties of
-     *
-     * @return \ReflectionProperty[] Array of Reflection properties
-     */
-    private static function getClassProperties($class)
-    {
-        $rf = new \ReflectionClass($class);
-
-        return $rf->getProperties();
-    }
-
-    /**
      * Get the annotated primary key property name
      *
      * The property is annotated with the @id annotation
@@ -576,29 +562,5 @@ trait OrmAnnotation
             throw OrmException::fromPrevious($ex);
         }
         return $eager;
-    }
-
-    /**
-     * Checks whether a given string equals identifier of a primitive type
-     *
-     * @param string $type The type identifier
-     *
-     * @return boolean true in case of string is identifier of primitive type, false otherwise
-     */
-    private static function isPrimitive($type)
-    {
-        $isPrimitive = false;
-
-        switch ($type) {
-            case 'int':
-            case 'integer':
-            case 'string':
-            case 'boolean':
-            case 'bool':
-                $isPrimitive = true;
-                break;
-        }
-
-        return $isPrimitive;
     }
 }
