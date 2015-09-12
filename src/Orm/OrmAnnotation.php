@@ -209,8 +209,7 @@ trait OrmAnnotation
         }
 
         $value = $rfPropertyType->isInternal() ?
-            self::convertType($type, $value) :
-            $rfPropertyType->newInstance($value);
+            self::convertType($type, $value) : $rfPropertyType->newInstance($value);
 
         return array($type, $value);
     }
@@ -357,14 +356,14 @@ trait OrmAnnotation
         try {
             $rf = new ReflectionClass($class);
 
-            $persist = false;
-
-            if (self::isCascadeAnnotated($rf->getDocComment())) {
-                $persist = true;
-            }
-
             foreach ($rf->getProperties() as $property) {
-                self::persistProperty($property, $class, $object, $rf->getNamespaceName(), $persist);
+                self::persistProperty(
+                    $property,
+                    $class,
+                    $object,
+                    $rf->getNamespaceName(),
+                    self::isCascadeAnnotated($rf->getDocComment())
+                );
             }
         } catch (ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
