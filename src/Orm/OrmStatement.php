@@ -411,4 +411,20 @@ trait OrmStatement
 
         return $joinQuery;
     }
+
+    /**
+     * Parse a complex crition into simple criterion
+     *
+     * @param string $criterion The full criterion pattern
+     *
+     * @return string The simple criterion name
+     */
+    private static function getSimpleCriterionName($criterion)
+    {
+        $criterion = str_ireplace('OR ', '', $criterion);
+        if (strpos($criterion, '.')) {
+            list($criterion) = explode('.', $criterion);
+        }
+        return $criterion;
+    }
 }

@@ -1,6 +1,7 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
+use Nkey\Caribu\Type\IType;
 /**
  * Connection related functionality for the ORM
  *
@@ -18,7 +19,7 @@ trait OrmConnection
     /**
      * The database connection
      *
-     * @var PDO
+     * @var \PDO
      */
     private $connection = null;
 
@@ -81,7 +82,7 @@ trait OrmConnection
     /**
      * Database type
      *
-     * @var AbstractType
+     * @var \Nkey\Caribu\Type\IType
      */
     private $dbType = null;
 
@@ -141,7 +142,7 @@ trait OrmConnection
     /**
      * Retrieve the database type
      *
-     * @return Nkey\Caribu\Type\IType
+     * @return \Nkey\Caribu\Type\IType
      */
     public function getDbType()
     {

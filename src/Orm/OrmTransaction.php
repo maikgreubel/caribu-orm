@@ -29,17 +29,15 @@ trait OrmTransaction
      */
     public function startTX()
     {
-        if (null == $this->connection) {
-            $this->connection = $this->getConnection();
-        }
+        $connection = $this->getConnection();
 
-        if (!$this->connection->inTransaction()) {
-            $this->connection->beginTransaction();
+        if (!$connection->inTransaction()) {
+            $connection->beginTransaction();
         }
 
         $this->transactionStack++;
 
-        return $this->connection;
+        return $connection;
     }
 
     /**
@@ -50,14 +48,16 @@ trait OrmTransaction
      */
     public function commitTX()
     {
-        if (!$this->connection->inTransaction()) {
+        $connection = $this->getConnection();
+
+        if (!$connection->inTransaction()) {
             throw new OrmException("Transaction is not open");
         }
 
         $this->transactionStack--;
 
         if ($this->transactionStack === 0) {
-            $this->connection->commit();
+            $connection->commit();
         }
     }
 
