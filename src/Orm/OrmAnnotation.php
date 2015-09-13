@@ -106,7 +106,7 @@ trait OrmAnnotation
      * @param string $class The name of class to retrieve a particular property type
      * @param string $propertyName The name of property to retrieve the type of
      *
-     * @return string|null The property type
+     * @return string|null The property type either as primitive type or full qualified class
      */
     private static function getAnnotatedPropertyType($class, $propertyName)
     {
@@ -136,10 +136,6 @@ trait OrmAnnotation
         $value = $property->getValue($from);
 
         $type = self::getAnnotatedPropertyType($toClass, $property->getName());
-
-        if (null !== $type && !self::isPrimitive($type) && !class_exists($type)) {
-            $type = self::fullQualifiedName($namespace, $type);
-        }
 
         if (null === $type || self::isPrimitive($type) || !class_exists($type)) {
             return array($type, $value);
@@ -262,23 +258,26 @@ trait OrmAnnotation
     {
         $type = null;
         $matches = array();
-        if (preg_match('/@var ([\w\\\\]+)/', $comment, $matches)) {
-            $originType = $type = $matches[1];
-
-            if (self::isPrimitive($type)) {
-                return $type;
-            }
-
-            if (!class_exists($type) && !strchr($type, "\\") && $namespace !== null) {
-                $type = self::fullQualifiedName($namespace, $type);
-            }
-
-            if (!class_exists($type)) {
-                throw new OrmException("Annotated type {type} could not be found nor loaded", array(
-                    'type' => $originType
-                ));
-            }
+        if (!preg_match('/@var ([\w\\\\]+)/', $comment, $matches)) {
+            return null;
         }
+
+        $type = $matches[1];
+
+        if (self::isPrimitive($type)) {
+            return $type;
+        }
+
+        if (!class_exists($type) && !strchr($type, "\\") && $namespace !== null) {
+            $type = self::fullQualifiedName($namespace, $type);
+        }
+
+        if (!class_exists($type)) {
+            throw new OrmException("Annotated type {type} could not be found nor loaded", array(
+                'type' => $matches[1]
+            ));
+        }
+
         return $type;
     }
 

@@ -117,7 +117,6 @@ class Orm
         $results = null;
 
         $instance = self::getInstance();
-        assert($instance instanceof Orm);
 
         $class = get_called_class();
 
@@ -203,7 +202,6 @@ class Orm
     public function persist()
     {
         $instance = self::getInstance();
-        assert($instance instanceof Orm);
 
         $escapeSign = $instance->getDbType()->getEscapeSign();
 
@@ -280,7 +278,6 @@ class Orm
     public function delete()
     {
         $instance = self::getInstance();
-        assert($instance instanceof Orm);
 
         $class = get_class($this);
 

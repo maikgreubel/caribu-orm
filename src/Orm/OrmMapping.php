@@ -91,8 +91,6 @@ trait OrmMapping
             $rfToClass = new \ReflectionClass($toClass);
 
             foreach ($rfToClass->getProperties() as $property) {
-                assert($property instanceof \ReflectionProperty);
-
                 if (null === ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
                     continue;
                 }
@@ -194,8 +192,6 @@ trait OrmMapping
 
             $properties = $rf->getProperties();
             foreach ($properties as $property) {
-                assert($property instanceof \ReflectionProperty);
-
                 // attached property by annotation mapping => map later
                 if (strpos($property->getName(), '.')) {
                     continue;
@@ -238,7 +234,6 @@ trait OrmMapping
         } else {
             $resultClassProperties = $resultClass->getProperties();
             foreach ($resultClassProperties as $resultClassProperty) {
-                assert($resultClassProperty instanceof \ReflectionProperty);
                 $docComments = $resultClassProperty->getDocComment();
 
                 if (null === ($destinationProperty = self::getAnnotatedColumn($docComments))) {

@@ -73,7 +73,6 @@ trait OrmEntityAnalyzer
     private static function getPrimaryKeyCol($class)
     {
         $instance = self::getInstance();
-        assert($instance instanceof Orm);
 
         $pkColumn = self::getAnnotatedPrimaryKeyColumn($class);
         if (null === $pkColumn) {

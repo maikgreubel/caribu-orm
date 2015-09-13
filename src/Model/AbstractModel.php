@@ -24,10 +24,9 @@ abstract class AbstractModel extends \Nkey\Caribu\Orm\Orm
     public function toArray()
     {
         $values = array();
-        $rf = new \ReflectionClass(get_class($this));
-        foreach ($rf->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
-            assert($method instanceof \ReflectionMethod);
-            if ($method->getDeclaringClass() != $rf) {
+        $rfClass = new \ReflectionClass(get_class($this));
+        foreach ($rfClass->getMethods(\ReflectionMethod::IS_PUBLIC) as $method) {
+            if ($method->getDeclaringClass() != $rfClass) {
                 continue;
             }
             if (substr($method->getName(), 0, 3) == 'get' && $method->getName() != 'get') {

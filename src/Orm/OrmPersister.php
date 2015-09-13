@@ -50,21 +50,16 @@ trait OrmPersister
     private static function persistMappedBy($class, \Nkey\Caribu\Model\AbstractModel $object)
     {
         $instance = self::getInstance();
-        assert($instance instanceof Orm);
-
         $escapeSign = $instance->getDbType()->getEscapeSign();
 
         try {
             $rf = new \ReflectionClass($class);
 
             foreach ($rf->getProperties() as $property) {
-                assert($property instanceof \ReflectionProperty);
-
                 if (null !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
                     $mappedBy = self::parseMappedBy($parameters);
 
                     $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
-                    assert($rfMethod instanceof \ReflectionMethod);
                     $foreignEntity = $rfMethod->invoke($object);
 
                     if (null !== $foreignEntity) {
