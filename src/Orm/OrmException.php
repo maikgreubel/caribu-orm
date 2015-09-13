@@ -26,7 +26,7 @@ class OrmException extends \Generics\GenericsException
     /**
      * Throw derived ORMException setting the previous as internal
      *
-     * @param \Exception $ex
+     * @param \Exception $exception The original exception
      * @param string $message Optional message to embed
      * @param integer $code Optional exception code to embed
      *

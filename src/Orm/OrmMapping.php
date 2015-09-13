@@ -226,8 +226,7 @@ trait OrmMapping
             $rfMethod = new \ReflectionMethod($resultClass->getName(), $method);
             $rfMethod->invoke($result, self::convertType($type, $value));
         } else {
-            $resultClassProperties = $resultClass->getProperties();
-            foreach ($resultClassProperties as $resultClassProperty) {
+            foreach ($resultClass->getProperties() as $resultClassProperty) {
                 $docComments = $resultClassProperty->getDocComment();
 
                 if (null === ($destinationProperty = self::getAnnotatedColumn($docComments))) {

@@ -102,49 +102,32 @@ class MySQL extends AbstractType
      */
     protected function mapType($result)
     {
-        switch (strtoupper($result['DATA_TYPE'])) {
-            case 'CHAR':
-            case 'VARCHAR':
-            case 'TEXT':
-            case 'TINYTEXT':
-            case 'MEDIUMTEXT':
-            case 'LONGTEXT':
-            case 'ENUM':
-            case 'SET':
-                return OrmDataType::STRING;
+        $type = strtoupper($result['DATA_TYPE']);
 
-            case 'BINARY':
-            case 'VARBINARY':
-            case 'TINYBLOB':
-            case 'BLOB':
-            case 'MEDIUMBLOB':
-            case 'LONGBLOB':
-                return OrmDataType::BLOB;
-
-            case 'INTEGER':
-            case 'INT':
-            case 'SMALLINT':
-            case 'TINYINT':
-            case 'MEDIUMINT':
-            case 'BIGINT':
-                return OrmDataType::INTEGER;
-
-            case 'DECIMAL':
-            case 'NUMERIC':
-            case 'FLOAT':
-            case 'REAL':
-            case 'FIXED':
-            case 'DEC':
-            case 'DOUBLE PRECISION':
-                return OrmDataType::DECIMAL;
-
-            case 'DATE':
-            case 'DATETIME':
-            case 'TIMESTAMP':
-                return OrmDataType::DATETIME;
-
-            default:
-                return OrmDataType::STRING;
+        if ($type === 'CHAR' || $type === 'VARCHAR' || $type === 'TEXT' || $type === 'TINYTEXT' ||
+            $type === 'MEDIUMTEXT' || $type === 'LONGTEXT' || $type === 'ENUM' || $type === 'SET') {
+            return OrmDataType::STRING;
         }
+
+        if ($type === 'BINARY' || $type === 'VABINARY' || $type === 'TINYBLOB' || $type === 'BLOB' ||
+            $type === 'MEDIUMBLOB' || $type === 'LONGBLOB') {
+            return OrmDataType::BLOB;
+        }
+
+        if ($type === 'INTEGER' || $type === 'INT' || $type === 'SMALLINT' || $type === 'TINYINT' ||
+            $type === 'MEDIUMINT' || $type === 'BIGINT') {
+            return OrmDataType::INTEGER;
+        }
+
+        if ($type === 'DECIMAL' || $type === 'NUMERIC' || $type === 'FLOAT' || $type === 'REAL' || $type === 'FIXED' ||
+            $type === 'DEC' || $type === 'DOUBLE PRECISION') {
+            return OrmDataType::DECIMAL;
+        }
+
+        if ($type === 'DATE' || $type === 'DATETIME' || $type === 'TIMESTAMP') {
+            return OrmDataType::DATETIME;
+        }
+
+        return OrmDataType::STRING;
     }
 }
