@@ -166,11 +166,11 @@ class Postgres extends AbstractType
                 $sequenceName = $matches[1];
             }
             $stmt->closeCursor();
-        } catch (\PDOException $ex) {
+        } catch (\PDOException $exception) {
             if ($stmt) {
                 $stmt->closeCursor();
             }
-            throw OrmException::fromPrevious($ex);
+            throw OrmException::fromPrevious($exception);
         }
 
         return $sequenceName;

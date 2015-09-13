@@ -35,8 +35,8 @@ trait OrmAnnotation
             }
 
             return $fallback;
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 
@@ -64,8 +64,8 @@ trait OrmAnnotation
             }
 
             return $propertyName;
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 
@@ -95,8 +95,8 @@ trait OrmAnnotation
             }
 
             return $columnName;
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 
@@ -194,8 +194,8 @@ trait OrmAnnotation
                     $pairs[$column] = $value;
                 }
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
 
         return $pairs;
@@ -239,8 +239,8 @@ trait OrmAnnotation
                 }
                 return $primaryKey;
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
 
         return null;
@@ -383,8 +383,8 @@ trait OrmAnnotation
             if (preg_match('/@eager/', $rf->getDocComment())) {
                 $eager = true;
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
         return $eager;
     }

@@ -171,8 +171,8 @@ trait OrmConnection
             $this->connection = new \PDO($dsn, $this->user, $this->password, $this->settings);
             $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $this->getLog()->info("New instance of PDO connection established");
-        } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex, $ex->getMessage(), $ex->getCode());
+        } catch (\PDOException $exception) {
+            throw OrmException::fromPrevious($exception, $exception->getMessage(), $exception->getCode());
         }
     }
 

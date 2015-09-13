@@ -137,11 +137,11 @@ try {
 
     // After persistence we can access now the generated id:
     printf("Your persisted entity has the ID %d", $demoEntity->getId());
-} catch (OrmException $ex) {
+} catch (OrmException $exception) {
 
-    while($ex != null) {
-        echo $ex->getMessage() . "\n";
-        echo $ex->getTraceAsString() . "\n";
-        $ex = $ex->getPrevious();
+    while($exception != null) {
+        echo $exception->getMessage() . "\n";
+        echo $exception->getTraceAsString() . "\n";
+        $exception = $exception->getPrevious();
     }
 }

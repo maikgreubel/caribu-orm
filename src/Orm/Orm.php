@@ -1,15 +1,8 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use \Exception;
-
-use \Generics\Util\Interpolator;
-
 use \Nkey\Caribu\Model\AbstractModel;
 use \Nkey\Caribu\Type\IType;
-
-use \PDO;
-use \PDOException;
 
 /**
  * The main object relational mapper class
@@ -33,7 +26,7 @@ class Orm
     /**
      * Include the generics interpolation functionality
      */
-    use Interpolator;
+    use \Generics\Util\Interpolator;
 
     /**
      * Singleton pattern
@@ -149,7 +142,7 @@ class Orm
             $statement->execute();
 
             $unmapped = array();
-            while ($result = $statement->fetch(PDO::FETCH_OBJ)) {
+            while ($result = $statement->fetch(\PDO::FETCH_OBJ)) {
                 $unmapped[] = $result;
             }
 
@@ -164,11 +157,11 @@ class Orm
             }
 
             $instance->commitTX();
-        } catch (Exception $ex) {
+        } catch (\Exception $exception) {
             throw self::handleException(
                 $instance,
                 $statement,
-                $ex,
+                $exception,
                 "Finding data set failed",
                 -100
             );
@@ -264,9 +257,9 @@ class Orm
             $this->persistMappedBy($class, $entity);
 
             $instance->commitTX();
-        } catch (PDOException $ex) {
+        } catch (\PDOException $exception) {
             $instance->getDbType()->unlock($tableName, $instance);
-            throw self::handleException($instance, $statement, $ex, "Persisting data set failed", - 1000);
+            throw self::handleException($instance, $statement, $exception, "Persisting data set failed", - 1000);
         }
     }
 
@@ -315,9 +308,9 @@ class Orm
             $instance->getDbType()->unlock($tableName, $instance);
             unset($statement);
             $instance->commitTX();
-        } catch (PDOException $ex) {
+        } catch (\PDOException $exception) {
             $instance->getDbType()->unlock($tableName, $instance);
-            throw self::handleException($instance, $statement, $ex, "Persisting data set failed", - 1000);
+            throw self::handleException($instance, $statement, $exception, "Persisting data set failed", - 1000);
         }
     }
 

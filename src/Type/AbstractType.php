@@ -66,8 +66,8 @@ abstract class AbstractType implements IType
                     'table' => $table
                 ));
             }
-        } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\PDOException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
 
         return $name;
@@ -90,8 +90,8 @@ abstract class AbstractType implements IType
             if ($connection->exec($sql) === false) {
                 throw new OrmException("Could not change lock type table {table}", array('table' => $table));
             }
-        } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex, "Could not change lock type of table");
+        } catch (\PDOException $exception) {
+            throw OrmException::fromPrevious($exception, "Could not change lock type of table");
         }
     }
 
@@ -135,11 +135,11 @@ abstract class AbstractType implements IType
             $type = $this->mapType($result);
 
             $stmt->closeCursor();
-        } catch (\PDOException $ex) {
+        } catch (\PDOException $exception) {
             if ($stmt) {
                 $stmt->closeCursor();
             }
-            throw OrmException::fromPrevious($ex);
+            throw OrmException::fromPrevious($exception);
         }
 
         return $type;

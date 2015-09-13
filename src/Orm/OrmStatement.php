@@ -160,15 +160,15 @@ trait OrmStatement
     private static function whereConditionsAsString(array $wheres)
     {
         if (count($wheres)) {
-            $t = "";
+            $conditions = "";
             foreach ($wheres as $where) {
                 $and = "";
-                if ($t) {
+                if ($conditions) {
                     $and = substr($where, 0, 3) == 'OR ' ? " " : " AND ";
                 }
-                $t .= $and . $where;
+                $conditions .= $and . $where;
             }
-            $wheres = sprintf("WHERE %s", $t);
+            $wheres = sprintf("WHERE %s", $conditions);
         } else {
             $wheres = '';
         }

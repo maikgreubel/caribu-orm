@@ -18,16 +18,11 @@ trait OrmMapping
      */
     private static function map($from, $toClass, Orm $orm)
     {
-        $result = null;
-        try {
-            $result = self::mapAnnotated($from, $toClass);
-            self::mapReferenced($from, $toClass, $result);
-            if (self::isEager($toClass)) {
-                self::injectMappedBy($toClass, $result, $orm);
-            }
-        } catch (OrmException $ex) {
-            // TODO: implement simple handling without annotation
-            throw $ex;
+        $result = self::mapAnnotated($from, $toClass);
+
+        self::mapReferenced($from, $toClass, $result);
+        if (self::isEager($toClass)) {
+            self::injectMappedBy($toClass, $result, $orm);
         }
 
         return $result;
@@ -70,8 +65,8 @@ trait OrmMapping
 
                 $propertySetter->invoke($result, $referencedObject);
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 
@@ -161,12 +156,12 @@ trait OrmMapping
                     $setMethod = new \ReflectionMethod($toClass, sprintf("set%s", ucfirst($property->getName())));
 
                     $setMethod->invoke($object, self::map($result, $type, $orm));
-                } catch (\PDOException $ex) {
-                    throw self::handleException($orm, $statement, $ex, "Mapping failed", - 1010);
+                } catch (\PDOException $exception) {
+                    throw self::handleException($orm, $statement, $exception, "Mapping failed", - 1010);
                 }
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 
@@ -207,8 +202,8 @@ trait OrmMapping
             }
 
             return $result;
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 

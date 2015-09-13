@@ -54,8 +54,8 @@ trait OrmEntityAnalyzer
                     $pkCol => $primaryKey
                 );
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
 
         return $primaryKey;

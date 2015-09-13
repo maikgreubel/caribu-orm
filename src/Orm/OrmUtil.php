@@ -58,7 +58,7 @@ trait OrmUtil
         try {
             $rf = new \ReflectionClass($type);
             return $rf->isInternal();
-        } catch (\ReflectionException $ex) {
+        } catch (\ReflectionException $exception) {
             // we do nothing and assume that the class is not checkable
         }
         return false;

@@ -51,8 +51,8 @@ class Sqlite extends AbstractType
                 }
             }
             $stmt->closeCursor();
-        } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\PDOException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
 
         return null;
@@ -149,8 +149,8 @@ class Sqlite extends AbstractType
                 }
             }
             $stmt->closeCursor();
-        } catch (\PDOException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\PDOException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
 
         return $type;

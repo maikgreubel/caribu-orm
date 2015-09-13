@@ -34,8 +34,8 @@ trait OrmPersister
         try {
             $rfMethod = new \ReflectionMethod($class, $method);
             $rfMethod->invoke($object, $primaryKey);
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 
@@ -97,11 +97,11 @@ trait OrmPersister
                             $statement->execute();
 
                             $instance->commitTX();
-                        } catch (\PDOException $ex) {
+                        } catch (\PDOException $exception) {
                             throw self::handleException(
                                 $instance,
                                 $statement,
-                                $ex,
+                                $exception,
                                 "Persisting related entities failed",
                                 -1010
                             );
@@ -109,8 +109,8 @@ trait OrmPersister
                     }
                 }
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 
@@ -148,8 +148,8 @@ trait OrmPersister
                     }
                 }
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 
@@ -164,19 +164,19 @@ trait OrmPersister
     private static function persistAnnotated($class, $object)
     {
         try {
-            $rf = new \ReflectionClass($class);
+            $rfClass = new \ReflectionClass($class);
 
-            foreach ($rf->getProperties() as $property) {
+            foreach ($rfClass->getProperties() as $property) {
                 self::persistProperty(
                     $property,
                     $class,
                     $object,
-                    $rf->getNamespaceName(),
-                    self::isCascadeAnnotated($rf->getDocComment())
+                    $rfClass->getNamespaceName(),
+                    self::isCascadeAnnotated($rfClass->getDocComment())
                 );
             }
-        } catch (\ReflectionException $ex) {
-            throw OrmException::fromPrevious($ex);
+        } catch (\ReflectionException $exception) {
+            throw OrmException::fromPrevious($exception);
         }
     }
 }

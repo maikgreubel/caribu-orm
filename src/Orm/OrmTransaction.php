@@ -84,8 +84,8 @@ trait OrmTransaction
             if (!$connection->rollBack()) {
                 $previousException = new OrmException("Could not rollback!", array(), 103, $previousException);
             }
-        } catch (\PDOException $ex) {
-            $previousException = OrmException::fromPrevious($ex);
+        } catch (\PDOException $exception) {
+            $previousException = OrmException::fromPrevious($exception);
         }
 
         return $previousException;

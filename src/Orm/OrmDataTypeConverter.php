@@ -32,7 +32,7 @@ trait OrmDataTypeConverter
     {
         try {
             $date = new \DateTime(sprintf("@%s", $value));
-        } catch (\Exception $ex) {
+        } catch (\Exception $exception) {
             try {
                 $date = \DateTime::createFromFormat("Y-m-d", $value);
 
@@ -47,8 +47,8 @@ trait OrmDataTypeConverter
                 if (!$date) {
                     $date = \DateTime::createFromFormat(\DateTime::ISO8601, $value);
                 }
-            } catch (\Exception $ex) {
-                throw OrmException::fromPrevious($ex);
+            } catch (\Exception $exception) {
+                throw OrmException::fromPrevious($exception);
             }
         }
 

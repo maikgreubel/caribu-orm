@@ -32,11 +32,11 @@ class OrmException extends \Generics\GenericsException
      *
      * @throws OrmException
      */
-    public static function fromPrevious(\Exception $ex, $message = null, $code = 0)
+    public static function fromPrevious(\Exception $exception, $message = null, $code = 0)
     {
         return new self("Exception {type} occured:{message}", array(
-            'type' => get_class($ex),
+            'type' => get_class($exception),
             'message' => (is_null($message) ? "" : " {$message}")
-        ), ($code == 0 ? $ex->getCode() : $code), $ex);
+        ), ($code == 0 ? $exception->getCode() : $code), $exception);
     }
 }
