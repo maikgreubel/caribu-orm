@@ -97,6 +97,70 @@ class MySQL extends AbstractType
     }
 
     /**
+     * Checks whether given type is a string type
+     *
+     * @param string $type
+     *
+     * @return boolean true in case of type is string type, false otherwise
+     */
+    private function isStringType($type)
+    {
+        return $type === 'CHAR' || $type === 'VARCHAR' || $type === 'TEXT' || $type === 'TINYTEXT' ||
+            $type === 'MEDIUMTEXT' || $type === 'LONGTEXT' || $type === 'ENUM' || $type === 'SET';
+    }
+
+    /**
+     * Checks whether given type is a binary type
+     *
+     * @param string $type
+     *
+     * @return boolean true in case of type is binary type, false otherwise
+     */
+    private function isBinaryType($type)
+    {
+        return $type === 'BINARY' || $type === 'VABINARY' || $type === 'TINYBLOB' || $type === 'BLOB' ||
+            $type === 'MEDIUMBLOB' || $type === 'LONGBLOB';
+    }
+
+    /**
+     * Checks whether given type is a integer type
+     *
+     * @param string $type
+     *
+     * @return boolean true in case of type is integer type, false otherwise
+     */
+    private function isIntegerType($type)
+    {
+        return $type === 'INTEGER' || $type === 'INT' || $type === 'SMALLINT' || $type === 'TINYINT' ||
+            $type === 'MEDIUMINT' || $type === 'BIGINT';
+    }
+
+    /**
+     * Checks whether given type is a decimal type
+     *
+     * @param string $type
+     *
+     * @return boolean true in case of type is decimal type, false otherwise
+     */
+    private function isDecimalType($type)
+    {
+        return $type === 'DECIMAL' || $type === 'NUMERIC' || $type === 'FLOAT' || $type === 'REAL' || $type === 'FIXED' ||
+            $type === 'DEC' || $type === 'DOUBLE PRECISION';
+    }
+
+    /**
+     * Checks whether given type is a datetime type
+     *
+     * @param string $type
+     *
+     * @return boolean true in case of type is datetime type, false otherwise
+     */
+    private function isDateTimeType($type)
+    {
+        return $type === 'DATE' || $type === 'DATETIME' || $type === 'TIMESTAMP';
+    }
+
+    /**
      * (non-PHPdoc)
      * @see \Nkey\Caribu\Type\AbstractType::mapType()
      */
@@ -104,27 +168,23 @@ class MySQL extends AbstractType
     {
         $type = strtoupper($result['DATA_TYPE']);
 
-        if ($type === 'CHAR' || $type === 'VARCHAR' || $type === 'TEXT' || $type === 'TINYTEXT' ||
-            $type === 'MEDIUMTEXT' || $type === 'LONGTEXT' || $type === 'ENUM' || $type === 'SET') {
+        if ($this->isStringType($type)) {
             return OrmDataType::STRING;
         }
 
-        if ($type === 'BINARY' || $type === 'VABINARY' || $type === 'TINYBLOB' || $type === 'BLOB' ||
-            $type === 'MEDIUMBLOB' || $type === 'LONGBLOB') {
+        if ($this->isBinaryType($type)) {
             return OrmDataType::BLOB;
         }
 
-        if ($type === 'INTEGER' || $type === 'INT' || $type === 'SMALLINT' || $type === 'TINYINT' ||
-            $type === 'MEDIUMINT' || $type === 'BIGINT') {
+        if ($this->isIntegerType($type)) {
             return OrmDataType::INTEGER;
         }
 
-        if ($type === 'DECIMAL' || $type === 'NUMERIC' || $type === 'FLOAT' || $type === 'REAL' || $type === 'FIXED' ||
-            $type === 'DEC' || $type === 'DOUBLE PRECISION') {
+        if ($this->isDecimalType($type)) {
             return OrmDataType::DECIMAL;
         }
 
-        if ($type === 'DATE' || $type === 'DATETIME' || $type === 'TIMESTAMP') {
+        if ($this->isDateTimeType($type)) {
             return OrmDataType::DATETIME;
         }
 
