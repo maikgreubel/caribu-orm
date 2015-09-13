@@ -140,19 +140,6 @@ trait OrmAnnotation
     }
 
     /**
-     * Build a full qualified class name including namespace
-     *
-     * @param string $ns The namespace of class
-     * @param string $class The name of class
-     *
-     * @return string The full qualified class name
-     */
-    private static function fullQualifiedName($ns, $class)
-    {
-        return sprintf("\\%s\\%s", $ns, $class);
-    }
-
-    /**
      * Get the value from property
      *
      * @param object $from The source object
@@ -284,24 +271,6 @@ trait OrmAnnotation
         }
 
         return $pk;
-    }
-
-    /**
-     * Parse the @mappedBy annotation
-     *
-     * @param string $mappedBy The mappedBy annotation string
-     *
-     * @return array All parsed property attributes of the mappedBy string
-     */
-    private static function parseMappedBy($mappedBy)
-    {
-        $mappingOptions = array();
-        foreach (explode(',', $mappedBy) as $mappingOption) {
-            list ($option, $value) = preg_split('/=/', $mappingOption);
-            $mappingOptions[$option] = $value;
-        }
-
-        return $mappingOptions;
     }
 
     /**

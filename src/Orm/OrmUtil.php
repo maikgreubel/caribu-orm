@@ -78,4 +78,17 @@ trait OrmUtil
         }
         return boolval($value);
     }
+
+    /**
+     * Build a full qualified class name including namespace
+     *
+     * @param string $ns The namespace of class
+     * @param string $class The name of class
+     *
+     * @return string The full qualified class name
+     */
+    private static function fullQualifiedName($ns, $class)
+    {
+        return sprintf("\\%s\\%s", $ns, $class);
+    }
 }

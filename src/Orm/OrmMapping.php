@@ -258,4 +258,22 @@ trait OrmMapping
 
         return $result;
     }
+
+    /**
+     * Parse the @mappedBy annotation
+     *
+     * @param string $mappedBy The mappedBy annotation string
+     *
+     * @return array All parsed property attributes of the mappedBy string
+     */
+    private static function parseMappedBy($mappedBy)
+    {
+        $mappingOptions = array();
+        foreach (explode(',', $mappedBy) as $mappingOption) {
+            list ($option, $value) = preg_split('/=/', $mappingOption);
+            $mappingOptions[$option] = $value;
+        }
+
+        return $mappingOptions;
+    }
 }

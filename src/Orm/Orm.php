@@ -45,7 +45,7 @@ class Orm
     /**
      * Singleton pattern
      *
-     * @return Nkey\Caribu\Orm\Orm The current instance
+     * @return Orm The current instance
      */
     public static function getInstance()
     {

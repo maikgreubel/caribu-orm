@@ -43,11 +43,11 @@ trait OrmPersister
      * Persist the mapped-by entities
      *
      * @param string $class The name of class of which the data has to be persisted
-     * @param AbstractModel $object The entity which contain mapped-by entries to persist
+     * @param \Nkey\Caribu\Model\AbstractModel $object The entity which contain mapped-by entries to persist
      *
      * @throws OrmException
      */
-    private static function persistMappedBy($class, $object)
+    private static function persistMappedBy($class, \Nkey\Caribu\Model\AbstractModel $object)
     {
         $instance = self::getInstance();
         assert($instance instanceof Orm);
