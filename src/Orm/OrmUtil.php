@@ -89,6 +89,9 @@ trait OrmUtil
      */
     private static function fullQualifiedName($ns, $class)
     {
-        return sprintf("\\%s\\%s", $ns, $class);
+        if (!class_exists($class)) {
+            $class = sprintf("\\%s\\%s", $ns, $class);
+        }
+        return $class;
     }
 }

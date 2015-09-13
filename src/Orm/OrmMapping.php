@@ -56,12 +56,11 @@ trait OrmMapping
                     continue;
                 }
 
-                $referencedClass = self::getAnnotatedPropertyType($toClass, $toProperty);
-
-                if (!class_exists($referencedClass)) {
-                    $referencedClass = sprintf("\\%s\\%s", $rfToClass->getNamespaceName(), $referencedClass);
-                }
-
+                $referencedClass = self::getAnnotatedPropertyType(
+                    $toClass,
+                    $toProperty,
+                    $rfToClass->getNamespaceName()
+                );
                 $rfReferenced = new \ReflectionClass($referencedClass);
 
                 $findMethod = $rfReferenced->getMethod("find");

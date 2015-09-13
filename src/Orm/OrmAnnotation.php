@@ -105,13 +105,15 @@ trait OrmAnnotation
      *
      * @param string $class The name of class to retrieve a particular property type
      * @param string $propertyName The name of property to retrieve the type of
+     * @param string $namespace The namespace
      *
      * @return string|null The property type either as primitive type or full qualified class
      */
-    private static function getAnnotatedPropertyType($class, $propertyName)
+    private static function getAnnotatedPropertyType($class, $propertyName, $namespace)
     {
         $type = null;
-        $rfClass = new \ReflectionClass($class);
+
+        $rfClass = new \ReflectionClass(self::fullQualifiedName($namespace, $class));
 
         if ($rfClass->hasProperty($propertyName)) {
             $property = $rfClass->getProperty($propertyName);
@@ -135,7 +137,7 @@ trait OrmAnnotation
     {
         $value = $property->getValue($from);
 
-        $type = self::getAnnotatedPropertyType($toClass, $property->getName());
+        $type = self::getAnnotatedPropertyType($toClass, $property->getName(), $namespace);
 
         if (null === $type || self::isPrimitive($type) || !class_exists($type)) {
             return array($type, $value);
@@ -256,7 +258,6 @@ trait OrmAnnotation
      */
     private static function getAnnotatedType($comment, $namespace = null)
     {
-        $type = null;
         $matches = array();
         if (!preg_match('/@var ([\w\\\\]+)/', $comment, $matches)) {
             return null;
@@ -268,9 +269,7 @@ trait OrmAnnotation
             return $type;
         }
 
-        if (!class_exists($type) && !strchr($type, "\\") && $namespace !== null) {
-            $type = self::fullQualifiedName($namespace, $type);
-        }
+        $type = self::fullQualifiedName($namespace, $type);
 
         if (!class_exists($type)) {
             throw new OrmException("Annotated type {type} could not be found nor loaded", array(
