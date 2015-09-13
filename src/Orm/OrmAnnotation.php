@@ -57,7 +57,6 @@ trait OrmAnnotation
             $propertyName = null;
 
             foreach (self::getClassProperties($class) as $property) {
-                assert($property instanceof \ReflectionProperty);
                 if (self::isIdAnnotated($property->getDocComment())) {
                     $propertyName = $property->getName();
                     break;
@@ -88,7 +87,6 @@ trait OrmAnnotation
             $columnName = null;
 
             foreach (self::getClassProperties($class) as $property) {
-                assert($property instanceof \ReflectionProperty);
                 $docComment = $property->getDocComment();
                 if (self::isIdAnnotated($docComment) &&
                     null === ($columnName = self::getAnnotatedColumn($docComment))) {
@@ -115,15 +113,9 @@ trait OrmAnnotation
         $type = null;
         $rfClass = new \ReflectionClass($class);
 
-        foreach ($rfClass->getProperties() as $property) {
-            assert($property instanceof \ReflectionProperty);
-
-            $docComments = $property->getDocComment();
-
-            if ($property->getName() == $propertyName &&
-                null !== ($type = self::getAnnotatedType($docComments, $rfClass->getNamespaceName()))) {
-                break;
-            }
+        if ($rfClass->hasProperty($propertyName)) {
+            $property = $rfClass->getProperty($propertyName);
+            $type = self::getAnnotatedType($property->getDocComment(), $rfClass->getNamespaceName());
         }
 
         return $type;
@@ -187,8 +179,6 @@ trait OrmAnnotation
             $rfClass = new \ReflectionClass($class);
 
             foreach ($rfClass->getProperties() as $property) {
-                assert($property instanceof \ReflectionProperty);
-
                 $docComments = $property->getDocComment();
 
                 // mapped by entries have no corresponding table column, so we skip it here
@@ -230,7 +220,6 @@ trait OrmAnnotation
             $rfClass = new \ReflectionClass($class);
 
             foreach ($rfClass->getProperties() as $property) {
-                assert($property instanceof \ReflectionProperty);
                 $docComment = $property->getDocComment();
 
                 if (!self::isIdAnnotated($docComment)) {
