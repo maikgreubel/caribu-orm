@@ -105,14 +105,14 @@ trait OrmMapping
                     throw new OrmException(
                         "Can't use mappedBy without specific type for property {property}",
                         array('property' => $property->getName())
-                        );
+                    );
                 }
 
                 if (self::isPrimitive($type)) {
                     throw new OrmException(
                         "Primitive type can not be used in mappedBy for property {property}",
                         array('property' => $property->getName())
-                        );
+                    );
                 }
 
                 $getMethod = new \ReflectionMethod($toClass, sprintf("get%s", ucfirst($property->getName())));
@@ -140,7 +140,7 @@ trait OrmMapping
                     $mappedBy['table'],
                     $mappedBy['inverseColumn'],
                     $ownPrimaryKeyName
-                    );
+                );
 
                 $statement = null;
 
@@ -156,7 +156,7 @@ trait OrmMapping
                         throw new OrmException(
                             "No foreign entity found for {entity} using primary key {pk}",
                             array('entity' => $toClass, 'pk' => $$ownPrimaryKey)
-                            );
+                        );
                     }
 
                     $orm->commitTX();
@@ -201,7 +201,12 @@ trait OrmMapping
                     continue;
                 }
 
-                list($type, $value) = self::getAnnotatedPropertyValue($from, $toClass, $property, $rf->getNamespaceName());
+                list($type, $value) = self::getAnnotatedPropertyValue(
+                    $from,
+                    $toClass,
+                    $property,
+                    $rf->getNamespaceName()
+                );
 
                 $result = self::assignPropertyValue($result, $resultClass, $property->getName(), $type, $value);
             }

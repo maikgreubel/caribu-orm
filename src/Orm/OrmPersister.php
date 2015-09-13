@@ -63,8 +63,7 @@ trait OrmPersister
                 if (null !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
                     $mappedBy = self::parseMappedBy($parameters);
 
-                    $method = sprintf("get%s", ucfirst($property->getName()));
-                    $rfMethod = new \ReflectionMethod($class, $method);
+                    $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
                     assert($rfMethod instanceof \ReflectionMethod);
                     $foreignEntity = $rfMethod->invoke($object);
 
@@ -92,7 +91,7 @@ trait OrmPersister
                             $escapeSign,
                             $mappedBy['inverseColumn'],
                             $mappedBy['column']
-                            );
+                        );
 
                         $statement = null;
                         try {
@@ -110,7 +109,7 @@ trait OrmPersister
                                 $ex,
                                 "Persisting related entities failed",
                                 -1010
-                                );
+                            );
                         }
                     }
                 }
@@ -134,14 +133,13 @@ trait OrmPersister
     private static function persistProperty(\ReflectionProperty $property, $class, $object, $namespace, $persist)
     {
         try {
-        if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) &&
-            !self::isPrimitive($type)) {
+            if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) &&
+                !self::isPrimitive($type)) {
                 if (!$persist && self::isCascadeAnnotated($property->getDocComment())) {
                     $persist = true;
                 }
 
-                $method = sprintf("get%s", ucfirst($property->getName()));
-                $rfMethod = new \ReflectionMethod($class, $method);
+                $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
                 $entity = $rfMethod->invoke($object);
                 if ($entity instanceof \Nkey\Caribu\Model\AbstractModel) {
                     if (!$persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity))) {
@@ -180,7 +178,7 @@ trait OrmPersister
                     $object,
                     $rf->getNamespaceName(),
                     self::isCascadeAnnotated($rf->getDocComment())
-                    );
+                );
             }
         } catch (\ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
