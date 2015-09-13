@@ -37,27 +37,28 @@ trait OrmEntityAnalyzer
      */
     private static function getPrimaryKey($class, $object, $onlyValue = false)
     {
-        $pk = self::getAnnotatedPrimaryKey($class, $object, $onlyValue);
+        $primaryKey = self::getAnnotatedPrimaryKey($class, $object, $onlyValue);
 
-        if (null == $pk) {
-            $pkCol = self::getPrimaryKeyCol($class);
-            $method = sprintf("get%s", ucfirst($pkCol));
-
-            try {
-                $rfMethod = new \ReflectionMethod($class, $method);
-                $pk = $rfMethod->invoke($object);
-                if (!$onlyValue) {
-                    $pk = array(
-                        $pkCol => $pk
-                    );
-                }
-
-            } catch (\ReflectionException $ex) {
-                throw OrmException::fromPrevious($ex);
-            }
+        if (null !== $primaryKey) {
+            return $primaryKey;
         }
 
-        return $pk;
+        $pkCol = self::getPrimaryKeyCol($class);
+        $method = sprintf("get%s", ucfirst($pkCol));
+
+        try {
+            $rfMethod = new \ReflectionMethod($class, $method);
+            $primaryKey = $rfMethod->invoke($object);
+            if (!$onlyValue) {
+                $primaryKey = array(
+                    $pkCol => $primaryKey
+                );
+            }
+        } catch (\ReflectionException $ex) {
+            throw OrmException::fromPrevious($ex);
+        }
+
+        return $primaryKey;
     }
 
     /**

@@ -46,26 +46,30 @@ trait OrmMapping
             $rfToClass = new \ReflectionClass($toClass);
 
             foreach (get_object_vars($from) as $property => $value) {
-                if (strpos($property, '.')) {
-                    list($toProperty, $column) = explode('.', $property);
-
-                    if ($rfToClass->hasProperty($toProperty)) {
-                        $referencedClass = self::getAnnotatedPropertyType($toClass, $toProperty);
-
-                        if (!class_exists($referencedClass)) {
-                            $referencedClass = sprintf("\\%s\\%s", $rfToClass->getNamespaceName(), $referencedClass);
-                        }
-
-                        $rfReferenced = new \ReflectionClass($referencedClass);
-
-                        $findMethod = $rfReferenced->getMethod("find");
-                        $referencedObject = $findMethod->invoke(null, array($column => $value));
-
-                        $propertySetter = $rfToClass->getMethod(sprintf("set%s", ucfirst($toProperty)));
-
-                        $propertySetter->invoke($result, $referencedObject);
-                    }
+                if (!strpos($property, '.')) {
+                    continue;
                 }
+
+                list($toProperty, $column) = explode('.', $property);
+
+                if (!$rfToClass->hasProperty($toProperty)) {
+                    continue;
+                }
+
+                $referencedClass = self::getAnnotatedPropertyType($toClass, $toProperty);
+
+                if (!class_exists($referencedClass)) {
+                    $referencedClass = sprintf("\\%s\\%s", $rfToClass->getNamespaceName(), $referencedClass);
+                }
+
+                $rfReferenced = new \ReflectionClass($referencedClass);
+
+                $findMethod = $rfReferenced->getMethod("find");
+                $referencedObject = $findMethod->invoke(null, array($column => $value));
+
+                $propertySetter = $rfToClass->getMethod(sprintf("set%s", ucfirst($toProperty)));
+
+                $propertySetter->invoke($result, $referencedObject);
             }
         } catch (\ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
@@ -89,77 +93,79 @@ trait OrmMapping
             foreach ($rfToClass->getProperties() as $property) {
                 assert($property instanceof \ReflectionProperty);
 
-                if (null !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
-                    $mappedBy = self::parseMappedBy($parameters);
+                if (null === ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
+                    continue;
+                }
 
-                    $type = self::getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName());
+                $mappedBy = self::parseMappedBy($parameters);
 
-                    if (null === $type) {
-                        throw new OrmException(
-                            "Can't use mappedBy without specific type for property {property}",
-                            array('property' => $property->getName())
+                $type = self::getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName());
+
+                if (null === $type) {
+                    throw new OrmException(
+                        "Can't use mappedBy without specific type for property {property}",
+                        array('property' => $property->getName())
                         );
-                    }
+                }
 
-                    if (self::isPrimitive($type)) {
-                        throw new OrmException(
-                            "Primitive type can not be used in mappedBy for property {property}",
-                            array('property' => $property->getName())
+                if (self::isPrimitive($type)) {
+                    throw new OrmException(
+                        "Primitive type can not be used in mappedBy for property {property}",
+                        array('property' => $property->getName())
                         );
-                    }
+                }
 
-                    $getMethod = new \ReflectionMethod($toClass, sprintf("get%s", ucfirst($property->getName())));
-                    if ($getMethod->invoke($object)) {
-                        continue;
-                    }
+                $getMethod = new \ReflectionMethod($toClass, sprintf("get%s", ucfirst($property->getName())));
+                if ($getMethod->invoke($object)) {
+                    continue;
+                }
 
-                    $ownPrimaryKey = self::getPrimaryKey($toClass, $object, true);
+                $ownPrimaryKey = self::getPrimaryKey($toClass, $object, true);
 
-                    $otherTable = self::getTableName($type);
-                    $otherPrimaryKeyName = self::getPrimaryKeyCol($type);
-                    $ownPrimaryKeyName = self::getPrimaryKeyCol($toClass);
+                $otherTable = self::getTableName($type);
+                $otherPrimaryKeyName = self::getPrimaryKeyCol($type);
+                $ownPrimaryKeyName = self::getPrimaryKeyCol($toClass);
 
-                    $query = sprintf(
-                        "SELECT %s.* FROM %s
+                $query = sprintf(
+                    "SELECT %s.* FROM %s
                         JOIN %s ON %s.%s = %s.%s
                         WHERE %s.%s = :%s",
-                        $otherTable,
-                        $otherTable,
-                        $mappedBy['table'],
-                        $mappedBy['table'],
-                        $mappedBy['column'],
-                        $otherTable,
-                        $otherPrimaryKeyName,
-                        $mappedBy['table'],
-                        $mappedBy['inverseColumn'],
-                        $ownPrimaryKeyName
+                    $otherTable,
+                    $otherTable,
+                    $mappedBy['table'],
+                    $mappedBy['table'],
+                    $mappedBy['column'],
+                    $otherTable,
+                    $otherPrimaryKeyName,
+                    $mappedBy['table'],
+                    $mappedBy['inverseColumn'],
+                    $ownPrimaryKeyName
                     );
 
-                    $statement = null;
+                $statement = null;
 
-                    try {
-                        $statement = $orm->startTX()->prepare($query);
-                        $statement->bindValue(sprintf(":%s", $ownPrimaryKeyName), $ownPrimaryKey);
+                try {
+                    $statement = $orm->startTX()->prepare($query);
+                    $statement->bindValue(sprintf(":%s", $ownPrimaryKeyName), $ownPrimaryKey);
 
-                        $statement->execute();
+                    $statement->execute();
 
-                        $result = $statement->fetch(\PDO::FETCH_OBJ);
+                    $result = $statement->fetch(\PDO::FETCH_OBJ);
 
-                        if (false == $result) {
-                            throw new OrmException(
-                                "No foreign entity found for {entity} using primary key {pk}",
-                                array('entity' => $toClass, 'pk' => $$ownPrimaryKey)
+                    if (false == $result) {
+                        throw new OrmException(
+                            "No foreign entity found for {entity} using primary key {pk}",
+                            array('entity' => $toClass, 'pk' => $$ownPrimaryKey)
                             );
-                        }
-
-                        $orm->commitTX();
-
-                        $setMethod = new \ReflectionMethod($toClass, sprintf("set%s", ucfirst($property->getName())));
-
-                        $setMethod->invoke($object, self::map($result, $type, $orm));
-                    } catch (\PDOException $ex) {
-                        throw self::handleException($orm, $statement, $ex, "Mapping failed", - 1010);
                     }
+
+                    $orm->commitTX();
+
+                    $setMethod = new \ReflectionMethod($toClass, sprintf("set%s", ucfirst($property->getName())));
+
+                    $setMethod->invoke($object, self::map($result, $type, $orm));
+                } catch (\PDOException $ex) {
+                    throw self::handleException($orm, $statement, $ex, "Mapping failed", - 1010);
                 }
             }
         } catch (\ReflectionException $ex) {

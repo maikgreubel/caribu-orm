@@ -25,9 +25,9 @@ trait OrmAnnotation
     private static function getAnnotatedTableName($class, $fallback)
     {
         try {
-            $rf = new \ReflectionClass($class);
+            $rfClass = new \ReflectionClass($class);
 
-            $docComments = $rf->getDocComment();
+            $docComments = $rfClass->getDocComment();
 
             $matches = array();
             if (preg_match('/@table (\w+)/', $docComments, $matches)) {
@@ -90,10 +90,9 @@ trait OrmAnnotation
             foreach (self::getClassProperties($class) as $property) {
                 assert($property instanceof \ReflectionProperty);
                 $docComment = $property->getDocComment();
-                if (self::isIdAnnotated($docComment)) {
-                    if (null === ($columnName = self::getAnnotatedColumn($docComment))) {
-                        $columnName = $property->getName();
-                    }
+                if (self::isIdAnnotated($docComment) &&
+                    null === ($columnName = self::getAnnotatedColumn($docComment))) {
+                    $columnName = $property->getName();
                 }
             }
 
@@ -114,24 +113,15 @@ trait OrmAnnotation
     private static function getAnnotatedPropertyType($class, $propertyName)
     {
         $type = null;
-        $rf = new \ReflectionClass($class);
+        $rfClass = new \ReflectionClass($class);
 
-        foreach ($rf->getProperties() as $property) {
+        foreach ($rfClass->getProperties() as $property) {
             assert($property instanceof \ReflectionProperty);
 
             $docComments = $property->getDocComment();
 
-            $isDestinationProperty = false;
-
-            if ($property->getName() == $propertyName) {
-                $isDestinationProperty = true;
-            }
-
-            if (!$isDestinationProperty) {
-                continue;
-            }
-
-            if (null !== ($type = self::getAnnotatedType($docComments, $rf->getNamespaceName()))) {
+            if ($property->getName() == $propertyName &&
+                null !== ($type = self::getAnnotatedType($docComments, $rfClass->getNamespaceName()))) {
                 break;
             }
         }
@@ -194,12 +184,10 @@ trait OrmAnnotation
     {
         $pairs = array();
         try {
-            $rf = new \ReflectionClass($class);
-            $properties = $rf->getProperties();
+            $rfClass = new \ReflectionClass($class);
 
-            foreach ($properties as $property) {
+            foreach ($rfClass->getProperties() as $property) {
                 assert($property instanceof \ReflectionProperty);
-
 
                 $docComments = $property->getDocComment();
 
@@ -211,8 +199,7 @@ trait OrmAnnotation
                     $column = $property->getName();
                 }
 
-                $method = sprintf("get%s", ucfirst($property->getName()));
-                $rfMethod = new \ReflectionMethod($class, $method);
+                $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
 
                 $value = $rfMethod->invoke($object);
                 if (null != $value) {
@@ -239,38 +226,37 @@ trait OrmAnnotation
      */
     private static function getAnnotatedPrimaryKey($class, $object, $onlyValue = false)
     {
-        $pk = null;
         try {
-            $rf = new \ReflectionClass($class);
+            $rfClass = new \ReflectionClass($class);
 
-            $properties = $rf->getProperties();
-
-            foreach ($properties as $property) {
+            foreach ($rfClass->getProperties() as $property) {
                 assert($property instanceof \ReflectionProperty);
                 $docComment = $property->getDocComment();
-                if (self::isIdAnnotated($docComment)) {
-                    $method = sprintf("get%s", ucfirst($property->getName()));
-                    $rfMethod = new \ReflectionMethod($class, $method);
 
-                    if (null === ($columnName = self::getAnnotatedColumn($docComment))) {
-                        $columnName = $property->getName();
-                    }
-
-                    $pk = $rfMethod->invoke($object);
-
-                    if (!$onlyValue) {
-                        $pk = array(
-                            $columnName => $pk
-                        );
-                    }
-                    break;
+                if (!self::isIdAnnotated($docComment)) {
+                    continue;
                 }
+
+                $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
+
+                if (null === ($columnName = self::getAnnotatedColumn($docComment))) {
+                    $columnName = $property->getName();
+                }
+
+                $primaryKey = $rfMethod->invoke($object);
+
+                if (!$onlyValue) {
+                    $primaryKey = array(
+                        $columnName => $primaryKey
+                    );
+                }
+                return $primaryKey;
             }
         } catch (\ReflectionException $ex) {
             throw OrmException::fromPrevious($ex);
         }
 
-        return $pk;
+        return null;
     }
 
     /**
