@@ -91,6 +91,7 @@ trait OrmAnnotation
                 if (self::isIdAnnotated($docComment) &&
                     null === ($columnName = self::getAnnotatedColumn($docComment))) {
                     $columnName = $property->getName();
+                    break;
                 }
             }
 
@@ -239,11 +240,10 @@ trait OrmAnnotation
                 }
                 return $primaryKey;
             }
+            return null;
         } catch (\ReflectionException $exception) {
             throw OrmException::fromPrevious($exception);
         }
-
-        return null;
     }
 
     /**
@@ -321,13 +321,7 @@ trait OrmAnnotation
      */
     private static function isIdAnnotated($comment)
     {
-        $isId = false;
-
-        if (preg_match('/@id/', $comment)) {
-            $isId = true;
-        }
-
-        return $isId;
+        return preg_match('/@id/', $comment) > 0;
     }
 
     /**
@@ -339,13 +333,7 @@ trait OrmAnnotation
      */
     private static function isCascadeAnnotated($comment)
     {
-        $isCascade = false;
-
-        if (preg_match('/@cascade/', $comment)) {
-            $isCascade = true;
-        }
-
-        return $isCascade;
+        return preg_match('/@cascade/', $comment) > 0;
     }
 
     /**
@@ -372,20 +360,10 @@ trait OrmAnnotation
      * @param string $class Name of class of entity
      *
      * @return boolean true if fetch type is eager, false otherwise
-     *
-     * @throws OrmException
      */
     private static function isEager($class)
     {
-        $eager = false;
-        try {
-            $rf = new \ReflectionClass($class);
-            if (preg_match('/@eager/', $rf->getDocComment())) {
-                $eager = true;
-            }
-        } catch (\ReflectionException $exception) {
-            throw OrmException::fromPrevious($exception);
-        }
-        return $eager;
+        $rf = new \ReflectionClass($class);
+        return preg_match('/@eager/', $rf->getDocComment()) > 0;
     }
 }
