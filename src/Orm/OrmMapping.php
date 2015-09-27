@@ -229,16 +229,10 @@ trait OrmMapping
             foreach ($resultClass->getProperties() as $resultClassProperty) {
                 $docComments = $resultClassProperty->getDocComment();
 
-                if (null === ($destinationProperty = self::getAnnotatedColumn($docComments))) {
-                    continue;
-                }
-
-                if ($destinationProperty !== $propertyName) {
-                    continue;
-                }
-
                 $type = self::getAnnotatedType($docComments, $resultClass->getNamespaceName());
-                if (null === $type) {
+
+                if (null === ($destinationProperty = self::getAnnotatedColumn($docComments)) ||
+                    $destinationProperty !== $propertyName || null === $type) {
                     continue;
                 }
 
