@@ -100,7 +100,7 @@ trait OrmDataTypeConverter
         }
 
         $rf = new \ReflectionClass($type);
-        if ($rf->getName() == 'DateTime') {
+        if ($rf->name == 'DateTime') {
             return self::convertDate($value);
         }
 

@@ -29,7 +29,7 @@ abstract class AbstractModel extends \Nkey\Caribu\Orm\Orm
             if ($method->getDeclaringClass() != $rfClass) {
                 continue;
             }
-            if (substr($method->getName(), 0, 3) == 'get' && $method->getName() != 'get') {
+            if (substr($method->name, 0, 3) == 'get' && $method->name != 'get') {
                 $values[] = $method->invoke($this);
             }
         }

@@ -223,7 +223,7 @@ trait OrmMapping
         $method = sprintf("set%s", ucfirst($propertyName));
 
         if ($resultClass->hasMethod($method)) {
-            $rfMethod = new \ReflectionMethod($resultClass->getName(), $method);
+            $rfMethod = new \ReflectionMethod($resultClass->name, $method);
             $rfMethod->invoke($result, self::convertType($type, $value));
         } else {
             foreach ($resultClass->getProperties() as $resultClassProperty) {
@@ -242,7 +242,7 @@ trait OrmMapping
 
                 $method = sprintf("set%s", ucfirst($resultClassProperty->getName()));
                 if ($resultClass->hasMethod($method)) {
-                    $rfMethod = new \ReflectionMethod($resultClass->getName(), $method);
+                    $rfMethod = new \ReflectionMethod($resultClass->name, $method);
                     $rfMethod->invoke($result, $value);
                     break;
                 }
