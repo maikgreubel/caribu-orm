@@ -199,9 +199,9 @@ trait OrmMapping
      * Assign the property value to result object via annotation
      *
      * @param object $result            
+     * @param \ReflectionProperty $resultClassProperty            
      * @param \ReflectionClass $resultClass            
      * @param string $propertyName            
-     * @param string $type            
      * @param mixed $value            
      *
      * @return boolean Whether to continue assigning
