@@ -18,6 +18,10 @@
     <condition property="dllext" value="dll" else="so">
         <os family="windows" />
     </condition>
+	
+	<condition property="dllsuff" value="php_" else="">
+        <os family="windows" />
+	</condition>
     
 	<!-- ========================================================================================================= -->
 	
@@ -29,16 +33,19 @@
 	            <arg value="-r echo ini_get('extension_dir');"/>
 	        </exec>
 	        <exec executable="php" resultproperty="exitcode" failonerror="@{failOnError}">
+	        	<!--
 	            <arg value="-n"/>
-	            <arg value="-dextension=${phpextdir}/php_curl.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/php_fileinfo.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/php_mbstring.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/php_openssl.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/php_pdo_mysql.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/php_pdo_pgsql.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/php_pdo_sqlite.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/php_sockets.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/php_xsl.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}curl.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}fileinfo.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}mbstring.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}openssl.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}pdo_mysql.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}pdo_pgsql.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}pdo_sqlite.${dllext}" />
+                <arg value="-dextension=${phpextdir}/${dllsuff}phar.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}sockets.${dllext}" />
+	            <arg value="-dextension=${phpextdir}/${dllsuff}xsl.${dllext}" />
+	            -->
 	        	<extArgs/>
 	        </exec>
 	    </sequential>
