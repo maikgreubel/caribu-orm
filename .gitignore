@@ -4,6 +4,7 @@
 build
 vendor
 composer.lock
+composer.phar
 cache.properties
 .buildpath
 /contrib/
