@@ -7,14 +7,6 @@
 	<!-- Uncomment the following when the tools are in ${basedir}/vendor/bin -->
 	<property name="toolsdir" value="${basedir}/vendor/bin/" />
 
-	<condition property="is_windows">
-		<os family="windows" />
-	</condition>
-
-	<condition property="is_unix">
-		<os family="unix" />
-	</condition>
-
     <condition property="dllext" value="dll" else="so">
         <os family="windows" />
     </condition>

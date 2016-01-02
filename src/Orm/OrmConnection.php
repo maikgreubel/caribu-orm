@@ -88,7 +88,8 @@ trait OrmConnection
     /**
      * Configure the Orm
      *
-     * @param array $options Various options to use for configuration. See documentation for details.
+     * @param array $options
+     *            Various options to use for configuration. See documentation for details.
      */
     public static function configure($options = array())
     {
@@ -96,45 +97,59 @@ trait OrmConnection
     }
 
     /**
+     * Assign the option to local configuration
+     *
+     * @param string $option
+     *            The option to assign
+     * @param mixed $value
+     *            The value to assign to option
+     */
+    private static function assignOption($option, $value)
+    {
+        switch ($option) {
+            case 'type':
+                self::getInstance()->type = $value;
+                break;
+            
+            case 'schema':
+                self::getInstance()->schema = $value;
+                break;
+            
+            case 'user':
+                self::getInstance()->user = $value;
+                break;
+            
+            case 'password':
+                self::getInstance()->password = $value;
+                break;
+            
+            case 'host':
+                self::getInstance()->host = $value;
+                break;
+            
+            case 'port':
+                self::getInstance()->port = $value;
+                break;
+            
+            case 'file':
+                self::getInstance()->file = $value;
+                break;
+            
+            default:
+                self::getInstance()->settings[$option] = $value;
+        }
+    }
+
+    /**
      * Parse the options
      *
-     * @param array $options The options to parse
+     * @param array $options
+     *            The options to parse
      */
     private static function parseOptions($options)
     {
         foreach ($options as $option => $value) {
-            switch ($option) {
-                case 'type':
-                    self::getInstance()->type = $value;
-                    break;
-
-                case 'schema':
-                    self::getInstance()->schema = $value;
-                    break;
-
-                case 'user':
-                    self::getInstance()->user = $value;
-                    break;
-
-                case 'password':
-                    self::getInstance()->password = $value;
-                    break;
-
-                case 'host':
-                    self::getInstance()->host = $value;
-                    break;
-
-                case 'port':
-                    self::getInstance()->port = $value;
-                    break;
-
-                case 'file':
-                    self::getInstance()->file = $value;
-                    break;
-
-                default:
-                    self::getInstance()->settings[$option] = $value;
-            }
+            self::assignOption($option, $value);
         }
     }
 
@@ -159,14 +174,14 @@ trait OrmConnection
     private function createConnection()
     {
         $dsn = $this->getDbType()->getDsn();
-
+        
         $dsn = self::interpolate($dsn, array(
             'host' => $this->host,
             'port' => ($this->port ? $this->port : $this->dbType->getDefaultPort()),
             'schema' => $this->schema,
             'file' => $this->file
         ));
-
+        
         try {
             $this->connection = new \PDO($dsn, $this->user, $this->password, $this->settings);
             $this->connection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -180,7 +195,7 @@ trait OrmConnection
      * Retrieve the database connection
      *
      * @return \PDO The database connection
-     *
+     *        
      * @throws OrmException
      */
     public function getConnection()
@@ -188,7 +203,7 @@ trait OrmConnection
         if (null == $this->connection) {
             $this->createConnection();
         }
-
+        
         return $this->connection;
     }
 
