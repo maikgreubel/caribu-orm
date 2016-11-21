@@ -1,4 +1,5 @@
 <?php
+declare(strict_types = 1);
 namespace Nkey\Caribu\Orm;
 
 use \Nkey\Caribu\Model\AbstractModel;
@@ -40,7 +41,7 @@ class Orm
      *
      * @return Orm The current instance
      */
-    public static function getInstance()
+    public static function getInstance(): Orm
     {
         if (null === self::$instance) {
             self::$instance = new self();
@@ -75,7 +76,7 @@ class Orm
      *
      * @throws OrmException
      */
-    public static function get($id)
+    public static function get($id): \Nkey\Caribu\Model\AbstractModel
     {
         $className = get_called_class();
         
@@ -103,14 +104,14 @@ class Orm
      *            The maximum amount of results
      * @param int $startOffset
      *            The offset where to get results of
-     * @param boolean $asList
+     * @param bool $asList
      *            Fetch results as list, also if number of results is one
      *            
      * @return Nkey\Caribu\Orm\AbstractModel|array|null Either an array of entities, a single entity (if only one was found) or null
      *        
      * @throws OrmException
      */
-    public static function find(array $criteria, $orderBy = "", $limit = 0, $startOffset = 0, $asList = false)
+    public static function find(array $criteria, string $orderBy = "", int $limit = 0, int $startOffset = 0, bool $asList = false)
     {
         $results = null;
         
@@ -178,7 +179,7 @@ class Orm
      *        
      * @throws OrmException
      */
-    public static function findAll(array $criteria = array(), $orderBy = "", $limit = 0, $startOffset = 0)
+    public static function findAll(array $criteria = array(), string $orderBy = "", int $limit = 0, int $startOffset = 0)
     {
         return self::find($criteria, $orderBy, $limit, $startOffset, true);
     }
@@ -267,7 +268,7 @@ class Orm
         
         $escapeSign = $this->getDbType()->getEscapeSign();
         
-        $pk = self::getPrimaryKey($class, $this);
+        $pk = self::getPrimaryKey($class, $this, false);
         $primaryKeyCol = array_keys($pk)[0];
         $primaryKeyValue = array_values($pk)[0];
         

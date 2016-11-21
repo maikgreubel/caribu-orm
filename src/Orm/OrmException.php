@@ -10,15 +10,20 @@ namespace Nkey\Caribu\Orm;
  */
 class OrmException extends \Generics\GenericsException
 {
+
     /**
      * Create a new OrmException instance
      *
-     * @param string $message The message to throw
-     * @param array $context Optional context key-value-pairs
-     * @param integer $number Optional exception code
-     * @param \Exception $previous Optional previous occured exception to embed
+     * @param string $message
+     *            The message to throw
+     * @param array $context
+     *            Optional context key-value-pairs
+     * @param int $number
+     *            Optional exception code
+     * @param \Exception $previous
+     *            Optional previous occured exception to embed
      */
-    public function __construct($message, array $context = array(), $number = 0, \Exception $previous = null)
+    public function __construct(string $message, array $context = array(), int $number = 0, \Exception $previous = null)
     {
         parent::__construct($message, $context, $number, $previous);
     }
@@ -26,13 +31,16 @@ class OrmException extends \Generics\GenericsException
     /**
      * Throw derived ORMException setting the previous as internal
      *
-     * @param \Exception $exception The original exception
-     * @param string $message Optional message to embed
-     * @param integer $code Optional exception code to embed
-     *
+     * @param \Exception $exception
+     *            The original exception
+     * @param string $message
+     *            Optional message to embed
+     * @param int $code
+     *            Optional exception code to embed
+     *            
      * @throws OrmException
      */
-    public static function fromPrevious(\Exception $exception, $message = null, $code = 0)
+    public static function fromPrevious(\Exception $exception, string $message = null, int $code = 0)
     {
         return new self("Exception {type} occured:{message}", array(
             'type' => get_class($exception),

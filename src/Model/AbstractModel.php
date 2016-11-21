@@ -21,7 +21,7 @@ abstract class AbstractModel extends \Nkey\Caribu\Orm\Orm
      *
      * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         $values = array();
         $rfClass = new \ReflectionClass(get_class($this));

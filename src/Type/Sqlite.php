@@ -1,10 +1,6 @@
 <?php
 namespace Nkey\Caribu\Type;
 
-use \Nkey\Caribu\Orm\OrmException;
-use \Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Orm\OrmDataType;
-
 /**
  * Concrete sqlite implementation of database type
  *
@@ -17,25 +13,27 @@ class Sqlite extends AbstractType
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\IType::getDsn()
      */
-    public function getDsn()
+    public function getDsn(): string
     {
         return "sqlite:{file}";
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\IType::getPrimaryKeyColumn()
      */
-    public function getPrimaryKeyColumn($table, Orm $orm)
+    public function getPrimaryKeyColumn(string $table, \Nkey\Caribu\Orm\Orm $orm): string
     {
         $query = "PRAGMA TABLE_INFO({table})";
-
+        
         $sql = $this->interp($query, array(
             'table' => $table
         ));
-
+        
         try {
             $stmt = $orm->getConnection()->query($sql);
             $stmt->setFetchMode(\PDO::FETCH_ASSOC);
@@ -52,95 +50,100 @@ class Sqlite extends AbstractType
             }
             $stmt->closeCursor();
         } catch (\PDOException $exception) {
-            throw OrmException::fromPrevious($exception);
+            throw \Nkey\Caribu\Orm\OrmException::fromPrevious($exception);
         }
-
+        
         return null;
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\IType::getDefaultPort()
      */
-    public function getDefaultPort()
+    public function getDefaultPort(): int
     {
-        return null;
+        return - 1;
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\IType::lock()
      */
-    public function lock($table, $lockType, Orm $orm)
+    public function lock(string $table, int $lockType, \Nkey\Caribu\Orm\Orm $orm)
     {
         return;
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\IType::unlock()
      */
-    public function unlock($table, Orm $orm)
+    public function unlock(string $table, \Nkey\Caribu\Orm\Orm $orm)
     {
         return;
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\IType::getEscapeSign()
      */
-    public function getEscapeSign()
+    public function getEscapeSign(): string
     {
         return "";
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\AbstractType::getTypeQuery()
      */
-    protected function getTypeQuery()
+    protected function getTypeQuery(): string
     {
         $query = "PRAGMA TABLE_INFO({table})";
-
+        
         return $query;
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\AbstractType::mapType()
      */
-    protected function mapType($result)
+    protected function mapType(array $result): int
     {
         switch ($result['type']) {
             case 'INTEGER':
-                return OrmDataType::INTEGER;
-
+                return \Nkey\Caribu\Orm\OrmDataType::INTEGER;
+            
             case 'REAL':
-                return OrmDataType::DECIMAL;
-
+                return \Nkey\Caribu\Orm\OrmDataType::DECIMAL;
+            
             case 'BLOB':
-                return OrmDataType::BLOB;
-
+                return \Nkey\Caribu\Orm\OrmDataType::BLOB;
+            
             case 'TEXT':
             default:
-                return OrmDataType::STRING;
+                return \Nkey\Caribu\Orm\OrmDataType::STRING;
         }
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\IType::getColumnType()
      */
-    public function getColumnType($table, $columnName, Orm $orm)
+    public function getColumnType(string $table, string $columnName, \Nkey\Caribu\Orm\Orm $orm): int
     {
         $type = null;
-
+        
         try {
-            $stmt = $orm->getConnection()->query(
-                $this->interp($this->getTypeQuery(), array(
-                    'table' => $table
-                ))
-            );
+            $stmt = $orm->getConnection()->query($this->interp($this->getTypeQuery(), array(
+                'table' => $table
+            )));
             $stmt->setFetchMode(\PDO::FETCH_ASSOC);
             while ($result = $stmt->fetch()) {
                 if ($result['name'] == $columnName) {
@@ -150,17 +153,18 @@ class Sqlite extends AbstractType
             }
             $stmt->closeCursor();
         } catch (\PDOException $exception) {
-            throw OrmException::fromPrevious($exception);
+            throw \Nkey\Caribu\Orm\OrmException::fromPrevious($exception);
         }
-
+        
         return $type;
     }
 
     /**
      * (non-PHPdoc)
+     *
      * @see \Nkey\Caribu\Type\IType::getSequenceNameForColumn()
      */
-    public function getSequenceNameForColumn($table, $columnName, Orm $orm)
+    public function getSequenceNameForColumn(string $table, string $columnName, \Nkey\Caribu\Orm\Orm $orm): string
     {
         return null;
     }

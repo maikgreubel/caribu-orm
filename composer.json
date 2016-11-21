@@ -24,7 +24,7 @@
 	"name" : "nkey/caribu",
 	"type" : "library",
 	"description" : "Annotation based OR Mapping framework for PHP",
-	"license" : "BSD-2-Clause",
+	"license" : "BSD-3-Clause",
 	"require" : {
 		"php" : "~5.6|~7.0",
 		"psr/log" : "~1.0",
@@ -37,11 +37,12 @@
 		"phpunit/phpunit" : "~4.8|~5.0",
 		"phpunit/dbunit" : "~2.0",
 		"squizlabs/php_codesniffer" : "~2.0",
-		"phploc/phploc" : "~2.0",
+		"phploc/phploc" : "~3.0",
 		"pdepend/pdepend" : "~2.0",
 		"phpmd/phpmd" : "~2.0",
 		"sebastian/phpcpd" : "~2.0",
-		"theseer/phpdox" : "~0.8"
+		"theseer/phpdox" : "~0.8",
+		"piece/stagehand-testrunner" : "dev-master"
 	},
 	"support" : {
 		"email" : "greubel@nkey.de",
@@ -61,5 +62,6 @@
 		"branch-alias" : {
 			"dev-master" : "1.0-dev"
 		}
-	}
+	},
+	"minimum-stability" : "dev"
 }

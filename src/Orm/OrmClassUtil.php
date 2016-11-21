@@ -12,7 +12,7 @@ trait OrmClassUtil
      *            
      * @return \ReflectionProperty[] Array of Reflection properties
      */
-    private static function getClassProperties($class)
+    private static function getClassProperties(string $class): array
     {
         $rf = new \ReflectionClass($class);
         
@@ -25,9 +25,9 @@ trait OrmClassUtil
      * @param string $type
      *            The type (class name) to check
      *            
-     * @return boolean
+     * @return bool
      */
-    private static function isInternalClass($type)
+    private static function isInternalClass(string $type): bool
     {
         try {
             $rf = new \ReflectionClass($type);
@@ -48,7 +48,7 @@ trait OrmClassUtil
      *            
      * @return string The full qualified class name
      */
-    private static function fullQualifiedName($ns, $class)
+    private static function fullQualifiedName(string $ns, string $class): string
     {
         if (! class_exists($class)) {
             $class = sprintf("\\%s\\%s", $ns, $class);

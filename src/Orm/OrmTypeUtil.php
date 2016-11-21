@@ -10,9 +10,9 @@ trait OrmTypeUtil
      * @param string $type
      *            The type identifier
      *            
-     * @return boolean true in case of string is identifier of primitive type, false otherwise
+     * @return bool true in case of string is identifier of primitive type, false otherwise
      */
-    private static function isPrimitive($type)
+    private static function isPrimitive(string $type): bool
     {
         $isPrimitive = false;
         
@@ -34,9 +34,9 @@ trait OrmTypeUtil
      *
      * @param mixed $value            
      *
-     * @return boolean true or false
+     * @return bool true or false
      */
-    private static function boolval($value)
+    private static function boolval($value): bool
     {
         if (! function_exists('boolval')) {
             return (bool) $value;

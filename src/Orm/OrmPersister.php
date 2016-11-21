@@ -1,6 +1,8 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
+use Nkey\Caribu\Model\AbstractModel;
+
 /**
  * Persisting provider for Caribu Orm
  *
@@ -18,9 +20,12 @@ trait OrmPersister
     /**
      * Set the primary key value after persist
      *
-     * @param string $class The name of class of entity
-     * @param \Nkey\Caribu\Model\AbstractModel $object The object where the primary key should be set
-     * @param mixed $primaryKey The primary key value
+     * @param string $class
+     *            The name of class of entity
+     * @param \Nkey\Caribu\Model\AbstractModel $object
+     *            The object where the primary key should be set
+     * @param mixed $primaryKey
+     *            The primary key value
      * @throws OrmException
      */
     private static function setPrimaryKey($class, $object, $primaryKey)
@@ -30,7 +35,7 @@ trait OrmPersister
             $pkCol = self::getPrimaryKeyCol($class);
         }
         $method = sprintf("set%s", ucfirst($pkCol));
-
+        
         try {
             $rfMethod = new \ReflectionMethod($class, $method);
             $rfMethod->invoke($object, $primaryKey);
@@ -42,69 +47,52 @@ trait OrmPersister
     /**
      * Persist the mapped-by entities
      *
-     * @param string $class The name of class of which the data has to be persisted
-     * @param \Nkey\Caribu\Model\AbstractModel $object The entity which contain mapped-by entries to persist
-     *
+     * @param string $class
+     *            The name of class of which the data has to be persisted
+     * @param \Nkey\Caribu\Model\AbstractModel $object
+     *            The entity which contain mapped-by entries to persist
+     *            
      * @throws OrmException
      */
-    private static function persistMappedBy($class, \Nkey\Caribu\Model\AbstractModel $object)
+    private static function persistMappedBy(string $class, \Nkey\Caribu\Model\AbstractModel $object)
     {
         $instance = self::getInstance();
         $escapeSign = $instance->getDbType()->getEscapeSign();
-
+        
         try {
             $rf = new \ReflectionClass($class);
-
+            
             foreach ($rf->getProperties() as $property) {
                 if (null !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
                     $mappedBy = self::parseMappedBy($parameters);
-
+                    
                     $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
                     $foreignEntity = $rfMethod->invoke($object);
-
+                    
                     if (null !== $foreignEntity) {
                         $foreignPrimaryKey = self::getPrimaryKey(get_class($foreignEntity), $foreignEntity, true);
                         $ownPrimaryKey = self::getPrimaryKey($class, $object, true);
-
+                        
                         if (is_null($foreignPrimaryKey)) {
                             throw new OrmException("No primary key column for foreign key found!");
                         }
                         if (is_null($ownPrimaryKey)) {
                             throw new OrmException("No primary key column found!");
                         }
-
-                        $query = sprintf(
-                            "INSERT INTO %s%s%s (%s%s%s, %s%s%s) VALUES (:%s, :%s)",
-                            $escapeSign,
-                            $mappedBy['table'],
-                            $escapeSign,
-                            $escapeSign,
-                            $mappedBy['inverseColumn'],
-                            $escapeSign,
-                            $escapeSign,
-                            $mappedBy['column'],
-                            $escapeSign,
-                            $mappedBy['inverseColumn'],
-                            $mappedBy['column']
-                        );
-
+                        
+                        $query = sprintf("INSERT INTO %s%s%s (%s%s%s, %s%s%s) VALUES (:%s, :%s)", $escapeSign, $mappedBy['table'], $escapeSign, $escapeSign, $mappedBy['inverseColumn'], $escapeSign, $escapeSign, $mappedBy['column'], $escapeSign, $mappedBy['inverseColumn'], $mappedBy['column']);
+                        
                         $statement = null;
                         try {
                             $statement = $instance->startTX()->prepare($query);
                             $statement->bindValue(sprintf(':%s', $mappedBy['inverseColumn']), $ownPrimaryKey);
                             $statement->bindValue(sprintf(':%s', $mappedBy['column']), $foreignPrimaryKey);
-
+                            
                             $statement->execute();
-
+                            
                             $instance->commitTX();
                         } catch (\PDOException $exception) {
-                            throw self::handleException(
-                                $instance,
-                                $statement,
-                                $exception,
-                                "Persisting related entities failed",
-                                -1010
-                            );
+                            throw self::handleException($instance, $statement, $exception, "Persisting related entities failed", - 1010);
                         }
                     }
                 }
@@ -117,27 +105,31 @@ trait OrmPersister
     /**
      * Persist inner entity
      *
-     * @param \ReflectionProperty $property The property which represents the inner entity
-     * @param string $class The result class name
-     * @param \Nkey\Caribu\Model\AbstractModel $object The object which holds the entity
-     * @param string $namespace The result class namespace
-     * @param boolean $persist Whether to persist
-     *
+     * @param \ReflectionProperty $property
+     *            The property which represents the inner entity
+     * @param string $class
+     *            The result class name
+     * @param \Nkey\Caribu\Model\AbstractModel $object
+     *            The object which holds the entity
+     * @param string $namespace
+     *            The result class namespace
+     * @param bool $persist
+     *            Whether to persist
+     *            
      * @throws OrmException
      */
-    private static function persistProperty(\ReflectionProperty $property, $class, $object, $namespace, $persist)
+    private static function persistProperty(\ReflectionProperty $property, string $class, \Nkey\Caribu\Model\AbstractModel $object, string $namespace, bool $persist)
     {
         try {
-            if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) &&
-                !self::isPrimitive($type)) {
-                if (!$persist && self::isCascadeAnnotated($property->getDocComment())) {
+            if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) && ! self::isPrimitive($type)) {
+                if (! $persist && self::isCascadeAnnotated($property->getDocComment())) {
                     $persist = true;
                 }
-
+                
                 $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
                 $entity = $rfMethod->invoke($object);
                 if ($entity instanceof \Nkey\Caribu\Model\AbstractModel) {
-                    if (!$persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity))) {
+                    if (! $persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity, false))) {
                         list ($pkCol) = $pk;
                         if (is_empty($pk[$pkCol])) {
                             $persist = true;
@@ -156,24 +148,20 @@ trait OrmPersister
     /**
      * Persist the entity and all sub entities if necessary
      *
-     * @param string $class The name of class of which the data has to be persisted
-     * @param \Nkey\Caribu\Model\AbstractModel $object The entity to persist
-     *
+     * @param string $class
+     *            The name of class of which the data has to be persisted
+     * @param \Nkey\Caribu\Model\AbstractModel $object
+     *            The entity to persist
+     *            
      * @throws OrmException
      */
-    private static function persistAnnotated($class, $object)
+    private static function persistAnnotated(string $class, \Nkey\Caribu\Model\AbstractModel $object)
     {
         try {
             $rfClass = new \ReflectionClass($class);
-
+            
             foreach ($rfClass->getProperties() as $property) {
-                self::persistProperty(
-                    $property,
-                    $class,
-                    $object,
-                    $rfClass->getNamespaceName(),
-                    self::isCascadeAnnotated($rfClass->getDocComment())
-                );
+                self::persistProperty($property, $class, $object, $rfClass->getNamespaceName(), self::isCascadeAnnotated($rfClass->getDocComment()));
             }
         } catch (\ReflectionException $exception) {
             throw OrmException::fromPrevious($exception);

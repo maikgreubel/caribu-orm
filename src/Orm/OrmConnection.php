@@ -104,7 +104,7 @@ trait OrmConnection
      * @param mixed $value
      *            The value to assign to option
      */
-    private static function assignOption($option, $value)
+    private static function assignOption(string $option, $value)
     {
         switch ($option) {
             case 'type':

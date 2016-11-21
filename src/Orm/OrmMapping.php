@@ -1,6 +1,8 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
+use Nkey\Caribu\Model\AbstractModel;
+
 trait OrmMapping
 {
     use OrmAnnotation;
@@ -18,7 +20,7 @@ trait OrmMapping
      * @throws OrmException
      * @throws PDOException
      */
-    private static function map($from, $toClass, Orm $orm)
+    private static function map(\stdClass $from, string $toClass, Orm $orm)
     {
         $result = self::mapAnnotated($from, $toClass);
         
@@ -35,12 +37,14 @@ trait OrmMapping
      *
      * @param object $from
      *            The unmapped object as stdClass
+     *            
      * @param string $toClass
      *            The name of class where the mapped data will be stored into
+     *            
      * @param AbstractModel $result
      *            The mapped entity
      */
-    private static function mapReferenced($from, $toClass, $result)
+    private static function mapReferenced(\stdClass $from, string $toClass, AbstractModel $result)
     {
         try {
             $rfToClass = new \ReflectionClass($toClass);
@@ -78,13 +82,17 @@ trait OrmMapping
      *
      * @param string $toClass
      *            The class of entity
+     *            
      * @param AbstractModel $object
      *            Prefilled entity
+     *            
+     * @param Orm $orm
+     *            The Orm instance
      *            
      * @throws OrmException
      * @throws PDOException
      */
-    private static function injectMappedBy($toClass, &$object, Orm $orm)
+    private static function injectMappedBy(string $toClass, AbstractModel &$object, Orm $orm)
     {
         try {
             $rfToClass = new \ReflectionClass($toClass);
@@ -168,7 +176,7 @@ trait OrmMapping
      *        
      * @throws OrmException
      */
-    private static function mapAnnotated($from, $toClass)
+    private static function mapAnnotated(\stdClass $from, string $toClass)
     {
         try {
             $resultClass = new \ReflectionClass($toClass);
@@ -204,9 +212,9 @@ trait OrmMapping
      * @param string $propertyName            
      * @param mixed $value            
      *
-     * @return boolean Whether to continue assigning
+     * @return bool Whether to continue assigning
      */
-    private static function assignAnnotatedPropertyValue($result, $resultClassProperty, $resultClass, $propertyName, $value)
+    private static function assignAnnotatedPropertyValue(\stdClass $result, \ReflectionProperty $resultClassProperty, \ReflectionClass $resultClass, string $propertyName, $value): bool
     {
         $docComments = $resultClassProperty->getDocComment();
         
@@ -241,7 +249,7 @@ trait OrmMapping
      *
      * @return object The assigned result object
      */
-    private static function assignPropertyValue($result, \ReflectionClass $resultClass, $propertyName, $type, $value)
+    private static function assignPropertyValue(\stdClass $result, \ReflectionClass $resultClass, string $propertyName, string $type, $value): \stdClass
     {
         $method = sprintf("set%s", ucfirst($propertyName));
         
@@ -267,7 +275,7 @@ trait OrmMapping
      *            
      * @return array All parsed property attributes of the mappedBy string
      */
-    private static function parseMappedBy($mappedBy)
+    private static function parseMappedBy(string $mappedBy): array
     {
         $mappingOptions = array();
         foreach (explode(',', $mappedBy) as $mappingOption) {

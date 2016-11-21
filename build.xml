@@ -119,7 +119,7 @@
 
 		<!-- General source code syntax check -->
 	<target name="lint" description="Perform syntax check of sourcecode files">
-		<apply executable="php" failonerror="true">
+		<apply executable="php" failonerror="false">
 			<arg value="-l" />
 
 			<fileset dir="${basedir}/src">
@@ -173,7 +173,7 @@
 	<!-- Metrics calculation -->
 	<target name="pdepend" depends="prepare"
 		description="Calculate software metrics using PHP_Depend and log result in XML format. Intended for usage within a continuous integration environment.">
-		<call-php>
+		<call-php failOnError="false">
 			<extargs>
 				<arg value="${basedir}/vendor/pdepend/pdepend/src/bin/pdepend"/>
 	            <arg value="--jdepend-xml=${basedir}/build/logs/jdepend.xml" />
