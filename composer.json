@@ -26,7 +26,7 @@
 	"description" : "Annotation based OR Mapping framework for PHP",
 	"license" : "BSD-3-Clause",
 	"require" : {
-		"php" : "~5.6|~7.0",
+		"php" : "~7.0",
 		"psr/log" : "~1.0",
 		"ext-pdo" : "*",
 		"ext-Reflection" : "*",
