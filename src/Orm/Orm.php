@@ -262,6 +262,8 @@ class Orm
     {
         $instance = self::getInstance();
         
+        assert($this instanceof \Nkey\Caribu\Model\AbstractModel);
+        
         $class = get_class($this);
         
         $tableName = $this->getTableName($class);

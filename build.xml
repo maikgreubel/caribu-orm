@@ -6,26 +6,27 @@
 
 	<!-- Uncomment the following when the tools are in ${basedir}/vendor/bin -->
 	<property name="toolsdir" value="${basedir}/vendor/bin/" />
+	<property name="phpbin" value="php" />
 
-    <condition property="dllext" value="dll" else="so">
-        <os family="windows" />
-    </condition>
-	
-	<condition property="dllsuff" value="php_" else="">
-        <os family="windows" />
+	<condition property="dllext" value="dll" else="so">
+		<os family="windows" />
 	</condition>
-    
+
+	<condition property="dllsuff" value="php_" else="">
+		<os family="windows" />
+	</condition>
+
 	<!-- ========================================================================================================= -->
-	
+
 	<macrodef name="call-php">
-		<attribute name="failOnError" default="true"/>
-        <element name="extArgs" optional="n"/>
+		<attribute name="failOnError" default="true" />
+		<element name="extArgs" optional="n" />
 		<sequential>
-	        <exec executable="php" outputproperty="phpextdir" failonerror="true">
-	            <arg value="-r echo ini_get('extension_dir');"/>
-	        </exec>
-	        <exec executable="php" resultproperty="exitcode" failonerror="@{failOnError}">
-	        	<!--
+			<exec executable="${phpbin}" outputproperty="phpextdir" failonerror="true">
+				<arg value="-r echo ini_get('extension_dir');" />
+			</exec>
+			<exec executable="${phpbin}" resultproperty="exitcode" failonerror="@{failOnError}">
+				<!--
 	            <arg value="-n"/>
 	            <arg value="-dextension=${phpextdir}/${dllsuff}curl.${dllext}" />
 	            <arg value="-dextension=${phpextdir}/${dllsuff}fileinfo.${dllext}" />
@@ -38,28 +39,24 @@
 	            <arg value="-dextension=${phpextdir}/${dllsuff}sockets.${dllext}" />
 	            <arg value="-dextension=${phpextdir}/${dllsuff}xsl.${dllext}" />
 	            -->
-	        	<extArgs/>
-	        </exec>
-	    </sequential>
+				<extArgs />
+			</exec>
+		</sequential>
 	</macrodef>
-	
-    <!-- ========================================================================================================= -->
-
-	<!-- Default build target -->
-	<target name="build"
-		depends="prepare,update-deps,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox"
-		description="Run a default build" />
-
-	<!-- Parallel build target -->
-	<target name="build-parallel" depends="prepare,update-deps,lint,tools-parallel,phpunit,phpdox"
-		description="Run a parallel executing tasks build" />
-
-	<!-- Perform a build without without updating the dependencies -->
-    <target name="no-update" depends="prepare,lint,tools-parallel,phpunit,phpdox"
-        description="Runs build without updating dependencies" />
 
 	<!-- ========================================================================================================= -->
-	
+
+	<!-- Default build target -->
+	<target name="build" depends="prepare,update-deps,lint,phploc-ci,pdepend,phpmd-ci,phpcs-ci,phpcpd-ci,phpunit,phpdox" description="Run a default build" />
+
+	<!-- Parallel build target -->
+	<target name="build-parallel" depends="prepare,update-deps,lint,tools-parallel,phpunit,phpdox" description="Run a parallel executing tasks build" />
+
+	<!-- Perform a build without without updating the dependencies -->
+	<target name="no-update" depends="prepare,lint,tools-parallel,phpunit,phpdox" description="Runs build without updating dependencies" />
+
+	<!-- ========================================================================================================= -->
+
 	<!-- Clean the build directory -->
 	<target name="clean" unless="clean.done" description="Cleanup build artifacts">
 		<delete dir="${basedir}/build/api" />
@@ -71,26 +68,24 @@
 	</target>
 
 	<!-- ========================================================================================================= -->
-	
+
 	<!-- Retrieve composer.phar -->
-	<target name="get-composer"
-		description="Retrieve composer from remote">
-		<get src="https://getcomposer.org/composer.phar" dest="composer.phar"/>
+	<target name="get-composer" description="Retrieve composer from remote">
+		<get src="https://getcomposer.org/composer.phar" dest="composer.phar" />
 	</target>
-	
+
 	<!-- Update the dependencies using composer (enabled by default) -->
-	<target name="update-deps" depends="get-composer"
-		description="Runs build including updating depedendencies">
-        <call-php>
-            <extargs>
-                <arg value="composer.phar" />
-                <arg value="update" />
-            </extargs>
-        </call-php>
+	<target name="update-deps" depends="get-composer" description="Runs build including updating depedendencies">
+		<call-php>
+			<extargs>
+				<arg value="composer.phar" />
+				<arg value="update" />
+			</extargs>
+		</call-php>
 	</target>
 
 	<!-- ========================================================================================================= -->
-		
+
 	<!-- Perform a parallel build of various tasks -->
 	<target name="tools-parallel" description="Run tools in parallel">
 		<parallel threadCount="2">
@@ -105,8 +100,7 @@
 	</target>
 
 	<!-- Prepare task -->
-	<target name="prepare" unless="prepare.done" depends="clean"
-		description="Prepare for build by creating essential directories">
+	<target name="prepare" unless="prepare.done" depends="clean" description="Prepare for build by creating essential directories">
 		<mkdir dir="${basedir}/build/api" />
 		<mkdir dir="${basedir}/build/coverage" />
 		<mkdir dir="${basedir}/build/logs" />
@@ -117,9 +111,9 @@
 
 	<!-- ========================================================================================================= -->
 
-		<!-- General source code syntax check -->
+	<!-- General source code syntax check -->
 	<target name="lint" description="Perform syntax check of sourcecode files">
-		<apply executable="php" failonerror="false">
+		<apply executable="${phpbin}" failonerror="false">
 			<arg value="-l" />
 
 			<fileset dir="${basedir}/src">
@@ -137,14 +131,13 @@
 	<!-- ========================================================================================================= -->
 
 	<!-- Lines of code check -->
-	<target name="phploc"
-		description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line.">
+	<target name="phploc" description="Measure project size using PHPLOC and print human readable output. Intended for usage on the command line.">
 		<call-php>
 			<extargs>
-				<arg value="${basedir}/vendor/phploc/phploc/phploc"/>
-	            <arg value="--count-tests" />
-	            <arg path="${basedir}/src" />
-	            <arg path="${basedir}/tests" />
+				<arg value="${basedir}/vendor/phploc/phploc/phploc" />
+				<arg value="--count-tests" />
+				<arg path="${basedir}/src" />
+				<arg path="${basedir}/tests" />
 			</extargs>
 		</call-php>
 	</target>
@@ -152,35 +145,32 @@
 	<!-- ========================================================================================================= -->
 
 	<!-- Lines of code check for continous integration -->
-	<target name="phploc-ci" depends="prepare"
-		description="Measure project size using PHPLOC and log result in CSV and XML format. Intended for usage within a continuous integration environment.">
+	<target name="phploc-ci" depends="prepare" description="Measure project size using PHPLOC and log result in CSV and XML format. Intended for usage within a continuous integration environment.">
 		<call-php>
-            <extargs>
-                <arg value="${basedir}/vendor/phploc/phploc/phploc"/>
-                <arg value="--count-tests" />
-                <arg value="--log-csv" />
-                <arg path="${basedir}/build/logs/phploc.csv" />
-                <arg value="--log-xml" />
-                <arg path="${basedir}/build/logs/phploc.xml" />
-                <arg path="${basedir}/src" />
-                <arg path="${basedir}/tests" />
-            </extargs>
+			<extargs>
+				<arg value="${basedir}/vendor/phploc/phploc/phploc" />
+				<arg value="--count-tests" />
+				<arg value="--log-csv" />
+				<arg path="${basedir}/build/logs/phploc.csv" />
+				<arg value="--log-xml" />
+				<arg path="${basedir}/build/logs/phploc.xml" />
+				<arg path="${basedir}/src" />
+				<arg path="${basedir}/tests" />
+			</extargs>
 		</call-php>
 	</target>
 
 	<!-- ========================================================================================================= -->
 
 	<!-- Metrics calculation -->
-	<target name="pdepend" depends="prepare"
-		description="Calculate software metrics using PHP_Depend and log result in XML format. Intended for usage within a continuous integration environment.">
+	<target name="pdepend" depends="prepare" description="Calculate software metrics using PHP_Depend and log result in XML format. Intended for usage within a continuous integration environment.">
 		<call-php failOnError="false">
 			<extargs>
-				<arg value="${basedir}/vendor/pdepend/pdepend/src/bin/pdepend"/>
-	            <arg value="--jdepend-xml=${basedir}/build/logs/jdepend.xml" />
-	            <arg value="--jdepend-chart=${basedir}/build/pdepend/dependencies.svg" />
-	            <arg
-	                value="--overview-pyramid=${basedir}/build/pdepend/overview-pyramid.svg" />
-	            <arg path="${basedir}/src" />
+				<arg value="${basedir}/vendor/pdepend/pdepend/src/bin/pdepend" />
+				<arg value="--jdepend-xml=${basedir}/build/logs/jdepend.xml" />
+				<arg value="--jdepend-chart=${basedir}/build/pdepend/dependencies.svg" />
+				<arg value="--overview-pyramid=${basedir}/build/pdepend/overview-pyramid.svg" />
+				<arg path="${basedir}/src" />
 			</extargs>
 		</call-php>
 	</target>
@@ -188,115 +178,109 @@
 	<!-- ========================================================================================================= -->
 
 	<!-- Mess detection -->
-	<target name="phpmd"
-		description="Perform project mess detection using PHPMD and print human readable output. Intended for usage on the command line before committing.">
-        <call-php>
-            <extargs>
-                <arg value="${basedir}/vendor/phpmd/phpmd/src/bin/phpmd"/>
-                <arg path="${basedir}/src" />
-                <arg value="text" />
-                <arg path="${basedir}/phpmd.xml" />
-            </extargs>
-        </call-php>
+	<target name="phpmd" description="Perform project mess detection using PHPMD and print human readable output. Intended for usage on the command line before committing.">
+		<call-php>
+			<extargs>
+				<arg value="${basedir}/vendor/phpmd/phpmd/src/bin/phpmd" />
+				<arg path="${basedir}/src" />
+				<arg value="text" />
+				<arg path="${basedir}/phpmd.xml" />
+			</extargs>
+		</call-php>
 	</target>
 
 	<!-- ========================================================================================================= -->
 
 	<!-- Mess detection for command line -->
-	<target name="phpmd-ci" depends="prepare"
-		description="Perform project mess detection using PHPMD and log result in XML format. Intended for usage within a continuous integration environment.">
-        <call-php failOnError="false">
-            <extargs>
-                <arg value="${basedir}/vendor/phpmd/phpmd/src/bin/phpmd"/>
-                <arg path="${basedir}/src" />
-                <arg value="xml" />
-                <arg path="${basedir}/phpmd.xml" />
-                <arg value="--reportfile" />
-                <arg path="${basedir}/build/logs/pmd.xml" />
-            </extargs>
-        </call-php>
+	<target name="phpmd-ci" depends="prepare" description="Perform project mess detection using PHPMD and log result in XML format. Intended for usage within a continuous integration environment.">
+		<call-php failOnError="false">
+			<extargs>
+				<arg value="${basedir}/vendor/phpmd/phpmd/src/bin/phpmd" />
+				<arg path="${basedir}/src" />
+				<arg value="xml" />
+				<arg path="${basedir}/phpmd.xml" />
+				<arg value="--reportfile" />
+				<arg path="${basedir}/build/logs/pmd.xml" />
+			</extargs>
+		</call-php>
 	</target>
 
 	<!-- ========================================================================================================= -->
 
 	<!-- Checkstyle for continous integration -->
-	<target name="phpcs-ci" depends="prepare"
-		description="Find coding standard violations using PHP_CodeSniffer and log result in XML format. Intended for usage within a continuous integration environment.">
-        <call-php failOnError="false">
-            <extargs>
-                <arg value="${basedir}/vendor/squizlabs/php_codesniffer/scripts/phpcs"/>
-                <arg value="--report=checkstyle" />
-                <arg value="--report-file=${basedir}/build/logs/checkstyle.xml" />
-                <arg value="--standard=PSR2" />
-                <arg value="--extensions=php" />
-                <arg value="--ignore=autoload.php" />
-                <arg path="${basedir}/src" />
-            </extargs>
-        </call-php>
+	<target name="phpcs-ci" depends="prepare" description="Find coding standard violations using PHP_CodeSniffer and log result in XML format. Intended for usage within a continuous integration environment.">
+		<call-php failOnError="false">
+			<extargs>
+				<arg value="${basedir}/vendor/squizlabs/php_codesniffer/scripts/phpcs" />
+				<arg value="--report=checkstyle" />
+				<arg value="--report-file=${basedir}/build/logs/checkstyle.xml" />
+				<arg value="--standard=PSR2" />
+				<arg value="--extensions=php" />
+				<arg value="--ignore=autoload.php" />
+				<arg path="${basedir}/src" />
+			</extargs>
+		</call-php>
 	</target>
 
 	<!-- ========================================================================================================= -->
-	
+
 	<!-- Copy&Paste detection -->
-	<target name="phpcpd"
-		description="Find duplicate code using PHPCPD and print human readable output. Intended for usage on the command line before committing." >
-        <call-php failOnError="false">
-            <extargs>
-                <arg value="${basedir}/vendor/sebastian/phpcpd/phpcpd"/>
-                <arg path="${basedir}/src" />
-            </extargs>
-        </call-php>
+	<target name="phpcpd" description="Find duplicate code using PHPCPD and print human readable output. Intended for usage on the command line before committing.">
+		<call-php failOnError="false">
+			<extargs>
+				<arg value="${basedir}/vendor/sebastian/phpcpd/phpcpd" />
+				<arg path="${basedir}/src" />
+			</extargs>
+		</call-php>
 	</target>
 
 	<!-- ========================================================================================================= -->
 
 	<!-- Copy&Paste detection for continous integration -->
-	<target name="phpcpd-ci" depends="prepare"
-		description="Find duplicate code using PHPCPD and log result in XML format. Intended for usage within a continuous integration environment.">
-        <call-php failOnError="false">
-            <extargs>
-                <arg value="${basedir}/vendor/sebastian/phpcpd/phpcpd"/>
-                <arg value="--log-pmd" />
-                <arg path="${basedir}/build/logs/pmd-cpd.xml" />
-                <arg path="${basedir}/src" />
-            </extargs>
-        </call-php>
+	<target name="phpcpd-ci" depends="prepare" description="Find duplicate code using PHPCPD and log result in XML format. Intended for usage within a continuous integration environment.">
+		<call-php failOnError="false">
+			<extargs>
+				<arg value="${basedir}/vendor/sebastian/phpcpd/phpcpd" />
+				<arg value="--log-pmd" />
+				<arg path="${basedir}/build/logs/pmd-cpd.xml" />
+				<arg path="${basedir}/src" />
+			</extargs>
+		</call-php>
 	</target>
 
 	<!-- ========================================================================================================= -->
 
 	<!-- PHPUnit -->
-	<target name="phpunit" depends="prepare"
-		description="Run unit tests with PHPUnit">
-        <call-php>
-            <extargs>
-                <arg value="${basedir}/vendor/phpunit/phpunit/phpunit"/>
-                <arg value="--configuration" />
-                <arg path="${basedir}/phpunit.xml" />
-                <arg value="--coverage-clover" />
-                <arg path="${basedir}/build/logs/clover.xml" />
-                <arg value="--coverage-crap4j" />
-                <arg path="${basedir}/build/logs/crap4j.xml" />
-                <arg value="--log-junit" />
-                <arg path="${basedir}/build/logs/junit.xml" />
-                <arg value="--coverage-html" />
-                <arg path="${basedir}/build/coverage/html" />
-                <arg value="--coverage-xml" />
-                <arg path="${basedir}/build/coverage/xml" />
-            </extargs>
-        </call-php>
+	<target name="phpunit" depends="prepare" description="Run unit tests with PHPUnit">
+		<call-php>
+			<extargs>
+				<arg value="-v" />
+				<arg value="${basedir}/vendor/phpunit/phpunit/phpunit" />
+				<arg value="--configuration" />
+				<arg path="${basedir}/phpunit.xml" />
+				<arg value="--coverage-clover" />
+				<arg path="${basedir}/build/logs/clover.xml" />
+				<arg value="--coverage-crap4j" />
+				<arg path="${basedir}/build/logs/crap4j.xml" />
+				<arg value="--log-junit" />
+				<arg path="${basedir}/build/logs/junit.xml" />
+				<arg value="--coverage-html" />
+				<arg path="${basedir}/build/coverage/html" />
+				<arg value="--coverage-xml" />
+				<arg path="${basedir}/build/coverage/xml" />
+			</extargs>
+		</call-php>
 	</target>
 
 	<!-- ========================================================================================================= -->
 
 	<!-- Documentation generation using phpdox -->
-	<target name="phpdox"
-		description="Generate project documentation using phpDox">
-        <call-php failOnError="false">
-            <extargs>
-                <arg value="${basedir}/vendor/theseer/phpdox/phpdox"/>
-            </extargs>
-        </call-php>
+	<target name="phpdox" description="Generate project documentation using phpDox">
+		<call-php failOnError="false">
+			<extargs>
+				<arg value="${basedir}/vendor/theseer/phpdox/phpdox" />
+			</extargs>
+		</call-php>
 	</target>
-	
+
 </project>
