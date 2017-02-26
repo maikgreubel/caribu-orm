@@ -3,8 +3,6 @@ namespace Nkey\Caribu\Tests;
 
 use Nkey\Caribu\Orm\Orm;
 
-use \PHPUnit_Extensions_Database_TestCase;
-
 /**
  * Test case abstraction
  *
@@ -12,7 +10,7 @@ use \PHPUnit_Extensions_Database_TestCase;
  *
  * @author Maik Greubel <greubel@nkey.de>
  */
-abstract class AbstractDatabaseTestCase extends PHPUnit_Extensions_Database_TestCase
+abstract class AbstractDatabaseTestCase extends \PHPUnit\DbUnit\TestCase
 {
     /**
      * Options for database connection configuration
@@ -57,7 +55,7 @@ abstract class AbstractDatabaseTestCase extends PHPUnit_Extensions_Database_Test
     {
         if(null == $this->connection) {
             Orm::configure($this->options);
-            $this->connection = new \PHPUnit_Extensions_Database_DB_DefaultDatabaseConnection(Orm::getInstance()->getConnection());
+            $this->connection = new \PHPUnit\DbUnit\Database\DefaultConnection(Orm::getInstance()->getConnection());
         }
 
         return $this->connection;

@@ -4,9 +4,7 @@ namespace Nkey\Caribu\Tests;
 use Nkey\Caribu\Orm\Orm;
 use Nkey\Caribu\Orm\OrmException;
 
-use \PHPUnit_Framework_TestCase;
-
-class InvalidTypeTest extends PHPUnit_Framework_TestCase
+class InvalidTypeTest extends \PHPUnit\Framework\TestCase
 {
     /**
      * @expectedException Nkey\Caribu\Orm\OrmException

@@ -20,26 +20,10 @@
 
 	<macrodef name="call-php">
 		<attribute name="failOnError" default="true" />
-		<element name="extArgs" optional="n" />
+		<element name="extargs" optional="n" />
 		<sequential>
-			<exec executable="${phpbin}" outputproperty="phpextdir" failonerror="true">
-				<arg value="-r echo ini_get('extension_dir');" />
-			</exec>
 			<exec executable="${phpbin}" resultproperty="exitcode" failonerror="@{failOnError}">
-				<!--
-	            <arg value="-n"/>
-	            <arg value="-dextension=${phpextdir}/${dllsuff}curl.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/${dllsuff}fileinfo.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/${dllsuff}mbstring.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/${dllsuff}openssl.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/${dllsuff}pdo_mysql.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/${dllsuff}pdo_pgsql.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/${dllsuff}pdo_sqlite.${dllext}" />
-                <arg value="-dextension=${phpextdir}/${dllsuff}phar.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/${dllsuff}sockets.${dllext}" />
-	            <arg value="-dextension=${phpextdir}/${dllsuff}xsl.${dllext}" />
-	            -->
-				<extArgs />
+				<extargs />
 			</exec>
 		</sequential>
 	</macrodef>
@@ -254,7 +238,6 @@
 	<target name="phpunit" depends="prepare" description="Run unit tests with PHPUnit">
 		<call-php>
 			<extargs>
-				<arg value="-v" />
 				<arg value="${basedir}/vendor/phpunit/phpunit/phpunit" />
 				<arg value="--configuration" />
 				<arg path="${basedir}/phpunit.xml" />
@@ -268,6 +251,7 @@
 				<arg path="${basedir}/build/coverage/html" />
 				<arg value="--coverage-xml" />
 				<arg path="${basedir}/build/coverage/xml" />
+				<arg value="-v" />
 			</extargs>
 		</call-php>
 	</target>
