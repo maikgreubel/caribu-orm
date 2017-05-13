@@ -5,7 +5,6 @@ require_once dirname(__FILE__).'/../MySqlAbstractDatabaseTestCase.php';
 
 use Nkey\Caribu\Orm\Orm;
 
-use Nkey\Caribu\Tests\MySqlAbstractDatabaseTestCase;
 use Nkey\Caribu\Tests\Model\BlogPost;
 use Nkey\Caribu\Tests\Model\BlogUser;
 
@@ -28,7 +27,7 @@ class MySQLEntityListTest extends MySqlAbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -49,7 +48,7 @@ class MySQLEntityListTest extends MySqlAbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {

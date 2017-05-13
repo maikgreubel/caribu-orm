@@ -1,8 +1,6 @@
 <?php
 namespace Nkey\Caribu\Tests;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
-
 /**
  * MySql test case abstraction
  *
@@ -13,6 +11,8 @@ abstract class MySqlAbstractDatabaseTestCase extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
+    	parent::__construct();
+    	
         $this->options = array(
             'type' => 'mysql',
             'host' => 'localhost',

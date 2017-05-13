@@ -47,7 +47,7 @@ class BlogPost extends AbstractModel
 
     /**
      *
-     * @return the int
+     * @return int
      */
     public function getPostId()
     {

@@ -6,11 +6,9 @@ require_once dirname(__FILE__).'/../Model/MockedModel.php';
 require_once dirname(__FILE__).'/../Model/GuestBookModel.php';
 require_once dirname(__FILE__).'/../Model/AnnotatedGuestBookModel.php';
 
-use Nkey\Caribu\Tests\Model\MockedModel;
 use Nkey\Caribu\Tests\Model\GuestBookModel;
 use Nkey\Caribu\Tests\Model\AnnotatedGuestBookModel;
 
-use Nkey\Caribu\Tests\PostgresAbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
 
 /**
@@ -30,7 +28,7 @@ class PostgresComplexTest extends PostgresAbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -49,7 +47,7 @@ class PostgresComplexTest extends PostgresAbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {

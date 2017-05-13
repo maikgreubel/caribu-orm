@@ -1,10 +1,10 @@
 <?php
 declare(strict_types = 1);
+
 namespace Nkey\Caribu\Orm;
 
-use \Nkey\Caribu\Model\AbstractModel;
 use \Nkey\Caribu\Type\IType;
-
+use \Nkey\Caribu\Model\AbstractModel;
 /**
  * The main object relational mapper class
  *
@@ -107,7 +107,7 @@ class Orm
      * @param bool $asList
      *            Fetch results as list, also if number of results is one
      *            
-     * @return Nkey\Caribu\Orm\AbstractModel|array|null Either an array of entities, a single entity (if only one was found) or null
+     * @return AbstractModel|array|null Either an array of entities, a single entity (if only one was found) or null
      *        
      * @throws OrmException
      */

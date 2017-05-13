@@ -5,7 +5,6 @@ require_once dirname(__FILE__).'/../AbstractDatabaseTestCase.php';
 
 use Nkey\Caribu\Orm\Orm;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Tests\Model\BlogPost;
 use Nkey\Caribu\Tests\Model\BlogUser;
 
@@ -21,6 +20,8 @@ class EnityListTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
+    	parent::__construct();
+    	
         $this->options = array(
             'type' => 'sqlite',
             'file' => ':memory:'
@@ -31,7 +32,7 @@ class EnityListTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -49,7 +50,7 @@ class EnityListTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {

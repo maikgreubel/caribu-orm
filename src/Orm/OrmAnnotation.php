@@ -57,7 +57,7 @@ trait OrmAnnotation
     private static function getAnnotatedPrimaryKeyProperty(string $class): string
     {
         try {
-            $propertyName = null;
+            $propertyName = "";
             
             foreach (self::getClassProperties($class) as $property) {
                 if (self::isIdAnnotated($property->getDocComment())) {
@@ -88,11 +88,11 @@ trait OrmAnnotation
     private static function getAnnotatedPrimaryKeyColumn(string $class): string
     {
         try {
-            $columnName = null;
+            $columnName = "";
             
             foreach (self::getClassProperties($class) as $property) {
                 $docComment = $property->getDocComment();
-                if (self::isIdAnnotated($docComment) && null === ($columnName = self::getAnnotatedColumn($docComment))) {
+                if (self::isIdAnnotated($docComment) && "" === ($columnName = self::getAnnotatedColumn($docComment))) {
                     $columnName = $property->getName();
                     break;
                 }
@@ -118,7 +118,7 @@ trait OrmAnnotation
      */
     private static function getAnnotatedPropertyType(string $class, string $propertyName, string $namespace): string
     {
-        $type = null;
+        $type = "";
         
         $rfClass = new \ReflectionClass(self::fullQualifiedName($namespace, $class));
         
@@ -151,7 +151,7 @@ trait OrmAnnotation
         
         $type = self::getAnnotatedPropertyType($toClass, $property->getName(), $namespace);
         
-        if (null === $type || self::isPrimitive($type) || ! class_exists($type)) {
+        if ("" === $type || self::isPrimitive($type) || ! class_exists($type)) {
             return array(
                 $type,
                 $value
@@ -203,7 +203,7 @@ trait OrmAnnotation
                 if (preg_match('/@mappedBy/i', $docComments)) {
                     continue;
                 }
-                if (null === ($column = self::getAnnotatedColumn($docComments))) {
+                if ("" === ($column = self::getAnnotatedColumn($docComments))) {
                     $column = $property->getName();
                 }
                 
@@ -235,7 +235,7 @@ trait OrmAnnotation
      *        
      * @throws OrmException
      */
-    private static function getAnnotatedPrimaryKey(string $class, \Nkey\Caribu\Model\AbstractModel $object, bool $onlyValue): array
+    private static function getAnnotatedPrimaryKey(string $class, \Nkey\Caribu\Model\AbstractModel $object, bool $onlyValue)
     {
         try {
             $rfClass = new \ReflectionClass($class);
@@ -249,7 +249,7 @@ trait OrmAnnotation
                 
                 $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
                 
-                if (null === ($columnName = self::getAnnotatedColumn($docComment))) {
+                if ("" === ($columnName = self::getAnnotatedColumn($docComment))) {
                     $columnName = $property->getName();
                 }
                 
@@ -375,7 +375,7 @@ trait OrmAnnotation
      */
     private static function getAnnotatedMappedByParameters(string $comment): string
     {
-        $parameters = null;
+        $parameters = "";
         
         $matches = array();
         if (preg_match('/@mappedBy\(([^\)].+)\)/', $comment, $matches)) {

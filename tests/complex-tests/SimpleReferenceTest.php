@@ -5,7 +5,6 @@ require_once dirname(__FILE__).'/../AbstractDatabaseTestCase.php';
 
 use Nkey\Caribu\Orm\Orm;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Tests\Model\Author;
 use Nkey\Caribu\Tests\Model\Book;
 
@@ -22,7 +21,7 @@ class SimpleReferenceTest extends MySqlAbstractDatabaseTestCase
     /**
      * (non-PHPdoc)
      *
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -42,7 +41,7 @@ class SimpleReferenceTest extends MySqlAbstractDatabaseTestCase
     /**
      * (non-PHPdoc)
      *
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {

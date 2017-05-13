@@ -78,7 +78,7 @@ class AnnotatedGuestBookModel extends AbstractModel
 
     /**
      *
-     * @return the unknown_type
+     * @return string
      */
     public function getUser()
     {

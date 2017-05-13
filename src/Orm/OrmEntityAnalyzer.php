@@ -45,7 +45,7 @@ trait OrmEntityAnalyzer
      *        
      * @throws OrmException
      */
-    private static function getPrimaryKey(string $class, AbstractModel $object, bool $onlyValue)
+    private static function getPrimaryKey(string $class, AbstractModel $object, bool $onlyValue = false)
     {
         $primaryKey = self::getAnnotatedPrimaryKey($class, $object, $onlyValue);
         
@@ -86,10 +86,10 @@ trait OrmEntityAnalyzer
         $instance = self::getInstance();
         
         $pkColumn = self::getAnnotatedPrimaryKeyColumn($class);
-        if (null === $pkColumn) {
+        if ("" === $pkColumn) {
             $pkColumn = $instance->getDbType()->getPrimaryKeyColumn(self::getTableName($class), $instance);
         }
-        if (null === $pkColumn) {
+        if ("" === $pkColumn) {
             $pkColumn = 'id';
         }
         

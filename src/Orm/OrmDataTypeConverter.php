@@ -32,6 +32,7 @@ trait OrmDataTypeConverter
      */
     private static function convertDate(string $value): \DateTime
     {
+    	$value = trim($value);
         try {
             $date = new \DateTime(sprintf("@%s", $value));
         } catch (\Exception $exception) {
@@ -48,6 +49,10 @@ trait OrmDataTypeConverter
                 
                 if (! $date) {
                     $date = \DateTime::createFromFormat(\DateTime::ISO8601, $value);
+                }
+                
+                if (! $date) {
+                	throw new OrmException("Could not parse string '".$value."' as date");
                 }
             } catch (\Exception $exception) {
                 throw OrmException::fromPrevious($exception);

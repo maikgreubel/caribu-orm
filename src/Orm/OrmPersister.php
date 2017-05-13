@@ -1,8 +1,6 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
-use Nkey\Caribu\Model\AbstractModel;
-
 /**
  * Persisting provider for Caribu Orm
  *
@@ -31,7 +29,7 @@ trait OrmPersister
     private static function setPrimaryKey($class, $object, $primaryKey)
     {
         $pkCol = self::getAnnotatedPrimaryKeyProperty($class);
-        if (null === $pkCol) {
+        if ("" === $pkCol) {
             $pkCol = self::getPrimaryKeyCol($class);
         }
         $method = sprintf("set%s", ucfirst($pkCol));
@@ -63,7 +61,7 @@ trait OrmPersister
             $rf = new \ReflectionClass($class);
             
             foreach ($rf->getProperties() as $property) {
-                if (null !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
+                if ("" !== ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
                     $mappedBy = self::parseMappedBy($parameters);
                     
                     $rfMethod = new \ReflectionMethod($class, sprintf("get%s", ucfirst($property->getName())));
@@ -121,7 +119,7 @@ trait OrmPersister
     private static function persistProperty(\ReflectionProperty $property, string $class, \Nkey\Caribu\Model\AbstractModel $object, string $namespace, bool $persist)
     {
         try {
-            if (null !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) && ! self::isPrimitive($type)) {
+            if ("" !== ($type = self::getAnnotatedType($property->getDocComment(), $namespace)) && ! self::isPrimitive($type)) {
                 if (! $persist && self::isCascadeAnnotated($property->getDocComment())) {
                     $persist = true;
                 }

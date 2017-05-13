@@ -38,7 +38,7 @@ class Book extends AbstractModel
 
     /**
      *
-     * @return the int
+     * @return int
      */
     public function getId()
     {
@@ -58,7 +58,7 @@ class Book extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getName()
     {
@@ -78,7 +78,7 @@ class Book extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getSummary()
     {
@@ -98,7 +98,7 @@ class Book extends AbstractModel
 
     /**
      *
-     * @return the Author
+     * @return Author
      */
     public function getAuthor()
     {

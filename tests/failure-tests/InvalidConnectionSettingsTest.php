@@ -6,7 +6,6 @@ require_once dirname(__FILE__).'/../Model/MockedModel.php';
 
 use Nkey\Caribu\Tests\Model\MockedModel;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
 
 /**
@@ -20,6 +19,8 @@ class InvalidConnectionSettingsTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
+    	parent::__construct();
+    	
         $this->options = array(
             'type' => 'mysql',
             'host' => 'localhost',

@@ -34,7 +34,7 @@ class InvalidReferenceModel extends AbstractModel
 
     /**
      *
-     * @return the unknown_type
+     * @return int
      */
     public function getId()
     {
@@ -43,7 +43,7 @@ class InvalidReferenceModel extends AbstractModel
 
     /**
      *
-     * @param unknown_type $id
+     * @param int $id
      */
     public function setId($id)
     {
@@ -53,7 +53,7 @@ class InvalidReferenceModel extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getContent()
     {
@@ -72,7 +72,7 @@ class InvalidReferenceModel extends AbstractModel
 
     /**
      *
-     * @return the Poster
+     * @return Poster
      */
     public function getPoster()
     {

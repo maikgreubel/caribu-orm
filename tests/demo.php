@@ -53,8 +53,7 @@ class Demo extends AbstractModel
     private $publishedOn;
 
     /**
-     *
-     * @return the int
+     * @return int
      */
     public function getId()
     {
@@ -74,7 +73,7 @@ class Demo extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getDemoContent()
     {
@@ -94,7 +93,7 @@ class Demo extends AbstractModel
 
     /**
      *
-     * @return the int
+     * @return int
      */
     public function getPublishedOn()
     {

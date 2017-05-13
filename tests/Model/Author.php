@@ -24,7 +24,7 @@ class Author extends AbstractModel
 
     /**
      *
-     * @return the int
+     * @return int
      */
     public function getId()
     {
@@ -44,7 +44,7 @@ class Author extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getName()
     {

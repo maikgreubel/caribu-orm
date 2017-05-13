@@ -11,6 +11,8 @@ class InvalidReferenceTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
+    	parent::__construct();
+    	
         $this->options = array(
             'type' => 'sqlite',
             'file' => ':memory:'
@@ -19,7 +21,7 @@ class InvalidReferenceTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -36,7 +38,7 @@ class InvalidReferenceTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {

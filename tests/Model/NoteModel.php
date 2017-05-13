@@ -32,7 +32,7 @@ class NoteModel extends AbstractModel
 
     /**
      *
-     * @return the int
+     * @return int
      */
     public function getNoteId()
     {
@@ -52,7 +52,7 @@ class NoteModel extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getContent()
     {
@@ -72,7 +72,7 @@ class NoteModel extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getCreated()
     {

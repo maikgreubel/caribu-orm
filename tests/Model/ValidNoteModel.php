@@ -33,7 +33,7 @@ class ValidNoteModel extends AbstractModel
 
     /**
      *
-     * @return the int
+     * @return int
      */
     public function getNoteId()
     {
@@ -53,7 +53,7 @@ class ValidNoteModel extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getContent()
     {
@@ -73,7 +73,7 @@ class ValidNoteModel extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getCreated()
     {

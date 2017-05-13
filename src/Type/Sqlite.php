@@ -53,7 +53,7 @@ class Sqlite extends AbstractType
             throw \Nkey\Caribu\Orm\OrmException::fromPrevious($exception);
         }
         
-        return null;
+        return "";
     }
 
     /**
@@ -166,6 +166,6 @@ class Sqlite extends AbstractType
      */
     public function getSequenceNameForColumn(string $table, string $columnName, \Nkey\Caribu\Orm\Orm $orm): string
     {
-        return null;
+        return "";
     }
 }

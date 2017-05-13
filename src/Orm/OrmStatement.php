@@ -272,7 +272,7 @@ trait OrmStatement
         
         $column = self::getAnnotatedColumn($property->getDocComment());
         
-        if (null !== $column) {
+        if ("" !== $column) {
             $criterion = str_replace($simpleCriterion, $column, $criterion);
         }
         
@@ -322,7 +322,7 @@ trait OrmStatement
             // check annotations
             $propertyClass = "";
             // search the type of property value
-            if (null !== ($type = self::getAnnotatedType($rfProperty->getDocComment(), $rf->getNamespaceName()))) {
+            if ("" !== ($type = self::getAnnotatedType($rfProperty->getDocComment(), $rf->getNamespaceName()))) {
                 if (! self::isPrimitive($type) && class_exists($type)) {
                     $propertyClass = $type;
                 }
@@ -330,7 +330,7 @@ trait OrmStatement
             $inverseTable = $propertyClass ? self::getAnnotatedTableName($propertyClass, $criterion) : $criterion;
             
             // search the table mapping conditions
-            if (null !== ($parameters = self::getAnnotatedMappedByParameters($rfProperty->getDocComment()))) {
+            if ("" !== ($parameters = self::getAnnotatedMappedByParameters($rfProperty->getDocComment())) && !empty($propertyClass)) {
                 $mappedBy = self::parseMappedBy($parameters);
                 
                 $pkCol = self::getAnnotatedPrimaryKeyColumn($class);

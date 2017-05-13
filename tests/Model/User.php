@@ -36,7 +36,7 @@ class User extends AbstractModel
 
     /**
      *
-     * @return the int
+     * @return int
      */
     public function getId()
     {
@@ -56,7 +56,7 @@ class User extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getName()
     {
@@ -76,7 +76,7 @@ class User extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getEmail()
     {

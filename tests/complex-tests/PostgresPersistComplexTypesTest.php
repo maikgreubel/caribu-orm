@@ -7,7 +7,6 @@ require_once dirname(__FILE__).'/../Model/User.php';
 
 use Nkey\Caribu\Orm\Orm;
 
-use Nkey\Caribu\Tests\PostgresAbstractDatabaseTestCase;
 use Nkey\Caribu\Tests\Model\ReferencedGuestBook;
 use Nkey\Caribu\Tests\Model\User;
 
@@ -22,7 +21,7 @@ class PostgresPersistComplexTypesTest extends PostgresAbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -45,7 +44,7 @@ class PostgresPersistComplexTypesTest extends PostgresAbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {
@@ -75,6 +74,6 @@ class PostgresPersistComplexTypesTest extends PostgresAbstractDatabaseTestCase
 
         $second = ReferencedGuestBook::get($entity->getGid());
 
-        $this->assertEquals($entity->getCreated(), $second->getCreated());
+        $this->assertEquals($entity->getCreated()->getTimestamp(), $second->getCreated()->getTimestamp(), '', 1);
     }
 }

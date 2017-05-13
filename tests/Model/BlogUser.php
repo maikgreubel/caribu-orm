@@ -47,7 +47,7 @@ class BlogUser extends AbstractModel
 
     /**
      *
-     * @return the int
+     * @return int
      */
     public function getUserId()
     {
@@ -67,7 +67,7 @@ class BlogUser extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getName()
     {
@@ -87,7 +87,7 @@ class BlogUser extends AbstractModel
 
     /**
      *
-     * @return the string
+     * @return string
      */
     public function getEmail()
     {
@@ -107,7 +107,7 @@ class BlogUser extends AbstractModel
 
     /**
      *
-     * @return the BlogPost[]
+     * @return BlogPost[]
      */
     public function getPosts()
     {

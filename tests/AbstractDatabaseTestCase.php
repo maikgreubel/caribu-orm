@@ -36,20 +36,20 @@ abstract class AbstractDatabaseTestCase extends \PHPUnit\DbUnit\TestCase
     /**
      * Database connection
      *
-     * @var PHPUnit_Extensions_Database_DB_IDatabaseConnection
+     * @var \PHPUnit\DbUnit\Database\Connection
      */
     private $connection = null;
 
     /**
      * Dataset for testing
      *
-     * @var PHPUnit_Extensions_Database_DataSet_IDataSet
+     * @var \PHPUnit\DbUnit\DataSet\IDataSet
      */
     private $dataset;
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::getConnection()
+     * @see \PHPUnit\DbUnit\TestCase::getConnection()
      */
     public function getConnection()
     {
@@ -63,7 +63,7 @@ abstract class AbstractDatabaseTestCase extends \PHPUnit\DbUnit\TestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::getDataSet()
+     * @see \PHPUnit\DbUnit\TestCase::getDataSet()
      */
     public function getDataSet()
     {
@@ -75,7 +75,7 @@ abstract class AbstractDatabaseTestCase extends \PHPUnit\DbUnit\TestCase
                 $this->dataset = $this->createXmlDataSet($this->dataSetFile);
             }
             else {
-                $this->dataset = new \PHPUnit_Extensions_Database_DataSet_DefaultDataSet();
+            	$this->dataset = new \PHPUnit\DbUnit\DataSet\DefaultDataSet();
             }
         }
         return $this->dataset;

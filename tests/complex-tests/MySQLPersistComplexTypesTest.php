@@ -7,7 +7,6 @@ require_once dirname(__FILE__).'/../Model/User.php';
 
 use Nkey\Caribu\Orm\Orm;
 
-use Nkey\Caribu\Tests\MySqlAbstractDatabaseTestCase;
 use Nkey\Caribu\Tests\Model\ReferencedGuestBook;
 use Nkey\Caribu\Tests\Model\User;
 
@@ -22,7 +21,7 @@ class MySQLPersistComplexTypesTest extends MySqlAbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -41,7 +40,7 @@ class MySQLPersistComplexTypesTest extends MySqlAbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {
@@ -69,6 +68,6 @@ class MySQLPersistComplexTypesTest extends MySqlAbstractDatabaseTestCase
 
         $second = ReferencedGuestBook::get($entity->getGid());
 
-        $this->assertEquals($entity->getCreated(), $second->getCreated());
+        $this->assertEquals($entity->getCreated()->getTimestamp(), $second->getCreated()->getTimestamp(), '', 1);
     }
 }

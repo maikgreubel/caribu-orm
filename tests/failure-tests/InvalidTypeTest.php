@@ -2,7 +2,6 @@
 namespace Nkey\Caribu\Tests;
 
 use Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Orm\OrmException;
 
 class InvalidTypeTest extends \PHPUnit\Framework\TestCase
 {

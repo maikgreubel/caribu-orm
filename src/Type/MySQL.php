@@ -86,7 +86,7 @@ class MySQL extends AbstractType
      */
     public function getSequenceNameForColumn(string $table, string $columnName, \Nkey\Caribu\Orm\Orm $orm): string
     {
-        return null;
+        return "";
     }
 
     /**

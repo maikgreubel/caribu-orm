@@ -1,6 +1,8 @@
 <?php
 namespace Nkey\Caribu\Type;
 
+use Nkey\Caribu\Orm\Orm;
+
 /**
  * Abstract database type
  *

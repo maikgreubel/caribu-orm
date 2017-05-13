@@ -10,7 +10,6 @@ use Nkey\Caribu\Tests\Model\MockedModel;
 use Nkey\Caribu\Tests\Model\GuestBookModel;
 use Nkey\Caribu\Tests\Model\AnnotatedGuestBookModel;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
 
 /**
@@ -24,6 +23,8 @@ class SimpleTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
+    	parent::__construct();
+    	
         $this->options = array(
             'type' => 'sqlite',
             'file' => ':memory:'
@@ -34,7 +35,7 @@ class SimpleTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -50,7 +51,7 @@ class SimpleTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {

@@ -6,11 +6,9 @@ require_once dirname(__FILE__).'/../Model/MockedModel.php';
 require_once dirname(__FILE__).'/../Model/GuestBookModel.php';
 require_once dirname(__FILE__).'/../Model/AnnotatedGuestBookModel.php';
 
-use Nkey\Caribu\Tests\Model\MockedModel;
 use Nkey\Caribu\Tests\Model\GuestBookModel;
 use Nkey\Caribu\Tests\Model\AnnotatedGuestBookModel;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
 
 /**
@@ -24,6 +22,8 @@ class ComplexTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
+    	parent::__construct();
+    	
         $this->options = array(
             'type' => 'sqlite',
             'file' => ':memory:'
@@ -34,7 +34,7 @@ class ComplexTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -50,7 +50,7 @@ class ComplexTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {

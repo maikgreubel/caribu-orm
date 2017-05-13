@@ -27,12 +27,12 @@ trait OrmExceptionHandler
      *            
      * @return OrmException
      */
-    private static function handleException(Orm $orm, \PDOStatement $statement, \Exception $ex, string $message = null, int $code = 0)
+    private static function handleException(Orm $orm, $statement, \Exception $ex, string $message = null, int $code = 0)
     {
         $toThrow = OrmException::fromPrevious($ex, $message, $code);
         
         try {
-            if ($statement != null) {
+        	if ($statement != null && $statement instanceof \PDOStatement) {
                 $statement->closeCursor();
             }
             unset($statement);

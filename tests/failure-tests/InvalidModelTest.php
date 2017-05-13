@@ -6,9 +6,7 @@ require_once dirname(__FILE__).'/../Model/NoteModel.php';
 
 use Nkey\Caribu\Tests\Model\InvalidModel;
 
-use Nkey\Caribu\Tests\AbstractDatabaseTestCase;
 use Nkey\Caribu\Orm\Orm;
-use Nkey\Caribu\Orm\OrmException;
 
 /**
  * Invalid model test cases
@@ -21,6 +19,8 @@ class InvalidModelTest extends AbstractDatabaseTestCase
 {
     public function __construct()
     {
+    	parent::__construct();
+    	
         $this->options = array(
             'type' => 'sqlite',
             'file' => ':memory:'
@@ -29,7 +29,7 @@ class InvalidModelTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::setUp()
+     * @see \PHPUnit\DbUnit\TestCase::setUp()
      */
     protected function setUp()
     {
@@ -45,7 +45,7 @@ class InvalidModelTest extends AbstractDatabaseTestCase
 
     /**
      * (non-PHPdoc)
-     * @see PHPUnit_Extensions_Database_TestCase::tearDown()
+     * @see \PHPUnit\DbUnit\TestCase::tearDown()
      */
     protected function tearDown()
     {

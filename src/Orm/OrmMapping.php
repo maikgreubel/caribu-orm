@@ -2,6 +2,7 @@
 namespace Nkey\Caribu\Orm;
 
 use Nkey\Caribu\Model\AbstractModel;
+use PDOException;
 
 trait OrmMapping
 {
@@ -10,7 +11,7 @@ trait OrmMapping
     /**
      * Map a object from default class into specific
      *
-     * @param stdClass $from
+     * @param \stdClass $from
      *            The unmapped data as stdClass object
      * @param string $toClass
      *            The name of class to map data into
@@ -98,7 +99,7 @@ trait OrmMapping
             $rfToClass = new \ReflectionClass($toClass);
             
             foreach ($rfToClass->getProperties() as $property) {
-                if (null === ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
+                if ("" === ($parameters = self::getAnnotatedMappedByParameters($property->getDocComment()))) {
                     continue;
                 }
                 
@@ -106,7 +107,7 @@ trait OrmMapping
                 
                 $type = self::getAnnotatedType($property->getDocComment(), $rfToClass->getNamespaceName());
                 
-                if (null === $type) {
+                if ("" === $type) {
                     throw new OrmException("Can't use mappedBy without specific type for property {property}", array(
                         'property' => $property->getName()
                     ));
@@ -214,13 +215,13 @@ trait OrmMapping
      *
      * @return bool Whether to continue assigning
      */
-    private static function assignAnnotatedPropertyValue(\stdClass $result, \ReflectionProperty $resultClassProperty, \ReflectionClass $resultClass, string $propertyName, $value): bool
+    private static function assignAnnotatedPropertyValue($result, \ReflectionProperty $resultClassProperty, \ReflectionClass $resultClass, string $propertyName, $value): bool
     {
         $docComments = $resultClassProperty->getDocComment();
         
         $type = self::getAnnotatedType($docComments, $resultClass->getNamespaceName());
         
-        if (null === ($destinationProperty = self::getAnnotatedColumn($docComments)) || $destinationProperty !== $propertyName || null === $type) {
+        if ("" === ($destinationProperty = self::getAnnotatedColumn($docComments)) || $destinationProperty !== $propertyName || null === $type) {
             return true;
         }
         
@@ -249,7 +250,7 @@ trait OrmMapping
      *
      * @return object The assigned result object
      */
-    private static function assignPropertyValue(\stdClass $result, \ReflectionClass $resultClass, string $propertyName, string $type, $value): \stdClass
+    private static function assignPropertyValue($result, \ReflectionClass $resultClass, string $propertyName, string $type, $value): AbstractModel
     {
         $method = sprintf("set%s", ucfirst($propertyName));
         
@@ -279,6 +280,8 @@ trait OrmMapping
     {
         $mappingOptions = array();
         foreach (explode(',', $mappedBy) as $mappingOption) {
+        	if(empty($mappingOption)) continue;
+        	
             list ($option, $value) = preg_split('/=/', $mappingOption);
             $mappingOptions[$option] = $value;
         }

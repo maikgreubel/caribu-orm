@@ -1,6 +1,9 @@
 <?php
 namespace Nkey\Caribu\Type;
 
+use Nkey\Caribu\Orm\Orm;
+use Nkey\Caribu\Orm\OrmException;
+
 /**
  * Database type factory
  *
@@ -17,11 +20,11 @@ abstract class TypeFactory
      * @param Orm $orm
      *            Orm instance
      *            
-     * @return \Nkey\Caribu\Type\IType
+     * @return IType
      *
      * @throws OrmException
      */
-    public static function create(\Nkey\Caribu\Orm\Orm $orm): \Nkey\Caribu\Type\IType
+    public static function create(Orm $orm): IType
     {
         $type = $orm->getType();
         switch ($type) {
@@ -35,7 +38,7 @@ abstract class TypeFactory
                 return new Postgres();
             
             default:
-                throw new \Nkey\Caribu\Orm\OrmException("No such type {type}", array(
+                throw new OrmException("No such type {type}", array(
                     'type' => $type
                 ));
         }

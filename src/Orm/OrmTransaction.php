@@ -1,6 +1,8 @@
 <?php
 namespace Nkey\Caribu\Orm;
 
+use PDOException;
+
 /**
  * Transaction related functionality
  *
