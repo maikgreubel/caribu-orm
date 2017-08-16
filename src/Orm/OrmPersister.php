@@ -129,7 +129,7 @@ trait OrmPersister
                 if ($entity instanceof \Nkey\Caribu\Model\AbstractModel) {
                     if (! $persist && count($pk = self::getAnnotatedPrimaryKey($type, $entity, false))) {
                         list ($pkCol) = $pk;
-                        if (is_empty($pk[$pkCol])) {
+                        if (!isset($pk[$pkCol]) || empty($pk[$pkCol])) {
                             $persist = true;
                         }
                     }
